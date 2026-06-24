@@ -36,6 +36,19 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local agent tooling
+/.claude
+/.cursor
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# sanctum local-first data (never committed)
+/data
+/backups
+/public/uploads
+*.db
+*.db-shm
+*.db-wal
+*.sqlite

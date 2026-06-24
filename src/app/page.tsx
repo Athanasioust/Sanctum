@@ -1,65 +1,68 @@
-import Image from "next/image";
+import { desc } from "drizzle-orm";
+import { Swords, Sparkles } from "lucide-react";
+import { db } from "@/db";
+import { campaigns } from "@/db/schema";
+import { CampaignCard } from "@/components/campaigns/campaign-card";
+import { CreateCampaignDialog } from "@/components/campaigns/create-campaign-dialog";
+import { ImportCampaignButton } from "@/components/campaigns/import-campaign-button";
+import { EmptyState } from "@/components/shared/empty-state";
+import { BuiltByBadge } from "@/components/shared/built-by-badge";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const allCampaigns = await db
+    .select()
+    .from(campaigns)
+    .orderBy(desc(campaigns.updatedAt));
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main className="mx-auto w-full max-w-6xl px-6 py-10">
+      <header className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex items-center gap-4">
+          <div className="flex size-12 items-center justify-center rounded-xl bg-primary/15 text-primary">
+            <Swords className="size-6" />
+          </div>
+          <div>
+            <h1 className="font-heading text-3xl font-semibold tracking-tight">
+              Sanctum
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Your campaigns, characters and worlds — all in one place.
+            </p>
+          </div>
+        </div>
+        {allCampaigns.length > 0 ? (
+          <div className="flex items-center gap-2">
+            <ImportCampaignButton />
+            <CreateCampaignDialog />
+          </div>
+        ) : null}
+      </header>
+
+      {allCampaigns.length === 0 ? (
+        <EmptyState
+          icon={Sparkles}
+          title="No campaigns yet"
+          description="Create your first campaign to start tracking characters, combat, your world and story."
+          action={
+            <div className="flex items-center gap-2">
+              <CreateCampaignDialog />
+              <ImportCampaignButton />
+            </div>
+          }
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      ) : (
+        <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {allCampaigns.map((campaign) => (
+            <CampaignCard key={campaign.id} campaign={campaign} />
+          ))}
+        </section>
+      )}
+
+      <footer className="mt-12 border-t border-border pt-6">
+        <BuiltByBadge />
+      </footer>
+    </main>
   );
 }
