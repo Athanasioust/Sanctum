@@ -429,6 +429,7 @@ function ParticipantRow({
     useSortable({ id: p.id });
   const [confirmOpen, setConfirmOpen] = useState(false);
   const isDown = p.hpCurrent <= 0;
+  const isBloodied = !isDown && p.hpMax > 0 && p.hpCurrent <= p.hpMax / 2;
   const showDeathSaves = isDown && p.entityType === "character";
 
   return (
@@ -473,6 +474,9 @@ function ParticipantRow({
               <Badge variant="destructive" className="gap-1">
                 <Skull className="size-3" /> Down
               </Badge>
+            ) : null}
+            {isBloodied ? (
+              <Badge className="bg-orange-500/20 text-orange-300">Bloodied</Badge>
             ) : null}
           </div>
           <div className="mt-1 flex flex-wrap gap-1">
@@ -1000,31 +1004,31 @@ function BestiaryPicker({
         if (!o) setSearch("");
       }}
     >
-      <DialogContent className="max-w-md">
+      <DialogContent className="flex max-h-[85vh] max-w-md flex-col">
         <DialogHeader>
           <DialogTitle>Add from Bestiary</DialogTitle>
         </DialogHeader>
-        <div className="space-y-3 py-1">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search monsters…"
-              className="pl-8"
-              autoFocus
-            />
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Tap a creature to add it — add several to drop in a whole pack.
-          </p>
-          <div className="max-h-80 space-y-1 overflow-y-auto pr-1">
-            {filtered.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">
-                No monsters match.
-              </p>
-            ) : (
-              filtered.map((b) => {
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search monsters…"
+            className="pl-8"
+            autoFocus
+          />
+        </div>
+        <p className="-mt-1 text-xs text-muted-foreground">
+          Tap a creature to add it — add several to drop in a whole pack.
+        </p>
+        <div className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-border">
+          {filtered.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              No monsters match.
+            </p>
+          ) : (
+            <div className="divide-y divide-border">
+              {filtered.map((b) => {
                 const isDown = b.hpCurrent <= 0;
                 return (
                   <button
@@ -1040,7 +1044,7 @@ function BestiaryPicker({
                         entityType: "npc",
                       })
                     }
-                    className="flex w-full items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2 text-left text-sm transition-colors hover:border-primary/50 hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <span className="min-w-0 truncate font-medium">{b.name}</span>
                     <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
@@ -1053,9 +1057,9 @@ function BestiaryPicker({
                     </span>
                   </button>
                 );
-              })
-            )}
-          </div>
+              })}
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

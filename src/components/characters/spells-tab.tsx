@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Plus, Trash2, Sparkles, Minus, Pencil } from "lucide-react";
+import { Plus, Sparkles, Minus, Pencil, BookOpen, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,8 +25,10 @@ import {
 } from "@/components/ui/select";
 import { Field } from "@/components/shared/form";
 import { EmptyState } from "@/components/shared/empty-state";
+import { DeleteIconButton } from "@/components/shared/delete-icon-button";
 import { api } from "@/lib/client";
 import { SPELL_SCHOOLS } from "@/lib/constants";
+import { SRD_SPELLS, type SeedSpell } from "@/lib/srd-spells";
 import type { Spell, SpellSlot } from "@/db/schema";
 
 type OwnerType = "character" | "npc";
@@ -141,9 +143,17 @@ export function SpellsTab({
       </div>
 
       {/* Spell list */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <h3 className="font-medium">Spells</h3>
-        <SpellDialog ownerId={ownerId} ownerType={ownerType} onSaved={load} />
+        <div className="flex items-center gap-2">
+          <SpellCompendium
+            ownerId={ownerId}
+            ownerType={ownerType}
+            existingNames={new Set(spells.map((s) => s.name.toLowerCase()))}
+            onSaved={load}
+          />
+          <SpellDialog ownerId={ownerId} ownerType={ownerType} onSaved={load} />
+        </div>
       </div>
 
       {spells.length === 0 ? (
@@ -182,9 +192,7 @@ export function SpellsTab({
                         <SpellDialog ownerId={ownerId} ownerType={ownerType} onSaved={load} spell={spell} trigger={
                           <Button size="icon" variant="ghost" className="size-8" aria-label="Edit spell"><Pencil className="size-4" /></Button>
                         } />
-                        <Button size="icon" variant="ghost" className="size-8 text-muted-foreground hover:text-destructive" onClick={() => deleteSpell(spell.id)} aria-label="Delete spell">
-                          <Trash2 className="size-4" />
-                        </Button>
+                        <DeleteIconButton label="spell" onConfirm={() => deleteSpell(spell.id)} />
                       </div>
                     </div>
                   </div>
@@ -314,6 +322,143 @@ function SpellDialog({
           <Button variant="ghost" onClick={() => setOpen(false)} disabled={pending}>Cancel</Button>
           <Button onClick={save} disabled={pending}>{pending ? "Saving…" : "Save"}</Button>
         </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/**
+ * Searchable SRD spell compendium. Pick a spell to drop a full, editable copy
+ * onto this character/NPC — no retyping. Stays open so you can add several.
+ */
+function SpellCompendium({
+  ownerId,
+  ownerType,
+  existingNames,
+  onSaved,
+}: {
+  ownerId: number;
+  ownerType: OwnerType;
+  existingNames: Set<string>;
+  onSaved: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [level, setLevel] = useState("all");
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const q = search.trim().toLowerCase();
+  const filtered = SRD_SPELLS.filter((s) => {
+    if (level !== "all" && String(s.level) !== level) return false;
+    if (!q) return true;
+    return (
+      s.name.toLowerCase().includes(q) ||
+      s.school.toLowerCase().includes(q) ||
+      s.classes.some((c) => c.toLowerCase().includes(q))
+    );
+  });
+
+  async function add(spell: SeedSpell) {
+    setBusy(spell.name);
+    try {
+      await api.post("/api/spells", {
+        ownerId,
+        ownerType,
+        name: spell.name,
+        level: spell.level,
+        school: spell.school,
+        castingTime: spell.castingTime,
+        range: spell.range,
+        components: spell.components,
+        duration: spell.duration,
+        description: spell.description,
+        isConcentration: spell.isConcentration,
+      });
+      toast.success(`Added ${spell.name}`);
+      onSaved();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add spell");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) setSearch("");
+      }}
+    >
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline">
+          <BookOpen className="size-4" /> Add from SRD
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="flex max-h-[85vh] max-w-lg flex-col">
+        <DialogHeader>
+          <DialogTitle>SRD Spell Compendium</DialogTitle>
+        </DialogHeader>
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, school or class…"
+              className="pl-8"
+              autoFocus
+            />
+          </div>
+          <Select value={level} onValueChange={setLevel}>
+            <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All levels</SelectItem>
+              <SelectItem value="0">Cantrips</SelectItem>
+              {Array.from({ length: 9 }, (_, i) => i + 1).map((l) => (
+                <SelectItem key={l} value={String(l)}>Level {l}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <p className="-mt-1 text-xs text-muted-foreground">
+          Tap a spell to add an editable copy — add as many as you need.
+        </p>
+        <div className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-border">
+          {filtered.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">No spells match.</p>
+          ) : (
+            <div className="divide-y divide-border">
+              {filtered.map((s) => {
+                const added = existingNames.has(s.name.toLowerCase());
+                return (
+                  <button
+                    key={s.name}
+                    type="button"
+                    disabled={added || busy === s.name}
+                    onClick={() => add(s)}
+                    className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <span className="min-w-0">
+                      <span className="font-medium">{s.name}</span>
+                      {s.isConcentration ? (
+                        <span className="ml-1.5 text-xs text-muted-foreground">(C)</span>
+                      ) : null}
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {s.school}
+                        {s.classes.length ? ` · ${s.classes.join(", ")}` : ""}
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {added ? "Added" : s.level === 0 ? "Cantrip" : `Lvl ${s.level}`}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );

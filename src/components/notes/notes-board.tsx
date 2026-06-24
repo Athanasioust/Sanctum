@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Pin, PinOff, Pencil, Trash2, Plus } from "lucide-react";
+import { Pin, PinOff, Pencil, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Field } from "@/components/shared/form";
-import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { DeleteIconButton } from "@/components/shared/delete-icon-button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { api } from "@/lib/client";
 import { NOTE_COLORS } from "@/lib/constants";
@@ -116,7 +116,11 @@ export function NotesBoard({
                       </Button>
                     }
                   />
-                  <DeleteNote onConfirm={() => remove(note.id)} />
+                  <DeleteIconButton
+                    label="note"
+                    onConfirm={() => remove(note.id)}
+                    buttonClassName="size-7 opacity-0 transition-opacity group-hover:opacity-100"
+                  />
                 </div>
               </div>
               {note.content ? (
@@ -129,30 +133,6 @@ export function NotesBoard({
         </div>
       )}
     </div>
-  );
-}
-
-function DeleteNote({ onConfirm }: { onConfirm: () => void }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <>
-      <Button
-        size="icon"
-        variant="ghost"
-        className="size-7 opacity-0 transition-opacity group-hover:opacity-100"
-        onClick={() => setOpen(true)}
-        aria-label="Delete"
-      >
-        <Trash2 className="size-4 text-muted-foreground hover:text-destructive" />
-      </Button>
-      <ConfirmDialog
-        open={open}
-        onOpenChange={setOpen}
-        title="Delete this note?"
-        description="This cannot be undone."
-        onConfirm={onConfirm}
-      />
-    </>
   );
 }
 

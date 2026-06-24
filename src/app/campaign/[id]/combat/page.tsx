@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { and, asc, desc, eq } from "drizzle-orm";
-import { Swords } from "lucide-react";
+import { Swords, Calculator, Monitor } from "lucide-react";
 import { db } from "@/db";
 import {
   encounters,
@@ -10,6 +11,7 @@ import {
 } from "@/db/schema";
 import { PageContainer, PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
+import { Button } from "@/components/ui/button";
 import { CombatTracker, type Addable } from "@/components/combat/combat-tracker";
 import {
   NewEncounterButton,
@@ -93,7 +95,21 @@ export default async function CombatPage({
         title="Combat Tracker"
         description={active ? active.name : "Initiative, HP, conditions and turns."}
         icon={Swords}
-        actions={active ? null : <NewEncounterButton campaignId={campaignId} />}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" asChild>
+              <Link href={`/campaign/${campaignId}/combat/builder`}>
+                <Calculator className="size-4" /> Plan encounter
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <a href={`/screen/${campaignId}`} target="_blank" rel="noopener noreferrer">
+                <Monitor className="size-4" /> Player view
+              </a>
+            </Button>
+            {active ? null : <NewEncounterButton campaignId={campaignId} />}
+          </div>
+        }
       />
 
       {active ? (

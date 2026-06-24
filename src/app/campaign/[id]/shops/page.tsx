@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { shops, rollTables, locations, npcs } from "@/db/schema";
 import { PageContainer, PageHeader } from "@/components/shared/page-header";
 import { ShopsLootClient } from "@/components/shops/shops-loot-client";
+import { TreasureGeneratorButton } from "@/components/shops/treasure-generator-button";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,7 @@ export default async function ShopsPage({
         title="Shops & Loot"
         description="Stock shops and roll on weighted loot tables."
         icon={Coins}
+        actions={<TreasureGeneratorButton />}
       />
       <ShopsLootClient
         campaignId={campaignId}

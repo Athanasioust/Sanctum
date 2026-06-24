@@ -14,6 +14,20 @@ function timestamp() {
   return `${date}-${time}`;
 }
 
+/**
+ * Resolve a stored backup filename to an absolute path, guaranteeing it stays
+ * inside the backups directory. `basename` strips any directory components and
+ * the containment check is defence-in-depth against path traversal.
+ */
+function backupFilePath(filePath: string): string {
+  const resolved = path.join(BACKUPS_DIR, path.basename(filePath));
+  const root = path.resolve(BACKUPS_DIR);
+  if (resolved !== root && !path.resolve(resolved).startsWith(root + path.sep)) {
+    throw new ApiError("Invalid backup path", 400);
+  }
+  return resolved;
+}
+
 /** Create a checkpointed snapshot of the database file. */
 export async function createBackup(label = "Manual backup") {
   fs.mkdirSync(BACKUPS_DIR, { recursive: true });
@@ -35,7 +49,7 @@ export async function listBackups() {
 export async function deleteBackup(id: number) {
   const [row] = await db.select().from(backups).where(eq(backups.id, id));
   if (!row) throw new ApiError("Backup not found", 404);
-  const file = path.join(BACKUPS_DIR, row.filePath);
+  const file = backupFilePath(row.filePath);
   if (fs.existsSync(file)) fs.rmSync(file);
   await db.delete(backups).where(eq(backups.id, id));
 }
@@ -48,7 +62,7 @@ export async function deleteBackup(id: number) {
 export async function restoreBackup(id: number) {
   const [row] = await db.select().from(backups).where(eq(backups.id, id));
   if (!row) throw new ApiError("Backup not found", 404);
-  const source = path.join(BACKUPS_DIR, row.filePath);
+  const source = backupFilePath(row.filePath);
   if (!fs.existsSync(source)) throw new ApiError("Backup file is missing", 410);
 
   // Safety snapshot of the current database before overwriting it.

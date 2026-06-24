@@ -6,6 +6,7 @@ import { npcs } from "@/db/schema";
 import { PageContainer, PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { NpcGrid } from "@/components/npcs/npc-grid";
+import { GenerateNpcButton } from "@/components/npcs/generate-npc-button";
 import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
@@ -30,11 +31,14 @@ export default async function NpcsPage({
         icon={Skull}
         actions={
           list.length > 0 ? (
-            <Button asChild>
-              <Link href={`/campaign/${campaignId}/npcs/new`}>
-                <Plus className="size-4" /> New NPC / Monster
-              </Link>
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <GenerateNpcButton campaignId={campaignId} />
+              <Button asChild>
+                <Link href={`/campaign/${campaignId}/npcs/new`}>
+                  <Plus className="size-4" /> New NPC / Monster
+                </Link>
+              </Button>
+            </div>
           ) : null
         }
       />
@@ -42,13 +46,16 @@ export default async function NpcsPage({
         <EmptyState
           icon={Skull}
           title="No NPCs or monsters yet"
-          description="Create NPCs and monsters with full 5e stat blocks. Save reusable ones to your Bestiary."
+          description="Create NPCs and monsters with full 5e stat blocks, or generate a random one to improvise on the spot."
           action={
-            <Button asChild>
-              <Link href={`/campaign/${campaignId}/npcs/new`}>
-                <Plus className="size-4" /> New NPC / Monster
-              </Link>
-            </Button>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <GenerateNpcButton campaignId={campaignId} variant="default" />
+              <Button variant="outline" asChild>
+                <Link href={`/campaign/${campaignId}/npcs/new`}>
+                  <Plus className="size-4" /> New NPC / Monster
+                </Link>
+              </Button>
+            </div>
           }
         />
       ) : (

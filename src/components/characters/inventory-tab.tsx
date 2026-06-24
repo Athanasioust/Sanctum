@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Plus, Trash2, Backpack, Pencil } from "lucide-react";
+import { Plus, Backpack, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Field } from "@/components/shared/form";
 import { EmptyState } from "@/components/shared/empty-state";
+import { DeleteIconButton } from "@/components/shared/delete-icon-button";
 import { api } from "@/lib/client";
 import type { InventoryItem } from "@/db/schema";
 
@@ -110,9 +111,7 @@ export function InventoryTab({
                   <ItemDialog ownerId={ownerId} ownerType={ownerType} onSaved={load} item={item} trigger={
                     <Button size="icon" variant="ghost" className="size-8" aria-label="Edit item"><Pencil className="size-4" /></Button>
                   } />
-                  <Button size="icon" variant="ghost" className="size-8 text-muted-foreground hover:text-destructive" onClick={() => remove(item.id)} aria-label="Delete item">
-                    <Trash2 className="size-4" />
-                  </Button>
+                  <DeleteIconButton label="item" onConfirm={() => remove(item.id)} />
                 </div>
               </div>
             </div>

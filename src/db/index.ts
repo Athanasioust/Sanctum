@@ -38,9 +38,24 @@ function ensureDailyBackup(
 
 function createDb() {
   fs.mkdirSync(DATA_DIR, { recursive: true });
-  const sqlite = new Database(DB_PATH);
-  sqlite.pragma("journal_mode = WAL");
-  sqlite.pragma("foreign_keys = ON");
+
+  let sqlite: Database.Database;
+  try {
+    sqlite = new Database(DB_PATH);
+    sqlite.pragma("journal_mode = WAL");
+    // Enforce foreign-key constraints (off by default in SQLite).
+    sqlite.pragma("foreign_keys = ON");
+    // Touch the header so a corrupted/non-database file fails fast and clearly.
+    sqlite.pragma("user_version");
+  } catch (err) {
+    console.error(
+      `[db] Could not open the database at ${DB_PATH}. The file may be corrupted or ` +
+        `inaccessible. Restore a snapshot from the "backups" folder, or move/delete the ` +
+        `file to start a fresh database.`,
+      err,
+    );
+    throw err;
+  }
 
   const db = drizzle(sqlite, { schema });
 

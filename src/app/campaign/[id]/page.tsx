@@ -10,6 +10,7 @@ import {
   StickyNote,
   ArrowRight,
   ScrollText,
+  Monitor,
 } from "lucide-react";
 import { db } from "@/db";
 import {
@@ -116,12 +117,22 @@ export default async function DashboardPage({
               </p>
             ) : null}
           </div>
-          <div className="flex items-center gap-2 rounded-lg border border-border bg-background/60 px-3.5 py-2.5">
-            <CalendarDays className="size-4 text-primary" />
-            <div className="text-sm">
-              <p className="text-xs text-muted-foreground">In-world date</p>
-              <p className="font-medium">{inWorldDate}</p>
+          <div className="flex flex-col items-start gap-2 sm:items-end">
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-background/60 px-3.5 py-2.5">
+              <CalendarDays className="size-4 text-primary" />
+              <div className="text-sm">
+                <p className="text-xs text-muted-foreground">In-world date</p>
+                <p className="font-medium">{inWorldDate}</p>
+              </div>
             </div>
+            <a
+              href={`/screen/${id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <Monitor className="size-3.5" /> Open player view
+            </a>
           </div>
         </div>
       </div>

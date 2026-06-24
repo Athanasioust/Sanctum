@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Pencil, Trash2, Package } from "lucide-react";
+import { Plus, Pencil, Package } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/select";
 import { Field } from "@/components/shared/form";
 import { EmptyState } from "@/components/shared/empty-state";
-import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { DeleteIconButton } from "@/components/shared/delete-icon-button";
 import { api } from "@/lib/client";
 import { ITEM_RARITIES } from "@/lib/constants";
 import { rarityClasses } from "@/lib/ui";
@@ -101,7 +101,7 @@ export function ShopItemsManager({
                       <ItemDialog shopId={shopId} item={item} onSaved={upsert} trigger={
                         <Button size="icon" variant="ghost" className="size-8"><Pencil className="size-4" /></Button>
                       } />
-                      <DeleteItem onConfirm={() => remove(item.id)} />
+                      <DeleteIconButton label="item" onConfirm={() => remove(item.id)} />
                     </div>
                   </TableCell>
                 </TableRow>
@@ -111,18 +111,6 @@ export function ShopItemsManager({
         </div>
       )}
     </div>
-  );
-}
-
-function DeleteItem({ onConfirm }: { onConfirm: () => void }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <>
-      <Button size="icon" variant="ghost" className="size-8 text-muted-foreground hover:text-destructive" onClick={() => setOpen(true)}>
-        <Trash2 className="size-4" />
-      </Button>
-      <ConfirmDialog open={open} onOpenChange={setOpen} title="Remove this item?" onConfirm={onConfirm} />
-    </>
   );
 }
 
