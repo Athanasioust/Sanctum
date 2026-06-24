@@ -2,6 +2,8 @@
   "name": "sanctum",
   "version": "0.1.0",
   "private": true,
+  "license": "AGPL-3.0-only",
+  "author": "athanasioust",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

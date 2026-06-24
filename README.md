@@ -2,7 +2,7 @@
 
 A **local-first Dungeon Master's campaign manager** for Dungeons & Dragons 5e. Everything — characters, NPCs, combat, your world map, story timeline, factions, shops, calendars and notes — lives in a single SQLite database on your machine. No account, no cloud, no AI. Just open it and run your table.
 
-> Built by **athanasioust**.
+> Built by **athanasioust**. © 2026 athanasioust — licensed under [AGPL-3.0](#license).
 
 ## Features
 
@@ -80,3 +80,17 @@ To back up or move your whole setup, copy the `data/` folder. To share a single 
 ## Attribution
 
 Monster stat blocks bundled with the Bestiary importer are derived from the **System Reference Document 5.1** by Wizards of the Coast, available under the [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/legalcode).
+
+## License
+
+**Copyright © 2026 athanasioust. All rights reserved.**
+
+Sanctum is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)** — see the [`LICENSE`](./LICENSE) file for the full terms.
+
+In short:
+
+- You're free to use, study, modify and self-host Sanctum.
+- If you **distribute** it, or **run a modified version as a network/web service**, you **must** release your complete source code under the same AGPL-3.0 license and **preserve attribution** to the original author.
+- It **cannot** be taken closed-source or rebranded as your own proprietary product.
+
+For any use outside these terms (e.g. a commercial license without the copyleft requirements), contact the author.
