@@ -6,6 +6,8 @@ import {
   DesktopSidebar,
   MobileNavBar,
 } from "@/components/layout/campaign-nav";
+import { CommandPalette } from "@/components/search/command-palette";
+import { RulesReference } from "@/components/shared/rules-reference";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +41,10 @@ export default async function CampaignLayout({
       <div className="flex min-w-0 flex-1 flex-col">
         <MobileNavBar campaign={campaign} campaigns={allCampaigns} />
         <main className="flex-1">{children}</main>
+      </div>
+      <CommandPalette campaignId={campaign.id} />
+      <div className="fixed bottom-4 right-4 z-40">
+        <RulesReference />
       </div>
     </div>
   );

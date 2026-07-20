@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { asc, eq, or } from "drizzle-orm";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { db } from "@/db";
-import { npcs } from "@/db/schema";
+import { npcs, npcRelationships } from "@/db/schema";
 import { PageContainer } from "@/components/shared/page-header";
 import { StatBlock } from "@/components/npcs/stat-block";
 import { EntityActions } from "@/components/shared/entity-actions";
@@ -13,6 +13,7 @@ import {
 } from "@/components/npcs/npc-clone-actions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { NpcRelationshipsSection } from "@/components/npcs/npc-relationships-section";
 
 export const dynamic = "force-dynamic";
 
@@ -23,8 +24,16 @@ export default async function NpcDetailPage({
 }) {
   const { id, npcId } = await params;
   const campaignId = Number(id);
-  const [npc] = await db.select().from(npcs).where(eq(npcs.id, Number(npcId)));
+  const npcIdNum = Number(npcId);
+  const [npc] = await db.select().from(npcs).where(eq(npcs.id, npcIdNum));
   if (!npc || npc.campaignId !== campaignId) notFound();
+
+  const [allNpcs, relationships] = await Promise.all([
+    db.select({ id: npcs.id, name: npcs.name }).from(npcs).where(eq(npcs.campaignId, campaignId)).orderBy(asc(npcs.name)),
+    db.select().from(npcRelationships).where(
+      or(eq(npcRelationships.sourceNpcId, npcIdNum), eq(npcRelationships.targetNpcId, npcIdNum)),
+    ),
+  ]);
 
   return (
     <PageContainer>
@@ -61,6 +70,13 @@ export default async function NpcDetailPage({
       </div>
 
       <StatBlock npc={npc} />
+
+      <NpcRelationshipsSection
+        npcId={npcIdNum}
+        campaignId={campaignId}
+        npcs={allNpcs}
+        initialRelationships={relationships}
+      />
     </PageContainer>
   );
 }

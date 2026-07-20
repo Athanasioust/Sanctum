@@ -15,6 +15,13 @@
       "when": 1782307753181,
       "tag": "0001_overconfident_scourge",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1784507776536,
+      "tag": "0002_special_namora",
+      "breakpoints": true
     }
   ]
 }

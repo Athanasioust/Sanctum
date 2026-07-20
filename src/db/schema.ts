@@ -12,13 +12,9 @@ import {
 /* -------------------------------------------------------------------------- */
 
 export type CustomCalendarConfig = {
-  /** Ordered list of months in a year. */
   months: { name: string; days: number }[];
-  /** Names of the days of the week (optional cosmetic config). */
   weekdays?: string[];
-  /** Label for the year unit, e.g. "DR", "AG". */
   yearLabel?: string;
-  /** Number of the first year (defaults to 1). */
   yearOne?: number;
 };
 
@@ -34,7 +30,6 @@ export type MapPin = {
   color?: string;
 };
 export type GridCell = {
-  /** "floor" | "wall" | "door" | "water" | "difficult" | "empty" */
   type: string;
   label?: string;
   color?: string;
@@ -43,12 +38,13 @@ export type GridData = {
   cols: number;
   rows: number;
   cellSize: number;
-  /** Flat array of length cols*rows; null = empty. */
   cells: (GridCell | null)[];
 };
 export type RollTableEntry = { weight: number; result: string };
 export type PlotPoint = { text: string; checked: boolean };
 export type StatBlockAction = { name: string; description: string };
+export type Currency = { pp: number; gp: number; ep: number; sp: number; cp: number };
+export type SubObjective = { text: string; checked: boolean };
 
 /* -------------------------------------------------------------------------- */
 /*  Reusable column helpers                                                    */
@@ -64,7 +60,6 @@ const timestamps = {
     .$onUpdate(() => new Date()),
 };
 
-/** Ability scores shared by characters and npcs/monsters. */
 const abilityScores = {
   str: integer("str").notNull().default(10),
   dex: integer("dex").notNull().default(10),
@@ -115,7 +110,6 @@ export const characters = sqliteTable("characters", {
   alignment: text("alignment").notNull().default(""),
 
   experiencePoints: integer("experience_points").notNull().default(0),
-  // Auto-calculated from level, persisted for convenience.
   proficiencyBonus: integer("proficiency_bonus").notNull().default(2),
 
   ...abilityScores,
@@ -127,8 +121,6 @@ export const characters = sqliteTable("characters", {
   armorClass: integer("armor_class").notNull().default(10),
   speed: integer("speed").notNull().default(30),
   initiativeBonus: integer("initiative_bonus").notNull().default(0),
-  // Current/last rolled initiative tracked on the sheet itself (separate from
-  // the live combat tracker).
   initiative: integer("initiative").notNull().default(0),
   passivePerception: integer("passive_perception").notNull().default(10),
 
@@ -187,12 +179,22 @@ export const characters = sqliteTable("characters", {
     .$defaultFn(() => []),
   exhaustionLevel: integer("exhaustion_level").notNull().default(0),
 
+  // Feature 4: Currency tracking (PP/GP/EP/SP/CP)
+  currency: text("currency", { mode: "json" })
+    .notNull()
+    .default('{"pp":0,"gp":0,"ep":0,"sp":0,"cp":0}')
+    .$type<Currency>(),
+
+  // Feature 5: Rest mechanics — hit dice pool
+  hitDiceTotal: integer("hit_dice_total").notNull().default(0),
+  hitDiceUsed: integer("hit_dice_used").notNull().default(0),
+
   notes: text("notes").notNull().default(""),
   ...timestamps,
 });
 
 /* -------------------------------------------------------------------------- */
-/*  Spells (linked to a character or npc)                                      */
+/*  Spells                                                                     */
 /* -------------------------------------------------------------------------- */
 
 export const spells = sqliteTable("spells", {
@@ -215,7 +217,7 @@ export const spells = sqliteTable("spells", {
 });
 
 /* -------------------------------------------------------------------------- */
-/*  Spell Slots (linked to a character or npc)                                 */
+/*  Spell Slots                                                                */
 /* -------------------------------------------------------------------------- */
 
 export const spellSlots = sqliteTable("spell_slots", {
@@ -228,7 +230,7 @@ export const spellSlots = sqliteTable("spell_slots", {
 });
 
 /* -------------------------------------------------------------------------- */
-/*  Inventory Items (linked to a character or npc)                             */
+/*  Inventory Items                                                            */
 /* -------------------------------------------------------------------------- */
 
 export const inventoryItems = sqliteTable("inventory_items", {
@@ -333,6 +335,26 @@ export const npcs = sqliteTable("npcs", {
 });
 
 /* -------------------------------------------------------------------------- */
+/*  NPC Relationships (Feature 12)                                             */
+/* -------------------------------------------------------------------------- */
+
+export const npcRelationships = sqliteTable("npc_relationships", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  campaignId: integer("campaign_id")
+    .notNull()
+    .references(() => campaigns.id, { onDelete: "cascade" }),
+  sourceNpcId: integer("source_npc_id")
+    .notNull()
+    .references(() => npcs.id, { onDelete: "cascade" }),
+  targetNpcId: integer("target_npc_id")
+    .notNull()
+    .references(() => npcs.id, { onDelete: "cascade" }),
+  relationshipType: text("relationship_type").notNull().default("ally"),
+  description: text("description").notNull().default(""),
+  ...timestamps,
+});
+
+/* -------------------------------------------------------------------------- */
 /*  Combat Encounters                                                          */
 /* -------------------------------------------------------------------------- */
 
@@ -362,8 +384,6 @@ export const combatParticipants = sqliteTable("combat_participants", {
   encounterId: integer("encounter_id")
     .notNull()
     .references(() => encounters.id, { onDelete: "cascade" }),
-  // entity_id/entity_type are nullable so temporary creatures can exist
-  // without a backing characters/npcs row.
   entityId: integer("entity_id"),
   entityType: text("entity_type", { enum: ["character", "npc"] }),
   name: text("name").notNull(),
@@ -382,6 +402,26 @@ export const combatParticipants = sqliteTable("combat_participants", {
   deathSaveFailures: integer("death_save_failures").notNull().default(0),
   isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
   turnOrder: integer("turn_order").notNull().default(0),
+  // Feature 11: Concentration tracking
+  concentrationSpell: text("concentration_spell"),
+});
+
+/* -------------------------------------------------------------------------- */
+/*  Combat Log Entries (Feature 15)                                           */
+/* -------------------------------------------------------------------------- */
+
+export const combatLogEntries = sqliteTable("combat_log_entries", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  encounterId: integer("encounter_id")
+    .notNull()
+    .references(() => encounters.id, { onDelete: "cascade" }),
+  round: integer("round").notNull().default(1),
+  actorName: text("actor_name").notNull().default(""),
+  action: text("action").notNull().default(""),
+  details: text("details").notNull().default(""),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 
 /* -------------------------------------------------------------------------- */
@@ -592,12 +632,111 @@ export const notes = sqliteTable("notes", {
 });
 
 /* -------------------------------------------------------------------------- */
+/*  Quests (Feature 3)                                                         */
+/* -------------------------------------------------------------------------- */
+
+export const quests = sqliteTable("quests", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  campaignId: integer("campaign_id")
+    .notNull()
+    .references(() => campaigns.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description").notNull().default(""),
+  status: text("status", { enum: ["active", "on-hold", "completed", "failed"] })
+    .notNull()
+    .default("active"),
+  subObjectives: text("sub_objectives", { mode: "json" })
+    .notNull()
+    .$type<SubObjective[]>()
+    .$defaultFn(() => []),
+  linkedNpcIds: text("linked_npc_ids", { mode: "json" })
+    .notNull()
+    .$type<number[]>()
+    .$defaultFn(() => []),
+  linkedLocationIds: text("linked_location_ids", { mode: "json" })
+    .notNull()
+    .$type<number[]>()
+    .$defaultFn(() => []),
+  reward: text("reward").notNull().default(""),
+  sessionNumber: integer("session_number"),
+  notes: text("notes").notNull().default(""),
+  ...timestamps,
+});
+
+/* -------------------------------------------------------------------------- */
+/*  Magic Items (Feature 9)                                                    */
+/* -------------------------------------------------------------------------- */
+
+export const magicItems = sqliteTable("magic_items", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  campaignId: integer("campaign_id")
+    .notNull()
+    .references(() => campaigns.id, { onDelete: "cascade" }),
+  characterId: integer("character_id").references(() => characters.id, {
+    onDelete: "set null",
+  }),
+  name: text("name").notNull(),
+  itemType: text("item_type").notNull().default("wondrous"),
+  rarity: text("rarity").notNull().default("common"),
+  description: text("description").notNull().default(""),
+  requiresAttunement: integer("requires_attunement", { mode: "boolean" })
+    .notNull()
+    .default(false),
+  isAttuned: integer("is_attuned", { mode: "boolean" }).notNull().default(false),
+  charges: integer("charges"),
+  chargesMax: integer("charges_max"),
+  rechargeCondition: text("recharge_condition").notNull().default(""),
+  isCursed: integer("is_cursed", { mode: "boolean" }).notNull().default(false),
+  notes: text("notes").notNull().default(""),
+  ...timestamps,
+});
+
+/* -------------------------------------------------------------------------- */
+/*  Handouts (Feature 7)                                                       */
+/* -------------------------------------------------------------------------- */
+
+export const handouts = sqliteTable("handouts", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  campaignId: integer("campaign_id")
+    .notNull()
+    .references(() => campaigns.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  content: text("content").notNull().default(""),
+  imageUrl: text("image_url"),
+  isRevealed: integer("is_revealed", { mode: "boolean" }).notNull().default(false),
+  sortOrder: integer("sort_order").notNull().default(0),
+  ...timestamps,
+});
+
+/* -------------------------------------------------------------------------- */
+/*  Rumors (Feature 14)                                                        */
+/* -------------------------------------------------------------------------- */
+
+export const rumors = sqliteTable("rumors", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  campaignId: integer("campaign_id")
+    .notNull()
+    .references(() => campaigns.id, { onDelete: "cascade" }),
+  text: text("text").notNull(),
+  source: text("source").notNull().default(""),
+  sourceLocationId: integer("source_location_id").references(() => locations.id, {
+    onDelete: "set null",
+  }),
+  sourceNpcId: integer("source_npc_id").references(() => npcs.id, {
+    onDelete: "set null",
+  }),
+  isFollowedUp: integer("is_followed_up", { mode: "boolean" })
+    .notNull()
+    .default(false),
+  ...timestamps,
+});
+
+/* -------------------------------------------------------------------------- */
 /*  Backups                                                                    */
 /* -------------------------------------------------------------------------- */
 
 export const backups = sqliteTable("backups", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  // Nullable: a full-database snapshot is not tied to a single campaign.
   campaignId: integer("campaign_id").references(() => campaigns.id, {
     onDelete: "cascade",
   }),
@@ -624,10 +763,14 @@ export type InventoryItem = typeof inventoryItems.$inferSelect;
 export type NewInventoryItem = typeof inventoryItems.$inferInsert;
 export type Npc = typeof npcs.$inferSelect;
 export type NewNpc = typeof npcs.$inferInsert;
+export type NpcRelationship = typeof npcRelationships.$inferSelect;
+export type NewNpcRelationship = typeof npcRelationships.$inferInsert;
 export type Encounter = typeof encounters.$inferSelect;
 export type NewEncounter = typeof encounters.$inferInsert;
 export type CombatParticipant = typeof combatParticipants.$inferSelect;
 export type NewCombatParticipant = typeof combatParticipants.$inferInsert;
+export type CombatLogEntry = typeof combatLogEntries.$inferSelect;
+export type NewCombatLogEntry = typeof combatLogEntries.$inferInsert;
 export type Location = typeof locations.$inferSelect;
 export type NewLocation = typeof locations.$inferInsert;
 export type StoryEvent = typeof storyEvents.$inferSelect;
@@ -646,5 +789,13 @@ export type SessionPrep = typeof sessionPreps.$inferSelect;
 export type NewSessionPrep = typeof sessionPreps.$inferInsert;
 export type Note = typeof notes.$inferSelect;
 export type NewNote = typeof notes.$inferInsert;
+export type Quest = typeof quests.$inferSelect;
+export type NewQuest = typeof quests.$inferInsert;
+export type MagicItem = typeof magicItems.$inferSelect;
+export type NewMagicItem = typeof magicItems.$inferInsert;
+export type Handout = typeof handouts.$inferSelect;
+export type NewHandout = typeof handouts.$inferInsert;
+export type Rumor = typeof rumors.$inferSelect;
+export type NewRumor = typeof rumors.$inferInsert;
 export type Backup = typeof backups.$inferSelect;
 export type NewBackup = typeof backups.$inferInsert;

@@ -20,6 +20,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { api } from "@/lib/client";
 import { NOTE_COLORS } from "@/lib/constants";
 import { noteColorClasses } from "@/lib/ui";
+import { renderMarkdown } from "@/lib/markdown";
 import { cn } from "@/lib/utils";
 import { StickyNote } from "lucide-react";
 import type { Note } from "@/db/schema";
@@ -124,9 +125,10 @@ export function NotesBoard({
                 </div>
               </div>
               {note.content ? (
-                <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">
-                  {note.content}
-                </p>
+                <div
+                  className="prose prose-invert prose-sm mt-2 text-sm text-muted-foreground"
+                  dangerouslySetInnerHTML={{ __html: renderMarkdown(note.content) }}
+                />
               ) : null}
             </div>
           ))}
@@ -149,6 +151,7 @@ function NoteDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
+  const [preview, setPreview] = useState(false);
   const [form, setForm] = useState({
     title: note?.title ?? "",
     content: note?.content ?? "",
@@ -204,7 +207,23 @@ function NoteDialog({
             <Input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="Note title" />
           </Field>
           <Field label="Content">
-            <Textarea value={form.content} onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))} rows={6} />
+            <div className="flex justify-end mb-1">
+              <button
+                type="button"
+                onClick={() => setPreview((v) => !v)}
+                className="text-xs text-muted-foreground hover:text-foreground underline"
+              >
+                {preview ? "Edit" : "Preview"}
+              </button>
+            </div>
+            {preview ? (
+              <div
+                className="prose prose-invert prose-sm min-h-[120px] rounded-md border border-border bg-muted/30 p-3 text-sm"
+                dangerouslySetInnerHTML={{ __html: renderMarkdown(form.content) }}
+              />
+            ) : (
+              <Textarea value={form.content} onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))} rows={6} />
+            )}
           </Field>
           <Field label="Color">
             <div className="flex flex-wrap gap-2">

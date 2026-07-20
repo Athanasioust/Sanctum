@@ -12,6 +12,11 @@ import {
   ClipboardList,
   StickyNote,
   Settings,
+  ListTodo,
+  Sparkles,
+  Image,
+  MessageCircleQuestion,
+  Network,
   type LucideIcon,
 } from "lucide-react";
 
@@ -95,6 +100,36 @@ export const CAMPAIGN_NAV: NavItem[] = [
     href: (id) => `/campaign/${id}/notes`,
     icon: StickyNote,
     segment: "notes",
+  },
+  {
+    label: "Quests",
+    href: (id) => `/campaign/${id}/quests`,
+    icon: ListTodo,
+    segment: "quests",
+  },
+  {
+    label: "Magic Items",
+    href: (id) => `/campaign/${id}/magic-items`,
+    icon: Sparkles,
+    segment: "magic-items",
+  },
+  {
+    label: "Handouts",
+    href: (id) => `/campaign/${id}/handouts`,
+    icon: Image,
+    segment: "handouts",
+  },
+  {
+    label: "Rumors",
+    href: (id) => `/campaign/${id}/rumors`,
+    icon: MessageCircleQuestion,
+    segment: "rumors",
+  },
+  {
+    label: "Relations",
+    href: (id) => `/campaign/${id}/relations`,
+    icon: Network,
+    segment: "relations",
   },
   {
     label: "Settings",

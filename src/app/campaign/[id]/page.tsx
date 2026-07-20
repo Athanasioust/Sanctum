@@ -11,6 +11,7 @@ import {
   ArrowRight,
   ScrollText,
   Monitor,
+  ListTodo,
 } from "lucide-react";
 import { db } from "@/db";
 import {
@@ -20,6 +21,7 @@ import {
   sessionPreps,
   storyEvents,
   notes as notesTable,
+  quests,
 } from "@/db/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -47,6 +49,7 @@ export default async function DashboardPage({
     [{ value: plotCount }],
     pinnedNotes,
     recentEvents,
+    activeQuests,
   ] = await Promise.all([
     db.select({ value: count() }).from(characters).where(eq(characters.campaignId, id)),
     db
@@ -79,6 +82,11 @@ export default async function DashboardPage({
       .where(eq(storyEvents.campaignId, id))
       .orderBy(desc(storyEvents.createdAt))
       .limit(6),
+    db
+      .select({ id: quests.id, title: quests.title, status: quests.status })
+      .from(quests)
+      .where(and(eq(quests.campaignId, id), eq(quests.status, "active")))
+      .limit(5),
   ]);
 
   const stats = [
@@ -155,6 +163,32 @@ export default async function DashboardPage({
           </Link>
         ))}
       </div>
+
+      {/* Active quests */}
+      {activeQuests.length > 0 && (
+        <div className="mb-6 rounded-xl border border-blue-500/20 bg-blue-500/5 p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-blue-300">
+              <ListTodo className="size-4" /> Active Quests
+            </h2>
+            <Link href={`/campaign/${id}/quests`} className="text-xs text-muted-foreground hover:text-foreground">
+              View all
+            </Link>
+          </div>
+          <ul className="flex flex-wrap gap-2">
+            {activeQuests.map((q) => (
+              <li key={q.id}>
+                <Link
+                  href={`/campaign/${id}/quests`}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-300 hover:bg-blue-500/20 transition-colors"
+                >
+                  {q.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Recent events */}

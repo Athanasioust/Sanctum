@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { npcs } from "@/db/schema";
 import { PageContainer, PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
+import { InfoCallout } from "@/components/shared/info-callout";
 import { NpcGrid } from "@/components/npcs/npc-grid";
 import { GenerateNpcButton } from "@/components/npcs/generate-npc-button";
 import { Button } from "@/components/ui/button";
@@ -27,7 +28,7 @@ export default async function NpcsPage({
     <PageContainer>
       <PageHeader
         title="NPCs & Monsters"
-        description="Everyone and everything that isn't a player character."
+        description="The living cast of this campaign — the specific characters and creatures in play."
         icon={Skull}
         actions={
           list.length > 0 ? (
@@ -42,6 +43,15 @@ export default async function NpcsPage({
           ) : null
         }
       />
+      {list.length > 0 ? (
+        <InfoCallout>
+          These are the actual NPCs and monsters in your campaign. For a reusable
+          library of stat blocks (including 140+ SRD monsters), see the{" "}
+          <strong className="text-foreground">Bestiary</strong> — save any NPC
+          there from its page to reuse it later.
+        </InfoCallout>
+      ) : null}
+
       {list.length === 0 ? (
         <EmptyState
           icon={Skull}

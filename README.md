@@ -6,13 +6,21 @@ A **local-first Dungeon Master's campaign manager** for Dungeons & Dragons 5e. E
 
 ## Features
 
-- **Characters** — full 5e character sheets with ability scores, skills, saves, HP, initiative, spells, inventory, features and feats.
+- **Characters** — full 5e character sheets with ability scores, skills, saves, HP, initiative, spells, inventory, features and feats, plus a **currency tracker** (pp/gp/ep/sp/cp) and **hit dice & rest** management (spend hit dice on a short rest, restore on a long rest).
 - **Bestiary & NPCs** — reusable stat-block templates, plus **one-click import of 140+ SRD monsters** from goblins to the tarrasque.
-- **Combat tracker** — initiative order, drag-to-reorder turns, conditions, death saves, and quick **+/- HP buttons** (tap for 1, hold to fly through 5 at a time).
+- **Combat tracker** — initiative order, drag-to-reorder turns, conditions, death saves, quick **+/- HP buttons** (tap for 1, hold to fly through 5 at a time), **concentration tracking** with automatic save-DC prompts on damage, and a per-round **combat log**.
+- **Quests** — track active/on-hold/completed/failed quests with checkable sub-objectives and rewards.
+- **Magic items** — catalogue items by rarity and type, track attunement, charges (with recharge conditions) and cursed status, and assign them to characters.
+- **Handouts** — write player-facing handouts in Markdown (with images) and reveal them to the live player view.
+- **Rumors** — jot down rumors and gossip with their source, and mark them followed-up once investigated.
+- **NPC relationships** — map the web of allies, enemies, family and informants as an interactive relationship graph.
 - **World** — nested locations with image maps, pins and a tactical grid builder.
 - **Story & sessions** — a timeline of events/plot threads/milestones, plus per-session prep with plot points and planned encounters.
 - **Calendar** — real-world calendar (driven by your system clock) or a fully custom in-world calendar with its own months and weekdays.
-- **Factions, shops & loot, roll tables and sticky notes.**
+- **Factions, shops & loot, roll tables and sticky notes** — with Markdown support in notes.
+- **Global search** — a **⌘K / Ctrl+K command palette** searches across characters, NPCs, locations, quests, magic items, handouts and rumors.
+- **Rules reference** — a built-in D&D 5e quick-reference panel (conditions, combat actions, exhaustion, rests, proficiency) always a click away.
+- **Player view** — a live, auto-refreshing second screen showing initiative, party status and any revealed handouts.
 - **Backups & portability** — automatic daily backups, plus per-campaign export/import as JSON.
 
 ## Tech stack

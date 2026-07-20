@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { npcs } from "@/db/schema";
 import { PageContainer, PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
+import { InfoCallout } from "@/components/shared/info-callout";
 import { NpcGrid } from "@/components/npcs/npc-grid";
 import { SeedBestiaryButton } from "@/components/npcs/seed-bestiary-button";
 import { Button } from "@/components/ui/button";
@@ -27,7 +28,7 @@ export default async function BestiaryPage({
     <PageContainer>
       <PageHeader
         title="Bestiary"
-        description="Reusable stat block templates you can drop into encounters or the campaign."
+        description="Your reusable library of stat-block templates — the monster manual you draw from."
         icon={BookOpen}
         actions={
           list.length > 0 ? (
@@ -42,6 +43,17 @@ export default async function BestiaryPage({
           ) : null
         }
       />
+      {list.length > 0 ? (
+        <InfoCallout>
+          Templates here aren&apos;t in play — they&apos;re a library. Use{" "}
+          <strong className="text-foreground">Add to campaign</strong> to create a
+          living NPC/monster (it appears under{" "}
+          <strong className="text-foreground">NPCs &amp; Monsters</strong>), or{" "}
+          <strong className="text-foreground">To encounter</strong> to drop one
+          into an active fight.
+        </InfoCallout>
+      ) : null}
+
       {list.length === 0 ? (
         <EmptyState
           icon={BookOpen}

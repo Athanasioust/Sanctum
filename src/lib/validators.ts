@@ -140,6 +140,17 @@ export const characterCreateSchema = z.object({
   multiclassInfo: z.array(multiclassEntrySchema).optional().default([]),
   conditions: stringArray,
   exhaustionLevel: z.number().int().min(0).max(6).optional().default(0),
+  currency: z
+    .object({
+      pp: z.number().int().min(0).optional().default(0),
+      gp: z.number().int().min(0).optional().default(0),
+      ep: z.number().int().min(0).optional().default(0),
+      sp: z.number().int().min(0).optional().default(0),
+      cp: z.number().int().min(0).optional().default(0),
+    })
+    .optional(),
+  hitDiceTotal: z.number().int().min(0).optional().default(0),
+  hitDiceUsed: z.number().int().min(0).optional().default(0),
   notes: optionalString(20000),
 });
 export const characterUpdateSchema = characterCreateSchema.partial();
@@ -263,9 +274,10 @@ export const participantCreateSchema = z.object({
   isActive: z.boolean().optional().default(true),
   turnOrder: z.number().int().optional().default(0),
 });
-export const participantUpdateSchema = participantCreateSchema.partial().omit({
-  encounterId: true,
-});
+export const participantUpdateSchema = participantCreateSchema
+  .partial()
+  .omit({ encounterId: true })
+  .extend({ concentrationSpell: z.string().max(120).nullable().optional() });
 
 /* -------------------------------------------------------------------------- */
 /*  Locations                                                                  */
@@ -407,6 +419,157 @@ export const noteCreateSchema = z.object({
   color: optionalString(20).default("default"),
 });
 export const noteUpdateSchema = noteCreateSchema.partial();
+
+/* -------------------------------------------------------------------------- */
+/*  Character updates (currency + hit dice)                                   */
+/* -------------------------------------------------------------------------- */
+
+const currencySchema = z
+  .object({
+    pp: z.number().int().min(0).optional().default(0),
+    gp: z.number().int().min(0).optional().default(0),
+    ep: z.number().int().min(0).optional().default(0),
+    sp: z.number().int().min(0).optional().default(0),
+    cp: z.number().int().min(0).optional().default(0),
+  })
+  .optional();
+
+/* Extend the existing character schema with new fields.
+   characterCreateSchema / characterUpdateSchema already exist above;
+   these are the full-field versions that include the new columns. */
+export const characterCurrencySchema = z.object({
+  currency: currencySchema,
+});
+
+export const characterRestSchema = z.object({
+  hitDiceTotal: z.number().int().min(0).optional(),
+  hitDiceUsed: z.number().int().min(0).optional(),
+  hpCurrent: z.number().int().min(0).optional(),
+});
+
+/* -------------------------------------------------------------------------- */
+/*  Quests (Feature 3)                                                         */
+/* -------------------------------------------------------------------------- */
+
+const subObjectiveSchema = z.object({
+  text: z.string().max(500),
+  checked: z.boolean().default(false),
+});
+
+export const questCreateSchema = z.object({
+  campaignId: z.number().int(),
+  title: z.string().trim().min(1, "Title is required").max(200),
+  description: optionalString(20000),
+  status: z.enum(["active", "on-hold", "completed", "failed"]).optional().default("active"),
+  subObjectives: z.array(subObjectiveSchema).optional().default([]),
+  linkedNpcIds: idArray,
+  linkedLocationIds: idArray,
+  reward: optionalString(2000),
+  sessionNumber: z.number().int().nullable().optional(),
+  notes: optionalString(20000),
+});
+export const questUpdateSchema = questCreateSchema.partial();
+
+export type QuestCreateInput = z.infer<typeof questCreateSchema>;
+export type QuestUpdateInput = z.infer<typeof questUpdateSchema>;
+
+/* -------------------------------------------------------------------------- */
+/*  Magic Items (Feature 9)                                                    */
+/* -------------------------------------------------------------------------- */
+
+export const magicItemCreateSchema = z.object({
+  campaignId: z.number().int(),
+  characterId: z.number().int().nullable().optional(),
+  name: z.string().trim().min(1, "Name is required").max(120),
+  itemType: optionalString(60).default("wondrous"),
+  rarity: optionalString(40).default("common"),
+  description: optionalString(10000),
+  requiresAttunement: z.boolean().optional().default(false),
+  isAttuned: z.boolean().optional().default(false),
+  charges: z.number().int().min(0).nullable().optional(),
+  chargesMax: z.number().int().min(0).nullable().optional(),
+  rechargeCondition: optionalString(200),
+  isCursed: z.boolean().optional().default(false),
+  notes: optionalString(10000),
+});
+export const magicItemUpdateSchema = magicItemCreateSchema.partial();
+
+export type MagicItemCreateInput = z.infer<typeof magicItemCreateSchema>;
+export type MagicItemUpdateInput = z.infer<typeof magicItemUpdateSchema>;
+
+/* -------------------------------------------------------------------------- */
+/*  Handouts (Feature 7)                                                       */
+/* -------------------------------------------------------------------------- */
+
+export const handoutCreateSchema = z.object({
+  campaignId: z.number().int(),
+  title: z.string().trim().min(1, "Title is required").max(160),
+  content: optionalString(50000),
+  imageUrl: z.string().url().nullable().optional().or(z.literal("").transform(() => null)),
+  isRevealed: z.boolean().optional().default(false),
+  sortOrder: z.number().int().optional().default(0),
+});
+export const handoutUpdateSchema = handoutCreateSchema.partial();
+
+export type HandoutCreateInput = z.infer<typeof handoutCreateSchema>;
+export type HandoutUpdateInput = z.infer<typeof handoutUpdateSchema>;
+
+/* -------------------------------------------------------------------------- */
+/*  Rumors (Feature 14)                                                        */
+/* -------------------------------------------------------------------------- */
+
+export const rumorCreateSchema = z.object({
+  campaignId: z.number().int(),
+  text: z.string().trim().min(1, "Rumor text is required").max(2000),
+  source: optionalString(500),
+  sourceLocationId: z.number().int().nullable().optional(),
+  sourceNpcId: z.number().int().nullable().optional(),
+  isFollowedUp: z.boolean().optional().default(false),
+});
+export const rumorUpdateSchema = rumorCreateSchema.partial();
+
+export type RumorCreateInput = z.infer<typeof rumorCreateSchema>;
+export type RumorUpdateInput = z.infer<typeof rumorUpdateSchema>;
+
+/* -------------------------------------------------------------------------- */
+/*  NPC Relationships (Feature 12)                                             */
+/* -------------------------------------------------------------------------- */
+
+export const npcRelationshipCreateSchema = z.object({
+  campaignId: z.number().int(),
+  sourceNpcId: z.number().int(),
+  targetNpcId: z.number().int(),
+  relationshipType: z.string().trim().min(1).max(60).optional().default("ally"),
+  description: optionalString(2000),
+});
+export const npcRelationshipUpdateSchema = npcRelationshipCreateSchema.partial();
+
+export type NpcRelationshipCreateInput = z.infer<typeof npcRelationshipCreateSchema>;
+export type NpcRelationshipUpdateInput = z.infer<typeof npcRelationshipUpdateSchema>;
+
+/* -------------------------------------------------------------------------- */
+/*  Combat Log Entries (Feature 15)                                            */
+/* -------------------------------------------------------------------------- */
+
+export const combatLogEntryCreateSchema = z.object({
+  encounterId: z.number().int(),
+  round: z.number().int().min(1).optional().default(1),
+  actorName: optionalString(120),
+  action: z.string().trim().min(1, "Action is required").max(200),
+  details: optionalString(2000),
+});
+export const combatLogEntryUpdateSchema = combatLogEntryCreateSchema.partial();
+
+export type CombatLogEntryCreateInput = z.infer<typeof combatLogEntryCreateSchema>;
+export type CombatLogEntryUpdateInput = z.infer<typeof combatLogEntryUpdateSchema>;
+
+/* -------------------------------------------------------------------------- */
+/*  Participant update (concentration, Feature 11)                             */
+/* -------------------------------------------------------------------------- */
+
+export const participantConcentrationSchema = z.object({
+  concentrationSpell: z.string().max(120).nullable().optional(),
+});
 
 /* re-export helpers for reuse by later entity schemas in this file */
 export { optionalString, stringArray, idArray };

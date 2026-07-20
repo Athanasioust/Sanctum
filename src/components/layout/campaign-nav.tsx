@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -9,6 +9,7 @@ import {
   Home,
   Check,
   Menu,
+  Search,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -27,9 +28,43 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { BuiltByBadge } from "@/components/shared/built-by-badge";
+import { openCommandPalette } from "@/components/search/command-palette";
 import { CAMPAIGN_NAV } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import type { Campaign } from "@/db/schema";
+
+/** Shows ⌘K on macOS, Ctrl K elsewhere; renders a neutral placeholder on the
+ *  server so hydration is stable. */
+function useShortcutLabel() {
+  const [label, setLabel] = useState("");
+  useEffect(() => {
+    const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+    setLabel(isMac ? "⌘K" : "Ctrl K");
+  }, []);
+  return label;
+}
+
+/** Visible affordance for the global search palette (opened via ⌘K/Ctrl+K). */
+function SearchTrigger({ onNavigate }: { onNavigate?: () => void }) {
+  const shortcut = useShortcutLabel();
+  return (
+    <button
+      onClick={() => {
+        onNavigate?.();
+        openCommandPalette();
+      }}
+      className="flex w-full items-center gap-2 rounded-lg border border-sidebar-border bg-sidebar-accent/40 px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
+    >
+      <Search className="size-4 shrink-0" />
+      <span className="flex-1">Search…</span>
+      {shortcut ? (
+        <kbd className="rounded border border-sidebar-border bg-background/60 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+          {shortcut}
+        </kbd>
+      ) : null}
+    </button>
+  );
+}
 
 type Props = {
   campaign: Campaign;
@@ -135,6 +170,7 @@ export function CampaignNavContent({
   return (
     <div className="flex h-full flex-col gap-4 p-3">
       <CampaignSwitcher campaign={campaign} campaigns={campaigns} />
+      <SearchTrigger onNavigate={onNavigate} />
       <ScrollArea className="-mx-1 flex-1 px-1">
         <NavLinks campaign={campaign} onNavigate={onNavigate} />
       </ScrollArea>
@@ -171,6 +207,15 @@ export function MobileNavBar(props: Props) {
       <span className="truncate font-heading text-sm font-semibold">
         {props.campaign.name}
       </span>
+      <Button
+        size="icon"
+        variant="ghost"
+        className="ml-auto"
+        aria-label="Search"
+        onClick={() => openCommandPalette()}
+      >
+        <Search className="size-5" />
+      </Button>
     </div>
   );
 }

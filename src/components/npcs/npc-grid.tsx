@@ -2,12 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Shield } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Shield, UserPlus, Swords } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { HpBar } from "@/components/shared/hp-bar";
 import { EntityActions } from "@/components/shared/entity-actions";
+import { api } from "@/lib/client";
 import { cn } from "@/lib/utils";
-import type { Npc } from "@/db/schema";
+import type { Encounter, Npc } from "@/db/schema";
 
 const FILTERS = [
   { key: "all", label: "All" },
@@ -74,6 +78,9 @@ export function NpcGrid({
                   </div>
                 </div>
               </Link>
+              {basePath === "bestiary" ? (
+                <BestiaryCardActions npc={n} campaignId={campaignId} />
+              ) : null}
               <div className="absolute right-3 top-3 opacity-0 transition-opacity group-hover:opacity-100">
                 <EntityActions
                   editHref={`/campaign/${campaignId}/${basePath}/${n.id}/edit`}
@@ -85,6 +92,73 @@ export function NpcGrid({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * Quick "pull from the library" actions shown on Bestiary cards, so the
+ * Bestiary reads as a source of reusable templates rather than a second copy
+ * of the NPC roster. Cloning a template creates a live instance (isTemplate:
+ * false) or drops it straight into the active encounter.
+ */
+function BestiaryCardActions({ npc, campaignId }: { npc: Npc; campaignId: number }) {
+  const router = useRouter();
+  const [pending, setPending] = useState(false);
+
+  async function addToCampaign() {
+    setPending(true);
+    try {
+      const { id: _id, createdAt: _c, updatedAt: _u, ...rest } = npc;
+      void _id; void _c; void _u;
+      const created = await api.post<Npc>("/api/npcs", {
+        ...rest,
+        isTemplate: false,
+        hpCurrent: npc.hpMax,
+      });
+      toast.success(`Added "${npc.name}" to the campaign`);
+      router.push(`/campaign/${campaignId}/npcs/${created.id}`);
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add NPC");
+      setPending(false);
+    }
+  }
+
+  async function addToEncounter() {
+    setPending(true);
+    try {
+      const encounters = await api.get<Encounter[]>(`/api/encounters?campaignId=${campaignId}`);
+      const active = encounters.find((e) => e.status === "active");
+      if (!active) {
+        toast.error("No active encounter. Start one in Combat first.");
+        return;
+      }
+      await api.post("/api/participants", {
+        encounterId: active.id,
+        entityId: npc.id,
+        entityType: "npc",
+        name: npc.name,
+        hpCurrent: npc.hpMax,
+        hpMax: npc.hpMax,
+        armorClass: npc.armorClass,
+      });
+      toast.success(`Added "${npc.name}" to ${active.name}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add to encounter");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-2 border-t border-border px-5 py-3">
+      <Button size="sm" variant="outline" className="flex-1" onClick={addToCampaign} disabled={pending}>
+        <UserPlus className="size-3.5" /> Add to campaign
+      </Button>
+      <Button size="sm" variant="outline" className="flex-1" onClick={addToEncounter} disabled={pending}>
+        <Swords className="size-3.5" /> To encounter
+      </Button>
     </div>
   );
 }

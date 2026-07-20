@@ -33,6 +33,11 @@ import {
   ShieldPlus,
   BookOpen,
   Search,
+  Zap,
+  ZapOff,
+  ScrollText,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -69,7 +74,7 @@ import { api } from "@/lib/client";
 import { CONDITIONS, EXHAUSTION_EFFECTS } from "@/lib/constants";
 import { rollDie } from "@/lib/dnd";
 import { cn } from "@/lib/utils";
-import type { CombatParticipant, Encounter } from "@/db/schema";
+import type { CombatParticipant, CombatLogEntry, Encounter } from "@/db/schema";
 
 export type Addable = {
   id: number;
@@ -103,6 +108,8 @@ export function CombatTracker({
   const [round, setRound] = useState(encounter.roundNumber);
   const [turnIndex, setTurnIndex] = useState(encounter.currentTurnIndex);
   const [endOpen, setEndOpen] = useState(false);
+  const [logEntries, setLogEntries] = useState<CombatLogEntry[]>([]);
+  const [logOpen, setLogOpen] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -167,6 +174,15 @@ export function CombatTracker({
       hpCurrent = Math.min(p.hpMax, hpCurrent + delta);
     }
     if (hpCurrent === p.hpCurrent && hpTemp === p.hpTemp) return;
+    // Concentration check warning
+    if (delta < 0 && p.concentrationSpell) {
+      const dmgDealt = p.hpCurrent - hpCurrent + (p.hpTemp - hpTemp);
+      const dc = Math.max(10, Math.floor(dmgDealt / 2));
+      toast.warning(
+        `${p.name} is concentrating on ${p.concentrationSpell}! CON save DC ${dc}`,
+        { duration: 6000 },
+      );
+    }
     const next = partsRef.current.map((x) =>
       x.id === id ? { ...x, hpCurrent, hpTemp } : x,
     );
@@ -325,6 +341,21 @@ export function CombatTracker({
     router.refresh();
   }
 
+  async function addLogEntry(actorName: string, action: string, details: string) {
+    try {
+      const entry = await api.post<CombatLogEntry>("/api/combat-log", {
+        encounterId: encounter.id,
+        round,
+        actorName,
+        action,
+        details,
+      });
+      setLogEntries((prev) => [...prev, entry]);
+    } catch {
+      toast.error("Failed to log action");
+    }
+  }
+
   return (
     <div className="space-y-5">
       {/* Control bar */}
@@ -404,6 +435,35 @@ export function CombatTracker({
         destructive
         onConfirm={endEncounter}
       />
+
+      {/* Combat log */}
+      <div className="rounded-xl border border-border bg-card">
+        <button
+          onClick={() => setLogOpen((v) => !v)}
+          className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium hover:bg-muted/40 rounded-xl"
+        >
+          <span className="flex items-center gap-2">
+            <ScrollText className="size-4 text-primary" /> Combat Log
+            {logEntries.length > 0 && (
+              <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-xs text-primary">
+                {logEntries.length}
+              </span>
+            )}
+          </span>
+          {logOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+        </button>
+        {logOpen && (
+          <div className="border-t border-border p-4">
+            <CombatLogPanel
+              encounterId={encounter.id}
+              round={round}
+              participants={parts}
+              entries={logEntries}
+              onAdd={addLogEntry}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -486,6 +546,11 @@ function ParticipantRow({
             {p.exhaustionLevel > 0 ? (
               <Badge className="bg-destructive/20 text-red-200 text-xs">Exhaustion {p.exhaustionLevel}</Badge>
             ) : null}
+            {p.concentrationSpell ? (
+              <Badge className="bg-blue-500/15 text-blue-300 border-blue-500/20 text-xs gap-1">
+                <Zap className="size-2.5" /> {p.concentrationSpell}
+              </Badge>
+            ) : null}
           </div>
         </div>
 
@@ -502,6 +567,7 @@ function ParticipantRow({
           <HpStepper participantId={p.id} onAdjustHp={onAdjustHp} />
           <HpDialog participant={p} onSave={onSave} />
           <ConditionsDialog participant={p} onSave={onSave} />
+          <ConcentrationDialog participant={p} onSave={onSave} />
           <Button
             size="icon"
             variant="ghost"
@@ -963,6 +1029,161 @@ function AddCombatantMenu({
         onAdd={onAdd}
       />
     </>
+  );
+}
+
+function ConcentrationDialog({
+  participant: p,
+  onSave,
+}: {
+  participant: CombatParticipant;
+  onSave: (id: number, patch: Partial<CombatParticipant>) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [spell, setSpell] = useState(p.concentrationSpell ?? "");
+
+  function save() {
+    onSave(p.id, { concentrationSpell: spell.trim() || null });
+    setOpen(false);
+  }
+
+  function clear() {
+    onSave(p.id, { concentrationSpell: null });
+    setSpell("");
+    setOpen(false);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (o) setSpell(p.concentrationSpell ?? ""); }}>
+      <DialogTrigger asChild>
+        <Button
+          size="icon"
+          variant="ghost"
+          className={cn("size-8", p.concentrationSpell ? "text-blue-400" : "text-muted-foreground")}
+          aria-label="Concentration"
+          title={p.concentrationSpell ? `Concentrating: ${p.concentrationSpell}` : "Set concentration spell"}
+        >
+          {p.concentrationSpell ? <Zap className="size-4" /> : <ZapOff className="size-4" />}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{p.name} — Concentration</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 py-2">
+          <Input
+            value={spell}
+            onChange={(e) => setSpell(e.target.value)}
+            placeholder="Spell name (e.g. Hold Person)"
+            autoFocus
+          />
+          <p className="text-xs text-muted-foreground">
+            When this combatant takes damage, you&apos;ll see the concentration check DC.
+          </p>
+        </div>
+        <DialogFooter className="flex gap-2">
+          {p.concentrationSpell && (
+            <Button variant="outline" onClick={clear}>Clear</Button>
+          )}
+          <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button onClick={save}>Set</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function CombatLogPanel({
+  encounterId,
+  round,
+  participants,
+  entries,
+  onAdd,
+}: {
+  encounterId: number;
+  round: number;
+  participants: CombatParticipant[];
+  entries: CombatLogEntry[];
+  onAdd: (actorName: string, action: string, details: string) => void;
+}) {
+  const [actor, setActor] = useState("");
+  const [action, setAction] = useState("");
+  const [details, setDetails] = useState("");
+
+  function submit() {
+    if (!action.trim()) { toast.error("Action is required"); return; }
+    onAdd(actor || "Unknown", action.trim(), details.trim());
+    setAction("");
+    setDetails("");
+  }
+
+  const grouped = entries.reduce<Record<number, CombatLogEntry[]>>((acc, e) => {
+    acc[e.round] = acc[e.round] ?? [];
+    acc[e.round].push(e);
+    return acc;
+  }, {});
+
+  return (
+    <div className="space-y-4">
+      {/* Quick log form */}
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <select
+          value={actor}
+          onChange={(e) => setActor(e.target.value)}
+          className="rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+        >
+          <option value="">Actor…</option>
+          {participants.map((p) => (
+            <option key={p.id} value={p.name}>{p.name}</option>
+          ))}
+        </select>
+        <Input
+          value={action}
+          onChange={(e) => setAction(e.target.value)}
+          placeholder="Action (e.g. Attack with longsword)"
+          className="flex-1"
+          onKeyDown={(e) => { if (e.key === "Enter") submit(); }}
+        />
+        <Input
+          value={details}
+          onChange={(e) => setDetails(e.target.value)}
+          placeholder="Details (optional)"
+          className="flex-1"
+          onKeyDown={(e) => { if (e.key === "Enter") submit(); }}
+        />
+        <Button size="sm" onClick={submit}>Log</Button>
+      </div>
+
+      {/* Entries */}
+      {entries.length === 0 ? (
+        <p className="py-4 text-center text-sm text-muted-foreground">No log entries yet.</p>
+      ) : (
+        <div className="max-h-64 space-y-3 overflow-y-auto">
+          {Object.entries(grouped)
+            .sort(([a], [b]) => Number(b) - Number(a))
+            .map(([r, rEntries]) => (
+              <div key={r}>
+                <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Round {r}</p>
+                <ul className="space-y-1">
+                  {rEntries.map((e) => (
+                    <li key={e.id} className="flex items-start gap-2 rounded-lg bg-muted/40 px-3 py-2 text-sm">
+                      {e.actorName && (
+                        <span className="shrink-0 font-medium text-primary">{e.actorName}:</span>
+                      )}
+                      <span className="min-w-0 flex-1">
+                        {e.action}
+                        {e.details ? (
+                          <span className="text-muted-foreground"> — {e.details}</span>
+                        ) : null}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+        </div>
+      )}
+    </div>
   );
 }
 

@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Swords, Heart, Shield, Skull } from "lucide-react";
+import { Swords, Heart, Shield, Skull, Image } from "lucide-react";
 import { api } from "@/lib/client";
 import { hpBarColor } from "@/lib/ui";
+import { renderMarkdown } from "@/lib/markdown";
 import { cn } from "@/lib/utils";
-import type { Character, CombatParticipant, Encounter } from "@/db/schema";
+import type { Character, CombatParticipant, Encounter, Handout } from "@/db/schema";
 
 type ScreenState = {
   active: boolean;
@@ -14,6 +15,7 @@ type ScreenState = {
   turnIndex: number;
   participants: CombatParticipant[];
   party: Character[];
+  handouts: Handout[];
 };
 
 const EMPTY: ScreenState = {
@@ -23,6 +25,7 @@ const EMPTY: ScreenState = {
   turnIndex: 0,
   participants: [],
   party: [],
+  handouts: [],
 };
 
 export function PlayerScreen({
@@ -37,12 +40,14 @@ export function PlayerScreen({
 
   const load = useCallback(async () => {
     try {
-      const [encounters, party] = await Promise.all([
+      const [encounters, party, allHandouts] = await Promise.all([
         api.get<Encounter[]>(`/api/encounters?campaignId=${campaignId}`),
         api.get<Character[]>(`/api/characters?campaignId=${campaignId}`),
+        api.get<Handout[]>(`/api/handouts?campaignId=${campaignId}`),
       ]);
+      const handouts = allHandouts.filter((h) => h.isRevealed);
       const active = encounters.find((e) => e.status === "active") ?? null;
-      let next: ScreenState = { ...EMPTY, party };
+      let next: ScreenState = { ...EMPTY, party, handouts };
       if (active) {
         const full = await api.get<Encounter & { participants: CombatParticipant[] }>(
           `/api/encounters/${active.id}`,
@@ -54,6 +59,7 @@ export function PlayerScreen({
           turnIndex: full.currentTurnIndex,
           participants: [...full.participants].sort((a, b) => a.turnOrder - b.turnOrder),
           party,
+          handouts,
         };
       }
       setState(next);
@@ -101,40 +107,56 @@ export function PlayerScreen({
       {!ready ? (
         <p className="py-20 text-center text-muted-foreground">Loading…</p>
       ) : (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_1fr]">
-          {/* Initiative */}
-          <section>
-            <h2 className="mb-3 font-heading text-lg font-semibold text-muted-foreground">
-              {state.active ? state.encounterName || "Initiative" : "Initiative"}
-            </h2>
-            {state.active && state.participants.length > 0 ? (
-              <div className="space-y-2">
-                {state.participants.map((p, i) => (
-                  <InitiativeRow key={p.id} p={p} current={i === state.turnIndex} />
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-xl border border-dashed border-border bg-card/40 py-16 text-center">
-                <p className="text-lg text-muted-foreground">No active encounter</p>
-                <p className="text-sm text-muted-foreground">The party rests… for now.</p>
-              </div>
-            )}
-          </section>
+        <>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_1fr]">
+            {/* Initiative */}
+            <section>
+              <h2 className="mb-3 font-heading text-lg font-semibold text-muted-foreground">
+                {state.active ? state.encounterName || "Initiative" : "Initiative"}
+              </h2>
+              {state.active && state.participants.length > 0 ? (
+                <div className="space-y-2">
+                  {state.participants.map((p, i) => (
+                    <InitiativeRow key={p.id} p={p} current={i === state.turnIndex} />
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-border bg-card/40 py-16 text-center">
+                  <p className="text-lg text-muted-foreground">No active encounter</p>
+                  <p className="text-sm text-muted-foreground">The party rests… for now.</p>
+                </div>
+              )}
+            </section>
 
-          {/* Party */}
-          <section>
-            <h2 className="mb-3 font-heading text-lg font-semibold text-muted-foreground">The Party</h2>
-            {state.party.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No characters yet.</p>
-            ) : (
-              <div className="space-y-2">
-                {state.party.map((c) => (
-                  <PartyRow key={c.id} c={c} />
+            {/* Party */}
+            <section>
+              <h2 className="mb-3 font-heading text-lg font-semibold text-muted-foreground">The Party</h2>
+              {state.party.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No characters yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  {state.party.map((c) => (
+                    <PartyRow key={c.id} c={c} />
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
+
+          {/* Handouts */}
+          {state.handouts.length > 0 && (
+            <section className="mt-8">
+              <h2 className="mb-4 flex items-center gap-2 font-heading text-lg font-semibold text-muted-foreground">
+                <Image className="size-4" /> Handouts
+              </h2>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {state.handouts.map((h) => (
+                  <HandoutCard key={h.id} handout={h} />
                 ))}
               </div>
-            )}
-          </section>
-        </div>
+            </section>
+          )}
+        </>
       )}
     </main>
   );
@@ -193,6 +215,28 @@ function MonsterStatus({ current, max }: { current: number; max: number }) {
       {current <= 0 ? <Skull className="size-3.5" /> : <Heart className="size-3.5" />}
       {label}
     </p>
+  );
+}
+
+function HandoutCard({ handout }: { handout: Handout }) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      <h3 className="mb-2 font-semibold">{handout.title}</h3>
+      {handout.imageUrl && (
+        <img
+          src={handout.imageUrl}
+          alt={handout.title}
+          className="mb-3 max-h-48 w-full rounded-lg object-contain"
+          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+        />
+      )}
+      {handout.content && (
+        <div
+          className="prose prose-invert prose-sm text-sm text-muted-foreground"
+          dangerouslySetInnerHTML={{ __html: renderMarkdown(handout.content) }}
+        />
+      )}
+    </div>
   );
 }
 
