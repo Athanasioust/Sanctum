@@ -13,6 +13,10 @@ directories:
 files:
   - electron/**/*
   - package.json
+  # The main process only needs Electron + Node builtins; the app itself runs
+  # from the standalone bundle in extraResources. Keep node_modules out of the
+  # asar so it doesn't redundantly bundle @next/better-sqlite3/sharp (~180 MB).
+  - "!node_modules/**"
 
 # The standalone bundle is copied in as unpacked resources. electron-builder
 # strips node_modules from extraResources, so the server's dependencies (incl.

@@ -57,6 +57,14 @@ function fetchPrebuilt(runtime, target) {
   run(`node "${prebuildBin}"${flags}`, bsqDir);
 }
 
+// --- 0. Clean stale output ------------------------------------------------
+// Removing dist/ and the previous standalone bundle is essential: Next traces
+// the project directory, so a leftover dist/ would be bundled into the new
+// build and the desktop app would snowball in size each rebuild.
+for (const dir of ["dist", path.join(".next", "standalone")]) {
+  fs.rmSync(path.join(root, dir), { recursive: true, force: true });
+}
+
 // --- 1. Build the Next.js standalone server -------------------------------
 run("npx next build");
 
@@ -71,6 +79,14 @@ console.log("\nAssembling standalone bundle...");
 copyDir(path.join(root, ".next", "static"), path.join(standalone, ".next", "static"));
 copyDir(path.join(root, "public"), path.join(standalone, "public"));
 copyDir(path.join(root, "drizzle"), path.join(standalone, "drizzle"));
+
+// Next's Turbopack standalone trace omits some compiled next-server runtimes
+// (notably app-route-turbo.runtime.prod.js), which breaks API routes at runtime.
+// Copy the full set so every route type works.
+copyDir(
+  path.join(root, "node_modules", "next", "dist", "compiled", "next-server"),
+  path.join(standalone, "node_modules", "next", "dist", "compiled", "next-server"),
+);
 
 // --- 3. Swap in the Electron-ABI native binary ----------------------------
 const electronVersion = JSON.parse(
