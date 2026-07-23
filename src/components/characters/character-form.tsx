@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, Save } from "lucide-react";
 import { toast } from "sonner";
@@ -33,6 +33,9 @@ import type { Character, MulticlassEntry } from "@/db/schema";
 
 type Props = { campaignId: number; character?: Character };
 
+let multiclassKeyCounter = 0;
+const nextMulticlassKey = () => `mc-${multiclassKeyCounter++}`;
+
 function defaults(campaignId: number) {
   return {
     campaignId,
@@ -50,8 +53,8 @@ function defaults(campaignId: number) {
     int: 10,
     wis: 10,
     cha: 10,
-    hpMax: 0,
-    hpCurrent: 0,
+    hpMax: 10,
+    hpCurrent: 10,
     hpTemp: 0,
     armorClass: 10,
     speed: 30,
@@ -97,6 +100,18 @@ export function CharacterForm({ campaignId, character }: Props) {
 
   function set<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  // Keep Current HP in step with Max HP while the character is at full health
+  // (or has no HP yet), so a freshly-entered Max HP is immediately combat-ready
+  // without having to type the value twice.
+  function setHpMax(next: number) {
+    setForm((f) => ({
+      ...f,
+      hpMax: next,
+      hpCurrent:
+        f.hpCurrent === f.hpMax || f.hpCurrent === 0 ? next : f.hpCurrent,
+    }));
   }
 
   const proficiencyBonus = useMemo(
@@ -211,7 +226,7 @@ export function CharacterForm({ campaignId, character }: Props) {
             <Input type="number" value={form.armorClass} onChange={(e) => set("armorClass", Number(e.target.value || 0))} />
           </Field>
           <Field label="Max HP">
-            <Input type="number" value={form.hpMax} onChange={(e) => set("hpMax", Number(e.target.value || 0))} />
+            <Input type="number" value={form.hpMax} onChange={(e) => setHpMax(Number(e.target.value || 0))} />
           </Field>
           <Field label="Current HP">
             <Input type="number" value={form.hpCurrent} onChange={(e) => set("hpCurrent", Number(e.target.value || 0))} />
@@ -362,13 +377,26 @@ function MulticlassEditor({
   value: MulticlassEntry[];
   onChange: (next: MulticlassEntry[]) => void;
 }) {
+  const [keys, setKeys] = useState<string[]>(() => value.map(nextMulticlassKey));
+  useEffect(() => {
+    setKeys((k) => (k.length === value.length ? k : value.map(nextMulticlassKey)));
+  }, [value.length]);
+
   function update(i: number, patch: Partial<MulticlassEntry>) {
     onChange(value.map((e, idx) => (idx === i ? { ...e, ...patch } : e)));
+  }
+  function removeAt(i: number) {
+    setKeys((k) => k.filter((_, idx) => idx !== i));
+    onChange(value.filter((_, idx) => idx !== i));
+  }
+  function addClass() {
+    setKeys((k) => [...k, nextMulticlassKey()]);
+    onChange([...value, { className: "", subclass: "", level: 1 }]);
   }
   return (
     <div className="space-y-3">
       {value.map((entry, i) => (
-        <div key={i} className="flex flex-wrap items-end gap-2 rounded-lg border border-border bg-muted/30 p-3">
+        <div key={keys[i] ?? i} className="flex flex-wrap items-end gap-2 rounded-lg border border-border bg-muted/30 p-3">
           <Field label="Class" className="flex-1">
             <Input value={entry.className} onChange={(e) => update(i, { className: e.target.value })} placeholder="Wizard" />
           </Field>
@@ -378,12 +406,12 @@ function MulticlassEditor({
           <Field label="Level" className="w-24">
             <Input type="number" min={1} value={entry.level} onChange={(e) => update(i, { level: Number(e.target.value || 1) })} />
           </Field>
-          <Button type="button" size="icon" variant="ghost" className="text-muted-foreground hover:text-destructive" onClick={() => onChange(value.filter((_, idx) => idx !== i))}>
+          <Button type="button" size="icon" variant="ghost" className="text-muted-foreground hover:text-destructive" onClick={() => removeAt(i)}>
             <Trash2 className="size-4" />
           </Button>
         </div>
       ))}
-      <Button type="button" variant="outline" size="sm" onClick={() => onChange([...value, { className: "", subclass: "", level: 1 }])}>
+      <Button type="button" variant="outline" size="sm" onClick={addClass}>
         <Plus className="size-4" /> Add class
       </Button>
     </div>

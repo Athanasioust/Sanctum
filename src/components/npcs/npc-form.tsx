@@ -47,8 +47,8 @@ function defaults(campaignId: number, isTemplate: boolean) {
     challengeRating: "",
     experiencePoints: 0,
     str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10,
-    hpMax: 0,
-    hpCurrent: 0,
+    hpMax: 10,
+    hpCurrent: 10,
     armorClass: 10,
     speed: "30 ft.",
     savingThrowProficiencies: [] as string[],
@@ -99,6 +99,18 @@ export function NpcForm({
 
   function set<K extends keyof NpcFormState>(key: K, value: NpcFormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  // Keep Current HP in step with Max HP while the creature is at full health
+  // (or has no HP yet), so a freshly-entered Max HP is immediately combat-ready
+  // without having to type the value twice.
+  function setHpMax(next: number) {
+    setForm((f) => ({
+      ...f,
+      hpMax: next,
+      hpCurrent:
+        f.hpCurrent === f.hpMax || f.hpCurrent === 0 ? next : f.hpCurrent,
+    }));
   }
 
   function onCrChange(cr: string) {
@@ -201,7 +213,7 @@ export function NpcForm({
             <Input type="number" value={form.armorClass} onChange={(e) => set("armorClass", Number(e.target.value || 0))} />
           </Field>
           <Field label="Max HP">
-            <Input type="number" value={form.hpMax} onChange={(e) => set("hpMax", Number(e.target.value || 0))} />
+            <Input type="number" value={form.hpMax} onChange={(e) => setHpMax(Number(e.target.value || 0))} />
           </Field>
           <Field label="Current HP">
             <Input type="number" value={form.hpCurrent} onChange={(e) => set("hpCurrent", Number(e.target.value || 0))} />

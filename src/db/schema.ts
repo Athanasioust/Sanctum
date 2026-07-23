@@ -389,6 +389,9 @@ export const combatParticipants = sqliteTable("combat_participants", {
   name: text("name").notNull(),
   initiativeRoll: integer("initiative_roll"),
   initiativeTotal: integer("initiative_total").notNull().default(0),
+  // Per-combatant initiative modifier (DEX mod for monsters, seeded on add).
+  // "Roll initiative" rolls d20 + this for NPCs/monsters; players type their own.
+  initiativeMod: integer("initiative_mod").notNull().default(0),
   hpCurrent: integer("hp_current").notNull().default(0),
   hpMax: integer("hp_max").notNull().default(0),
   hpTemp: integer("hp_temp").notNull().default(0),

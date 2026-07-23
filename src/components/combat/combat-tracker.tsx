@@ -38,6 +38,7 @@ import {
   ScrollText,
   ChevronDown,
   ChevronUp,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -70,6 +71,7 @@ import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { CheckboxGroup } from "@/components/shared/checkbox-group";
 import { Field } from "@/components/shared/form";
 import { HpBar } from "@/components/shared/hp-bar";
+import { Slider } from "@/components/ui/slider";
 import { api } from "@/lib/client";
 import { CONDITIONS, EXHAUSTION_EFFECTS } from "@/lib/constants";
 import { rollDie } from "@/lib/dnd";
@@ -115,23 +117,20 @@ export function CombatTracker({
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
   );
 
-  const modLookup = new Map<string, number>();
-  for (const a of [...addableCharacters, ...addableNpcs, ...addableBestiary]) {
-    modLookup.set(`${a.type}:${a.id}`, a.initiativeMod);
-  }
-  function initiativeMod(p: CombatParticipant): number {
-    if (p.entityId && p.entityType) {
-      return modLookup.get(`${p.entityType}:${p.entityId}`) ?? 0;
-    }
-    return 0;
-  }
-
   // Mirror of `parts` for synchronous reads while the +/- HP steppers fire in
   // rapid succession (so each press computes from the freshest HP).
   const partsRef = useRef(parts);
   useEffect(() => {
     partsRef.current = parts;
   }, [parts]);
+
+  // Load this encounter's existing combat log so it survives reloads.
+  useEffect(() => {
+    api
+      .get<CombatLogEntry[]>(`/api/combat-log?encounterId=${encounter.id}`)
+      .then(setLogEntries)
+      .catch(() => {});
+  }, [encounter.id]);
 
   // Per-participant debounced HP persistence: a long press updates the UI on
   // every tick but only writes the final value to the server.
@@ -141,6 +140,21 @@ export function CombatTracker({
     return () => timers.forEach((t) => clearTimeout(t));
   }, []);
 
+  // Effective HP (current + temp) at the start of a burst of edits, so a run of
+  // damage/heal is logged once with its net total instead of per +/- tap.
+  const hpBaseline = useRef(new Map<number, number>());
+  function markHpBaseline(id: number) {
+    if (!hpBaseline.current.has(id)) {
+      const p = partsRef.current.find((x) => x.id === id);
+      if (p) hpBaseline.current.set(id, p.hpCurrent + p.hpTemp);
+    }
+  }
+
+  function logHpDelta(name: string, delta: number) {
+    if (delta < 0) addLogEntry("", `${-delta} dmg to ${name}`, "");
+    else if (delta > 0) addLogEntry("", `${delta} HP restored to ${name}`, "");
+  }
+
   function scheduleHpSave(id: number, patch: Partial<CombatParticipant>) {
     const timers = hpSaveTimers.current;
     const existing = timers.get(id);
@@ -149,6 +163,13 @@ export function CombatTracker({
       id,
       setTimeout(() => {
         timers.delete(id);
+        // Auto-log the net HP change from this burst of edits to the combat log.
+        const base = hpBaseline.current.get(id);
+        hpBaseline.current.delete(id);
+        if (base !== undefined) {
+          const p = partsRef.current.find((x) => x.id === id);
+          if (p) logHpDelta(p.name, p.hpCurrent + p.hpTemp - base);
+        }
         api.patch(`/api/participants/${id}`, patch).catch(() =>
           toast.error("Failed to save HP"),
         );
@@ -156,10 +177,26 @@ export function CombatTracker({
     );
   }
 
+  /** Set current HP to an absolute value (used by the HP slider). */
+  function setHpCurrent(id: number, value: number) {
+    const p = partsRef.current.find((x) => x.id === id);
+    if (!p) return;
+    const hpCurrent = Math.max(0, Math.min(p.hpMax, Math.round(value)));
+    if (hpCurrent === p.hpCurrent) return;
+    markHpBaseline(id);
+    const next = partsRef.current.map((x) =>
+      x.id === id ? { ...x, hpCurrent } : x,
+    );
+    partsRef.current = next;
+    setParts(next);
+    scheduleHpSave(id, { hpCurrent });
+  }
+
   /** Apply a signed HP delta (negative = damage, positive = heal). */
   function adjustHp(id: number, delta: number) {
     const p = partsRef.current.find((x) => x.id === id);
     if (!p) return;
+    markHpBaseline(id);
     let hpCurrent = p.hpCurrent;
     let hpTemp = p.hpTemp;
     if (delta < 0) {
@@ -216,6 +253,7 @@ export function CombatTracker({
     name: string;
     hpMax: number;
     armorClass: number;
+    initiativeMod?: number;
     entityId?: number;
     entityType?: "character" | "npc";
   }) {
@@ -226,6 +264,7 @@ export function CombatTracker({
         hpMax: input.hpMax,
         hpCurrent: input.hpMax,
         armorClass: input.armorClass,
+        initiativeMod: input.initiativeMod ?? 0,
         entityId: input.entityId ?? null,
         entityType: input.entityType ?? null,
         turnOrder: parts.length,
@@ -234,6 +273,36 @@ export function CombatTracker({
       toast.success(`Added ${input.name}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to add combatant");
+    }
+  }
+
+  /** Add every player character not already in this encounter, in one request. */
+  async function addParty() {
+    const present = new Set(
+      parts.filter((p) => p.entityType === "character").map((p) => p.entityId),
+    );
+    const missing = addableCharacters.filter((c) => !present.has(c.id));
+    if (missing.length === 0) {
+      toast.info("All player characters are already in this encounter");
+      return;
+    }
+    try {
+      const payloads = missing.map((c, i) => ({
+        encounterId: encounter.id,
+        name: c.name,
+        hpMax: c.hpMax,
+        hpCurrent: c.hpCurrent > 0 ? c.hpCurrent : c.hpMax,
+        armorClass: c.armorClass,
+        initiativeMod: c.initiativeMod,
+        entityId: c.id,
+        entityType: "character" as const,
+        turnOrder: parts.length + i,
+      }));
+      const created = await api.post<CombatParticipant[]>("/api/participants", payloads);
+      setParts((prev) => [...prev, ...created]);
+      toast.success(`Added ${created.length} player character${created.length > 1 ? "s" : ""}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add party");
     }
   }
 
@@ -270,10 +339,14 @@ export function CombatTracker({
   }
 
   function rollAll() {
+    // Players roll their own initiative at the table — the DM types those in.
+    // This rolls only NPCs/monsters (d20 + their initiative modifier), leaving
+    // any player-entered values untouched, then sorts everyone together.
     const rolled = parts
       .map((p) => {
+        if (p.entityType === "character") return { ...p };
         const roll = rollDie(20);
-        return { ...p, initiativeRoll: roll, initiativeTotal: roll + initiativeMod(p) };
+        return { ...p, initiativeRoll: roll, initiativeTotal: roll + p.initiativeMod };
       })
       .sort((a, b) => b.initiativeTotal - a.initiativeTotal)
       .map((p, i) => ({ ...p, turnOrder: i }));
@@ -290,11 +363,15 @@ export function CombatTracker({
       ),
     ).catch(() => toast.error("Failed to save initiative"));
     saveEncounter({ currentTurnIndex: 0, roundNumber: 1 });
-    toast.success("Initiative rolled");
+    toast.success("Rolled initiative for NPCs & monsters");
   }
 
   function setInitiative(id: number, total: number) {
     savePart(id, { initiativeTotal: total });
+  }
+
+  function setInitiativeMod(id: number, mod: number) {
+    savePart(id, { initiativeMod: mod });
   }
 
   function sortByInitiative() {
@@ -375,12 +452,22 @@ export function CombatTracker({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" onClick={rollAll} disabled={parts.length === 0}>
-            <Dices className="size-4" /> Roll initiative
+          <Button
+            variant="outline"
+            onClick={rollAll}
+            disabled={parts.length === 0}
+            title="Rolls initiative for NPCs & monsters only — players type their own"
+          >
+            <Dices className="size-4" /> Roll NPCs
           </Button>
           <Button variant="outline" onClick={sortByInitiative} disabled={parts.length === 0}>
             Sort
           </Button>
+          {addableCharacters.length > 0 ? (
+            <Button variant="outline" onClick={addParty}>
+              <Users className="size-4" /> Add party
+            </Button>
+          ) : null}
           <AddCombatantMenu
             characters={addableCharacters}
             npcs={addableNpcs}
@@ -417,8 +504,10 @@ export function CombatTracker({
                   isCurrent={i === turnIndex}
                   onSave={savePart}
                   onAdjustHp={adjustHp}
+                  onSetHpCurrent={setHpCurrent}
                   onRemove={removeParticipant}
                   onSetInitiative={setInitiative}
+                  onSetInitiativeMod={setInitiativeMod}
                 />
               ))}
             </div>
@@ -475,16 +564,23 @@ function ParticipantRow({
   isCurrent,
   onSave,
   onAdjustHp,
+  onSetHpCurrent,
   onRemove,
   onSetInitiative,
+  onSetInitiativeMod,
 }: {
   participant: CombatParticipant;
   isCurrent: boolean;
   onSave: (id: number, patch: Partial<CombatParticipant>) => void;
   onAdjustHp: (id: number, delta: number) => void;
+  onSetHpCurrent: (id: number, value: number) => void;
   onRemove: (id: number) => void;
   onSetInitiative: (id: number, total: number) => void;
+  onSetInitiativeMod: (id: number, mod: number) => void;
 }) {
+  // Players type their own initiative; NPCs/monsters get a modifier the DM can
+  // set, which "Roll NPCs" uses.
+  const isNpc = p.entityType !== "character";
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: p.id });
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -513,14 +609,29 @@ function ParticipantRow({
           <GripVertical className="size-5" />
         </button>
 
-        {/* Initiative */}
-        <div className="flex w-14 flex-col items-center">
-          <span className="text-[10px] uppercase text-muted-foreground">Init</span>
-          <Input
-            value={p.initiativeTotal}
-            onChange={(e) => onSetInitiative(p.id, Number(e.target.value || 0))}
-            className="h-8 w-12 px-1 text-center text-sm tabular-nums"
-          />
+        {/* Initiative (total for everyone; editable modifier for NPCs) */}
+        <div className="flex items-center gap-1">
+          <div className="flex w-12 flex-col items-center">
+            <span className="text-[10px] uppercase text-muted-foreground">Init</span>
+            <Input
+              value={p.initiativeTotal}
+              onChange={(e) => onSetInitiative(p.id, Number(e.target.value || 0))}
+              className="h-8 w-11 px-1 text-center text-sm tabular-nums"
+              title="Initiative total — players type their own roll here"
+            />
+          </div>
+          {isNpc ? (
+            <div className="flex w-11 flex-col items-center">
+              <span className="text-[10px] uppercase text-muted-foreground">Mod</span>
+              <Input
+                type="number"
+                value={p.initiativeMod}
+                onChange={(e) => onSetInitiativeMod(p.id, Number(e.target.value || 0))}
+                className="h-8 w-11 px-1 text-center text-sm tabular-nums"
+                title="Initiative modifier — added to the d20 when you roll NPCs"
+              />
+            </div>
+          ) : null}
         </div>
 
         {/* Name + status */}
@@ -557,6 +668,17 @@ function ParticipantRow({
         {/* HP + AC */}
         <div className="hidden w-44 sm:block">
           <HpBar current={p.hpCurrent} max={p.hpMax} temp={p.hpTemp} />
+          {p.hpMax > 0 ? (
+            <Slider
+              className="mt-2"
+              value={[Math.min(p.hpCurrent, p.hpMax)]}
+              min={0}
+              max={p.hpMax}
+              step={1}
+              onValueChange={([v]) => onSetHpCurrent(p.id, v)}
+              aria-label={`Set ${p.name} HP`}
+            />
+          ) : null}
         </div>
         <div className="flex items-center gap-1 text-sm text-muted-foreground">
           <Shield className="size-4 text-primary" /> {p.armorClass}
@@ -565,7 +687,7 @@ function ParticipantRow({
         {/* Actions */}
         <div className="flex items-center gap-1">
           <HpStepper participantId={p.id} onAdjustHp={onAdjustHp} />
-          <HpDialog participant={p} onSave={onSave} />
+          <HpDialog participant={p} onSave={onSave} onAdjustHp={onAdjustHp} />
           <ConditionsDialog participant={p} onSave={onSave} />
           <ConcentrationDialog participant={p} onSave={onSave} />
           <Button
@@ -582,6 +704,17 @@ function ParticipantRow({
 
       <div className="mt-2 sm:hidden">
         <HpBar current={p.hpCurrent} max={p.hpMax} temp={p.hpTemp} />
+        {p.hpMax > 0 ? (
+          <Slider
+            className="mt-2"
+            value={[Math.min(p.hpCurrent, p.hpMax)]}
+            min={0}
+            max={p.hpMax}
+            step={1}
+            onValueChange={([v]) => onSetHpCurrent(p.id, v)}
+            aria-label={`Set ${p.name} HP`}
+          />
+        ) : null}
       </div>
 
       {showDeathSaves ? (
@@ -750,9 +883,11 @@ function HoldRepeatButton({
 function HpDialog({
   participant: p,
   onSave,
+  onAdjustHp,
 }: {
   participant: CombatParticipant;
   onSave: (id: number, patch: Partial<CombatParticipant>) => void;
+  onAdjustHp: (id: number, delta: number) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
@@ -761,19 +896,9 @@ function HpDialog({
   function apply(kind: "damage" | "heal") {
     const value = Math.abs(Number(amount || 0));
     if (!value) return;
-    if (kind === "damage") {
-      let remaining = value;
-      let newTemp = p.hpTemp;
-      if (newTemp > 0) {
-        const absorbed = Math.min(newTemp, remaining);
-        newTemp -= absorbed;
-        remaining -= absorbed;
-      }
-      const newHp = Math.max(0, p.hpCurrent - remaining);
-      onSave(p.id, { hpCurrent: newHp, hpTemp: newTemp });
-    } else {
-      onSave(p.id, { hpCurrent: Math.min(p.hpMax, p.hpCurrent + value) });
-    }
+    // Route through adjustHp so temp-HP absorption, concentration checks and
+    // combat-log damage entries all apply consistently.
+    onAdjustHp(p.id, kind === "damage" ? -value : value);
     setAmount("");
     setOpen(false);
   }
@@ -886,24 +1011,33 @@ function ConditionsDialog({
 }
 
 /**
- * A roster entry in the "Add combatant" menu. A character/NPC at 0 HP is
- * disabled — a downed creature can't join the fight.
+ * A roster entry in the "Add combatant" menu. A creature with no HP set, or one
+ * that's been dropped to 0 HP, can't join the fight — it's disabled with a
+ * short reason so it's clear why (rather than just greyed out).
  */
 function CombatantOption({ entity, onAdd }: { entity: Addable; onAdd: () => void }) {
-  const isDown = entity.hpCurrent <= 0;
+  const noHpSet = entity.hpMax <= 0;
+  const isDown = !noHpSet && entity.hpCurrent <= 0;
+  const blocked = noHpSet || isDown;
+  const reason = noHpSet ? "No HP set" : "Down · 0 HP";
+  const title = noHpSet
+    ? "Can't add — set this creature's Max HP first"
+    : "Can't add — currently at 0 HP";
   return (
     <DropdownMenuItem
-      disabled={isDown}
+      disabled={blocked}
       onSelect={() => {
-        if (isDown) return;
+        if (blocked) return;
         onAdd();
       }}
       className="flex items-center justify-between gap-2"
+      title={blocked ? title : undefined}
     >
       <span className="truncate">{entity.name}</span>
-      {isDown ? (
+      {blocked ? (
         <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
-          <Skull className="size-3" /> 0 HP
+          {isDown ? <Skull className="size-3" /> : null}
+          {reason}
         </span>
       ) : null}
     </DropdownMenuItem>
@@ -923,12 +1057,13 @@ function AddCombatantMenu({
     name: string;
     hpMax: number;
     armorClass: number;
+    initiativeMod?: number;
     entityId?: number;
     entityType?: "character" | "npc";
   }) => void;
 }) {
   const [quickOpen, setQuickOpen] = useState(false);
-  const [quick, setQuick] = useState({ name: "", hpMax: 10, armorClass: 10 });
+  const [quick, setQuick] = useState({ name: "", hpMax: 10, armorClass: 10, initiativeMod: 0 });
   const [bestiaryOpen, setBestiaryOpen] = useState(false);
 
   return (
@@ -957,7 +1092,7 @@ function AddCombatantMenu({
                   key={`c-${c.id}`}
                   entity={c}
                   onAdd={() =>
-                    onAdd({ name: c.name, hpMax: c.hpMax, armorClass: c.armorClass, entityId: c.id, entityType: "character" })
+                    onAdd({ name: c.name, hpMax: c.hpMax, armorClass: c.armorClass, initiativeMod: c.initiativeMod, entityId: c.id, entityType: "character" })
                   }
                 />
               ))}
@@ -972,7 +1107,7 @@ function AddCombatantMenu({
                   key={`n-${n.id}`}
                   entity={n}
                   onAdd={() =>
-                    onAdd({ name: n.name, hpMax: n.hpMax, armorClass: n.armorClass, entityId: n.id, entityType: "npc" })
+                    onAdd({ name: n.name, hpMax: n.hpMax, armorClass: n.armorClass, initiativeMod: n.initiativeMod, entityId: n.id, entityType: "npc" })
                   }
                 />
               ))}
@@ -987,15 +1122,18 @@ function AddCombatantMenu({
             <DialogTitle>Quick add creature</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
-            <Field label="Name" required>
+            <Field label="Name" hint="Defaults to “Goblin 1” if left blank">
               <Input value={quick.name} onChange={(e) => setQuick((q) => ({ ...q, name: e.target.value }))} placeholder="Goblin 1" autoFocus />
             </Field>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <Field label="Max HP">
                 <Input type="number" value={quick.hpMax} onChange={(e) => setQuick((q) => ({ ...q, hpMax: Number(e.target.value || 0) }))} />
               </Field>
               <Field label="Armor Class">
                 <Input type="number" value={quick.armorClass} onChange={(e) => setQuick((q) => ({ ...q, armorClass: Number(e.target.value || 0) }))} />
+              </Field>
+              <Field label="Init Mod">
+                <Input type="number" value={quick.initiativeMod} onChange={(e) => setQuick((q) => ({ ...q, initiativeMod: Number(e.target.value || 0) }))} />
               </Field>
             </div>
           </div>
@@ -1003,16 +1141,12 @@ function AddCombatantMenu({
             <Button variant="ghost" onClick={() => setQuickOpen(false)}>Cancel</Button>
             <Button
               onClick={() => {
-                if (!quick.name.trim()) {
-                  toast.error("Name is required");
-                  return;
-                }
-                if (quick.hpMax <= 0) {
-                  toast.error("Max HP must be greater than 0");
-                  return;
-                }
-                onAdd({ name: quick.name, hpMax: quick.hpMax, armorClass: quick.armorClass });
-                setQuick({ name: "", hpMax: 10, armorClass: 10 });
+                // Fall back to the placeholder defaults so a blank Add still
+                // produces a usable combatant (Goblin 1, 10 HP, AC 10).
+                const name = quick.name.trim() || "Goblin 1";
+                const hpMax = quick.hpMax > 0 ? quick.hpMax : 10;
+                onAdd({ name, hpMax, armorClass: quick.armorClass, initiativeMod: quick.initiativeMod });
+                setQuick({ name: "", hpMax: 10, armorClass: 10, initiativeMod: 0 });
                 setQuickOpen(false);
               }}
             >
@@ -1204,6 +1338,7 @@ function BestiaryPicker({
     name: string;
     hpMax: number;
     armorClass: number;
+    initiativeMod?: number;
     entityId?: number;
     entityType?: "character" | "npc";
   }) => void;
@@ -1250,17 +1385,27 @@ function BestiaryPicker({
           ) : (
             <div className="divide-y divide-border">
               {filtered.map((b) => {
-                const isDown = b.hpCurrent <= 0;
+                const noHpSet = b.hpMax <= 0;
+                const isDown = !noHpSet && b.hpCurrent <= 0;
+                const blocked = noHpSet || isDown;
                 return (
                   <button
                     key={b.id}
                     type="button"
-                    disabled={isDown}
+                    disabled={blocked}
+                    title={
+                      blocked
+                        ? noHpSet
+                          ? "Can't add — set this creature's Max HP first"
+                          : "Can't add — currently at 0 HP"
+                        : undefined
+                    }
                     onClick={() =>
                       onAdd({
                         name: b.name,
                         hpMax: b.hpMax,
                         armorClass: b.armorClass,
+                        initiativeMod: b.initiativeMod,
                         entityId: b.id,
                         entityType: "npc",
                       })
@@ -1268,14 +1413,21 @@ function BestiaryPicker({
                     className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <span className="min-w-0 truncate font-medium">{b.name}</span>
-                    <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-                      {b.cr ? <span>CR {b.cr}</span> : null}
-                      <span>HP {b.hpMax}</span>
-                      <span className="flex items-center gap-0.5">
-                        <Shield className="size-3" />
-                        {b.armorClass}
+                    {blocked ? (
+                      <span className="flex shrink-0 items-center gap-1 text-xs text-destructive/80">
+                        {isDown ? <Skull className="size-3" /> : null}
+                        {noHpSet ? "No HP set" : "Down · 0 HP"}
                       </span>
-                    </span>
+                    ) : (
+                      <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+                        {b.cr ? <span>CR {b.cr}</span> : null}
+                        <span>HP {b.hpMax}</span>
+                        <span className="flex items-center gap-0.5">
+                          <Shield className="size-3" />
+                          {b.armorClass}
+                        </span>
+                      </span>
+                    )}
                   </button>
                 );
               })}

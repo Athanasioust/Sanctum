@@ -127,6 +127,28 @@ export const CLASSES = [
   "Artificer",
 ] as const;
 
+/** Hit die size (dN) per class, for hit-dice healing on a short rest. */
+export const CLASS_HIT_DICE: Record<string, number> = {
+  Barbarian: 12,
+  Bard: 8,
+  Cleric: 8,
+  Druid: 8,
+  Fighter: 10,
+  Monk: 8,
+  Paladin: 10,
+  Ranger: 10,
+  Rogue: 8,
+  Sorcerer: 6,
+  Warlock: 8,
+  Wizard: 6,
+  Artificer: 8,
+};
+
+/** Best-effort hit die for a (possibly free-text) class name; defaults to d8. */
+export function hitDieForClass(cls: string): number {
+  return CLASS_HIT_DICE[cls?.trim()] ?? 8;
+}
+
 export const RACES = [
   "Human",
   "Elf",

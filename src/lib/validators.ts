@@ -263,6 +263,7 @@ export const participantCreateSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(120),
   initiativeRoll: z.number().int().nullable().optional(),
   initiativeTotal: z.number().int().optional().default(0),
+  initiativeMod: z.number().int().min(-20).max(20).optional().default(0),
   hpCurrent: nonNegInt(0),
   hpMax: nonNegInt(0),
   hpTemp: nonNegInt(0),

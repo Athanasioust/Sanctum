@@ -110,6 +110,7 @@ export function EncounterBuilder({
         hpMax: number;
         hpCurrent: number;
         armorClass: number;
+        initiativeMod: number;
         turnOrder: number;
       };
       const payloads: PartPayload[] = [];
@@ -123,6 +124,7 @@ export function EncounterBuilder({
           hpMax: c.hpMax,
           hpCurrent: c.hpMax,
           armorClass: c.armorClass,
+          initiativeMod: 0,
           turnOrder: payloads.length,
         });
       }
@@ -137,12 +139,13 @@ export function EncounterBuilder({
             hpMax: m.hpMax,
             hpCurrent: m.hpMax,
             armorClass: m.armorClass,
+            initiativeMod: m.initiativeMod,
             turnOrder: payloads.length,
           });
         }
       }
 
-      await Promise.all(payloads.map((p) => api.post("/api/participants", p)));
+      await api.post("/api/participants", payloads);
       toast.success(`Started "${encounterName}" with ${payloads.length} combatants`);
       router.push(`/campaign/${campaignId}/combat`);
       router.refresh();

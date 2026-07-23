@@ -11,11 +11,11 @@ import { HpBar } from "@/components/shared/hp-bar";
 import { EntityActions } from "@/components/shared/entity-actions";
 import { SpellsTab } from "@/components/characters/spells-tab";
 import { InventoryTab } from "@/components/characters/inventory-tab";
-import { ABILITIES, SKILLS, EXHAUSTION_EFFECTS } from "@/lib/constants";
+import { ABILITIES, SKILLS, EXHAUSTION_EFFECTS, hitDieForClass } from "@/lib/constants";
 import { abilityModifier, formatModifier } from "@/lib/dnd";
 import { api } from "@/lib/client";
 import type { AbilityKey } from "@/lib/constants";
-import type { Character, MagicItem } from "@/db/schema";
+import type { Character, MagicItem, SpellSlot } from "@/db/schema";
 import type { Currency } from "@/db/schema";
 
 export function CharacterDetail({
@@ -132,8 +132,10 @@ export function CharacterDetail({
             initialTotal={character.hitDiceTotal}
             initialUsed={character.hitDiceUsed}
             initialHp={character.hpCurrent}
+            initialExhaustion={character.exhaustionLevel}
             hpMax={character.hpMax}
             conMod={abilityModifier(character.con)}
+            hitDie={hitDieForClass(character.class)}
           />
         </TabsContent>
 
@@ -405,31 +407,36 @@ function HitDiceTracker({
   initialTotal,
   initialUsed,
   initialHp,
+  initialExhaustion,
   hpMax,
   conMod,
+  hitDie,
 }: {
   characterId: number;
   level: number;
   initialTotal: number;
   initialUsed: number;
   initialHp: number;
+  initialExhaustion: number;
   hpMax: number;
   conMod: number;
+  hitDie: number;
 }) {
   const [used, setUsed] = useState(initialUsed);
   const [hp, setHp] = useState(initialHp);
+  const [exhaustion, setExhaustion] = useState(initialExhaustion);
   const total = initialTotal > 0 ? initialTotal : level;
   const available = Math.max(0, total - used);
 
   async function spendHitDie() {
     if (available <= 0) { toast.error("No hit dice remaining"); return; }
-    const roll = Math.floor(Math.random() * 8) + 1;
+    const roll = Math.floor(Math.random() * hitDie) + 1;
     const healed = Math.max(1, roll + conMod);
     const newHp = Math.min(hpMax, hp + healed);
     const newUsed = used + 1;
     setUsed(newUsed);
     setHp(newHp);
-    toast.success(`Spent hit die — rolled ${roll} + CON ${conMod} = +${healed} HP`);
+    toast.success(`Spent hit die — rolled d${hitDie} (${roll}) + CON ${conMod} = +${healed} HP`);
     try {
       await api.patch(`/api/characters/${characterId}`, { hitDiceUsed: newUsed, hpCurrent: newHp });
     } catch {
@@ -438,13 +445,31 @@ function HitDiceTracker({
   }
 
   async function longRest() {
-    const newUsed = Math.max(0, used - Math.ceil(total / 2));
-    const newHp = hpMax;
+    // Recover HP to full, half your hit dice (min 1), one level of exhaustion,
+    // clear temp HP / death saves, and reset all spell slots.
+    const newUsed = Math.max(0, used - Math.max(1, Math.floor(total / 2)));
+    const nextExhaustion = Math.max(0, exhaustion - 1);
     setUsed(newUsed);
-    setHp(newHp);
-    toast.success("Long rest taken — HP and spell slots restored");
+    setHp(hpMax);
+    setExhaustion(nextExhaustion);
     try {
-      await api.patch(`/api/characters/${characterId}`, { hitDiceUsed: newUsed, hpCurrent: newHp });
+      await api.patch(`/api/characters/${characterId}`, {
+        hitDiceUsed: newUsed,
+        hpCurrent: hpMax,
+        hpTemp: 0,
+        exhaustionLevel: nextExhaustion,
+        deathSaveSuccesses: 0,
+        deathSaveFailures: 0,
+      });
+      const slots = await api.get<SpellSlot[]>(
+        `/api/spell-slots?ownerId=${characterId}&ownerType=character`,
+      );
+      await Promise.all(
+        slots
+          .filter((s) => s.used > 0)
+          .map((s) => api.patch(`/api/spell-slots/${s.id}`, { used: 0 })),
+      );
+      toast.success("Long rest taken — HP, hit dice and spell slots restored");
     } catch {
       toast.error("Failed to save");
     }
@@ -479,7 +504,7 @@ function HitDiceTracker({
           onClick={spendHitDie}
           disabled={available <= 0}
         >
-          Short Rest (spend 1d8)
+          Short Rest (spend 1d{hitDie})
         </Button>
         <Button variant="outline" size="sm" onClick={longRest}>
           Long Rest
@@ -496,11 +521,9 @@ function CharacterMagicItemsTab({ characterId, campaignId }: { characterId: numb
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/magic-items?campaignId=${campaignId}`)
+    fetch(`/api/magic-items?campaignId=${campaignId}&characterId=${characterId}`)
       .then((r) => r.json())
-      .then((all: MagicItem[]) => {
-        setItems(all.filter((i) => i.characterId === characterId));
-      })
+      .then((items: MagicItem[]) => setItems(items))
       .catch(() => toast.error("Failed to load magic items"))
       .finally(() => setLoading(false));
   }, [characterId, campaignId]);

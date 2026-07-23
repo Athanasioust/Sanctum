@@ -1,0 +1,1 @@
+ALTER TABLE `combat_participants` ADD `initiative_mod` integer DEFAULT 0 NOT NULL;

@@ -38,6 +38,10 @@ export function GenerateNpcButton({
         name: npc.name,
         race: npc.race,
         type: "npc",
+        // Give a sensible commoner default so the NPC can be dropped straight
+        // into combat without editing HP first.
+        hpMax: 10,
+        hpCurrent: 10,
         notes: `Occupation: ${npc.occupation}\n${npcToNotes(npc)}`,
       });
       toast.success(`Saved ${npc.name} to NPCs`);
