@@ -1,0 +1,50 @@
+appId: com.athanasioust.sanctum
+productName: Sanctum
+copyright: Copyright © athanasioust — AGPL-3.0
+
+directories:
+  output: dist
+  buildResources: electron
+
+# The Electron shell (main process) is the only code inside the asar. The actual
+# app — the standalone Next.js server plus its native better-sqlite3 binary and
+# the migrations — ships as unpacked resources so the .node file can be loaded
+# and the server can be spawned as a child process.
+files:
+  - electron/**/*
+  - package.json
+
+# The standalone bundle is copied in as unpacked resources. electron-builder
+# strips node_modules from extraResources, so the server's dependencies (incl.
+# the native better-sqlite3 binary) are restored by the afterPack hook below.
+extraResources:
+  - from: .next/standalone
+    to: standalone
+
+afterPack: electron/after-pack.js
+
+# We fetch a prebuilt better-sqlite3 for Electron ourselves (see
+# scripts/build-desktop.mjs); electron-builder must not try to rebuild the root
+# node_modules, which we do not ship inside the asar.
+npmRebuild: false
+
+win:
+  icon: electron/icon.ico
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Sanctum
+
+portable:
+  artifactName: Sanctum-${version}-portable.exe
