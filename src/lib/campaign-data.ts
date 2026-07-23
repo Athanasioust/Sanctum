@@ -20,6 +20,12 @@ import {
   rollTables,
   sessionPreps,
   notes,
+  quests,
+  magicItems,
+  handouts,
+  rumors,
+  npcRelationships,
+  combatLogEntries,
 } from "@/db/schema";
 import { ApiError } from "@/lib/api";
 import {
@@ -40,6 +46,12 @@ import {
   rollTableCreateSchema,
   sessionPrepCreateSchema,
   noteCreateSchema,
+  questCreateSchema,
+  magicItemCreateSchema,
+  handoutCreateSchema,
+  rumorCreateSchema,
+  npcRelationshipCreateSchema,
+  combatLogEntryCreateSchema,
 } from "@/lib/validators";
 
 export const EXPORT_VERSION = 1;
@@ -74,6 +86,11 @@ export async function exportCampaign(campaignId: number) {
     sessionRows,
     noteRows,
     encounterRows,
+    questRows,
+    magicItemRows,
+    handoutRows,
+    rumorRows,
+    relationshipRows,
   ] = await Promise.all([
     db.select().from(characters).where(eq(characters.campaignId, campaignId)),
     db.select().from(npcs).where(eq(npcs.campaignId, campaignId)),
@@ -86,6 +103,11 @@ export async function exportCampaign(campaignId: number) {
     db.select().from(sessionPreps).where(eq(sessionPreps.campaignId, campaignId)),
     db.select().from(notes).where(eq(notes.campaignId, campaignId)),
     db.select().from(encounters).where(eq(encounters.campaignId, campaignId)),
+    db.select().from(quests).where(eq(quests.campaignId, campaignId)),
+    db.select().from(magicItems).where(eq(magicItems.campaignId, campaignId)),
+    db.select().from(handouts).where(eq(handouts.campaignId, campaignId)),
+    db.select().from(rumors).where(eq(rumors.campaignId, campaignId)),
+    db.select().from(npcRelationships).where(eq(npcRelationships.campaignId, campaignId)),
   ]);
 
   const charIds = characterRows.map((c) => c.id);
@@ -96,12 +118,13 @@ export async function exportCampaign(campaignId: number) {
   const shopIds = shopRows.map((s) => s.id);
   const encounterIds = encounterRows.map((e) => e.id);
 
-  const [spellRows, slotRows, inventoryRows, shopItemRows, participantRows] = await Promise.all([
+  const [spellRows, slotRows, inventoryRows, shopItemRows, participantRows, combatLogRows] = await Promise.all([
     ownerIds.length ? db.select().from(spells).where(inArray(spells.ownerId, ownerIds)) : [],
     ownerIds.length ? db.select().from(spellSlots).where(inArray(spellSlots.ownerId, ownerIds)) : [],
     ownerIds.length ? db.select().from(inventoryItems).where(inArray(inventoryItems.ownerId, ownerIds)) : [],
     shopIds.length ? db.select().from(shopItems).where(inArray(shopItems.shopId, shopIds)) : [],
     encounterIds.length ? db.select().from(combatParticipants).where(inArray(combatParticipants.encounterId, encounterIds)) : [],
+    encounterIds.length ? db.select().from(combatLogEntries).where(inArray(combatLogEntries.encounterId, encounterIds)) : [],
   ]);
 
   const ownerMatch = <T extends { ownerId: number; ownerType: string }>(rows: T[]) =>
@@ -127,6 +150,12 @@ export async function exportCampaign(campaignId: number) {
     rollTables: rollTableRows,
     sessionPreps: sessionRows,
     notes: noteRows,
+    quests: questRows,
+    magicItems: magicItemRows,
+    handouts: handoutRows,
+    rumors: rumorRows,
+    npcRelationships: relationshipRows,
+    combatLogEntries: combatLogRows,
   };
 }
 
@@ -182,6 +211,24 @@ const ImportSchemas = {
     plannedNpcs: true,
   }),
   note: noteCreateSchema.omit({ campaignId: true }),
+  quest: questCreateSchema.omit({
+    campaignId: true,
+    linkedNpcIds: true,
+    linkedLocationIds: true,
+  }),
+  magicItem: magicItemCreateSchema.omit({ campaignId: true, characterId: true }),
+  handout: handoutCreateSchema.omit({ campaignId: true }),
+  rumor: rumorCreateSchema.omit({
+    campaignId: true,
+    sourceLocationId: true,
+    sourceNpcId: true,
+  }),
+  relationship: npcRelationshipCreateSchema.omit({
+    campaignId: true,
+    sourceNpcId: true,
+    targetNpcId: true,
+  }),
+  combatLog: combatLogEntryCreateSchema.omit({ encounterId: true }),
 };
 
 /** Validate a bundle array, returning {raw, data} pairs for rows that pass. */
@@ -346,6 +393,50 @@ export async function importCampaign(raw: unknown): Promise<number> {
     }
     for (const { data } of validateRows(ImportSchemas.note, bundle.notes)) {
       tx.insert(notes).values({ ...data, campaignId } as never).run();
+    }
+
+    // Quests, magic items, handouts, rumors, relationships, combat logs
+    for (const { raw: r, data } of validateRows(ImportSchemas.quest, bundle.quests)) {
+      tx.insert(quests).values({
+        ...data,
+        campaignId,
+        linkedNpcIds: mapIds(r.linkedNpcIds, npcMap),
+        linkedLocationIds: mapIds(r.linkedLocationIds, locMap),
+      } as never).run();
+    }
+    for (const { raw: r, data } of validateRows(ImportSchemas.magicItem, bundle.magicItems)) {
+      tx.insert(magicItems).values({
+        ...data,
+        campaignId,
+        characterId: charMap.get(Number(r.characterId)) ?? null,
+      } as never).run();
+    }
+    for (const { data } of validateRows(ImportSchemas.handout, bundle.handouts)) {
+      tx.insert(handouts).values({ ...data, campaignId } as never).run();
+    }
+    for (const { raw: r, data } of validateRows(ImportSchemas.rumor, bundle.rumors)) {
+      tx.insert(rumors).values({
+        ...data,
+        campaignId,
+        sourceLocationId: locMap.get(Number(r.sourceLocationId)) ?? null,
+        sourceNpcId: npcMap.get(Number(r.sourceNpcId)) ?? null,
+      } as never).run();
+    }
+    for (const { raw: r, data } of validateRows(ImportSchemas.relationship, bundle.npcRelationships)) {
+      const sourceNpcId = npcMap.get(Number(r.sourceNpcId));
+      const targetNpcId = npcMap.get(Number(r.targetNpcId));
+      if (!sourceNpcId || !targetNpcId) continue;
+      tx.insert(npcRelationships).values({
+        ...data,
+        campaignId,
+        sourceNpcId,
+        targetNpcId,
+      } as never).run();
+    }
+    for (const { raw: r, data } of validateRows(ImportSchemas.combatLog, bundle.combatLogEntries)) {
+      const encounterId = encMap.get(Number(r.encounterId));
+      if (!encounterId) continue;
+      tx.insert(combatLogEntries).values({ ...data, encounterId } as never).run();
     }
 
     return campaignId;

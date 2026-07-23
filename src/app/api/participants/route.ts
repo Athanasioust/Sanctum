@@ -13,7 +13,20 @@ export const GET = apiRoute(async (req) => {
 });
 
 export const POST = apiRoute(async (req) => {
-  const data = parseBody(participantCreateSchema, await readJson(req));
+  const body = await readJson(req);
+
+  // Accept an array to add a whole encounter's combatants in one request
+  // (and one transaction) instead of a POST per participant.
+  if (Array.isArray(body)) {
+    const rows = body.map((b) => parseBody(participantCreateSchema, b));
+    if (rows.length === 0) return json([], 201);
+    const created = db.transaction((tx) =>
+      rows.map((r) => tx.insert(combatParticipants).values(r).returning().all()[0]),
+    );
+    return json(created, 201);
+  }
+
+  const data = parseBody(participantCreateSchema, body);
   const [row] = await db.insert(combatParticipants).values(data).returning();
   return json(row, 201);
 });

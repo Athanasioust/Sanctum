@@ -8,5 +8,6 @@ export const { GET, POST } = collectionHandlers({
   createSchema: magicItemCreateSchema,
   updateSchema: magicItemUpdateSchema,
   campaignColumn: magicItems.campaignId,
+  numericFilterColumns: { characterId: magicItems.characterId },
   orderBy: { column: magicItems.name, dir: "asc" },
 });

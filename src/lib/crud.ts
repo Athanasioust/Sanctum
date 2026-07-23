@@ -24,6 +24,18 @@ type CrudConfig = {
   filterColumns?: Record<string, SQLiteColumn>;
   /** Numeric filter columns supported as query params, e.g. { ownerId: spells.ownerId }. */
   numericFilterColumns?: Record<string, SQLiteColumn>;
+  /**
+   * Owner-scoped child tables to delete alongside the row. These use a
+   * polymorphic ownerId/ownerType (no DB foreign key), so they must be cleaned
+   * up manually on delete to avoid orphaned rows. Requires `ownerTypeValue`.
+   */
+  cascadeOwned?: {
+    table: SQLiteTable;
+    ownerIdColumn: SQLiteColumn;
+    ownerTypeColumn: SQLiteColumn;
+  }[];
+  /** The ownerType value matching this entity (e.g. "character" or "npc"). */
+  ownerTypeValue?: string;
 };
 
 /** Build GET (list) and POST (create) handlers for a collection route. */
@@ -114,6 +126,34 @@ export function itemHandlers(cfg: CrudConfig) {
 
   const DELETE = apiRoute<{ id: string }>(async (_req, { params }) => {
     const id = requireId((await params).id);
+
+    // When the entity owns polymorphic child rows (spells, inventory, etc.),
+    // delete them and the row together in one transaction so nothing is orphaned.
+    if (cfg.cascadeOwned?.length && cfg.ownerTypeValue) {
+      const owned = cfg.cascadeOwned;
+      const ownerTypeValue = cfg.ownerTypeValue;
+      const deleted = db.transaction((tx) => {
+        for (const child of owned) {
+          tx.delete(child.table)
+            .where(
+              and(
+                eq(child.ownerIdColumn, id),
+                eq(child.ownerTypeColumn, ownerTypeValue),
+              ),
+            )
+            .run();
+        }
+        const [row] = tx
+          .delete(cfg.table)
+          .where(eq(cfg.idColumn, id))
+          .returning()
+          .all();
+        return row;
+      });
+      if (!deleted) throw new ApiError("Not found", 404);
+      return json({ success: true });
+    }
+
     const [row] = await db
       .delete(cfg.table)
       .where(eq(cfg.idColumn, id))

@@ -30,11 +30,28 @@ async function request<T>(
   const data = text ? JSON.parse(text) : undefined;
 
   if (!res.ok) {
-    const message =
+    let message =
       (data && typeof data === "object" && "error" in data
         ? String((data as { error: unknown }).error)
         : null) ?? `Request failed (${res.status})`;
-    throw new ApiClientError(message, res.status, (data as { details?: unknown })?.details);
+    // Surface field-level validation errors ("name: Name is required") instead
+    // of the generic top-level message, so forms can show what's actually wrong.
+    const details = (data as { details?: unknown })?.details;
+    if (Array.isArray(details) && details.length > 0) {
+      const fieldMsgs = details
+        .map((d) => {
+          if (d && typeof d === "object" && "message" in d) {
+            const path =
+              "path" in d && d.path ? `${String((d as { path: unknown }).path)}: ` : "";
+            return `${path}${String((d as { message: unknown }).message)}`;
+          }
+          return String(d);
+        })
+        .filter(Boolean)
+        .join("; ");
+      if (fieldMsgs) message = fieldMsgs;
+    }
+    throw new ApiClientError(message, res.status, details);
   }
 
   return data as T;
