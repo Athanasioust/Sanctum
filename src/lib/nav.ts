@@ -17,6 +17,7 @@ import {
   Image,
   MessageCircleQuestion,
   Network,
+  Upload,
   type LucideIcon,
 } from "lucide-react";
 
@@ -130,6 +131,12 @@ export const CAMPAIGN_NAV: NavItem[] = [
     href: (id) => `/campaign/${id}/relations`,
     icon: Network,
     segment: "relations",
+  },
+  {
+    label: "Import",
+    href: (id) => `/campaign/${id}/import`,
+    icon: Upload,
+    segment: "import",
   },
   {
     label: "Settings",

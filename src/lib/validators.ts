@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { IMPORT_TARGET_VALUES } from "./markdown-import";
 
 /* -------------------------------------------------------------------------- */
 /*  Shared primitives                                                          */
@@ -571,6 +572,65 @@ export type CombatLogEntryUpdateInput = z.infer<typeof combatLogEntryUpdateSchem
 export const participantConcentrationSchema = z.object({
   concentrationSpell: z.string().max(120).nullable().optional(),
 });
+
+/* -------------------------------------------------------------------------- */
+/*  Imports — markdown vaults & PDF character sheets                           */
+/* -------------------------------------------------------------------------- */
+
+/** Guard rails on a single request; the client uploads large vaults in batches. */
+export const MARKDOWN_IMPORT_LIMITS = {
+  filesPerRequest: 200,
+  bytesPerFile: 400_000,
+} as const;
+
+export const markdownImportSchema = z.object({
+  campaignId: z.number().int(),
+  /** Skip records whose name already exists in the campaign (safe re-imports). */
+  skipDuplicates: z.boolean().optional().default(true),
+  /** Spells are owner-scoped, so importing them needs a character or NPC. */
+  spellOwnerId: z.number().int().nullable().optional(),
+  spellOwnerType: z.enum(["character", "npc"]).nullable().optional(),
+  files: z
+    .array(
+      z.object({
+        path: z.string().min(1).max(1024),
+        content: z.string().max(MARKDOWN_IMPORT_LIMITS.bytesPerFile),
+        target: z.enum(IMPORT_TARGET_VALUES),
+      }),
+    )
+    .min(1, "No files to import")
+    .max(MARKDOWN_IMPORT_LIMITS.filesPerRequest),
+});
+
+export type MarkdownImportInput = z.infer<typeof markdownImportSchema>;
+
+export const characterSheetImportSchema = z.object({
+  campaignId: z.number().int(),
+  character: characterCreateSchema.omit({ campaignId: true }),
+  spells: z
+    .array(spellCreateSchema.omit({ ownerId: true, ownerType: true }))
+    .max(300)
+    .optional()
+    .default([]),
+  spellSlots: z
+    .array(
+      z.object({
+        slotLevel: z.number().int().min(1).max(9),
+        total: nonNegInt(0),
+        used: nonNegInt(0),
+      }),
+    )
+    .max(9)
+    .optional()
+    .default([]),
+  inventory: z
+    .array(inventoryItemCreateSchema.omit({ ownerId: true, ownerType: true }))
+    .max(200)
+    .optional()
+    .default([]),
+});
+
+export type CharacterSheetImportInput = z.infer<typeof characterSheetImportSchema>;
 
 /* re-export helpers for reuse by later entity schemas in this file */
 export { optionalString, stringArray, idArray };

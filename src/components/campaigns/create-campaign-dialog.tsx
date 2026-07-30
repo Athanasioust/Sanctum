@@ -154,7 +154,7 @@ export function CreateCampaignDialog({ trigger }: { trigger?: React.ReactNode })
               </Select>
               <p className="text-xs text-muted-foreground">
                 {calendarType === "custom"
-                  ? "Starts from a 12-month template you can customise on the Calendar page."
+                  ? "Starts from a 12-month template you can customise in Campaign Settings."
                   : "Uses a standard Gregorian calendar for events."}
               </p>
             </div>

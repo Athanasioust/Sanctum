@@ -65,5 +65,8 @@ export const api = {
     request<T>(url, { method: "PATCH", json: body ?? {} }),
   put: <T>(url: string, body?: unknown) =>
     request<T>(url, { method: "PUT", json: body ?? {} }),
+  /** Multipart POST — the browser sets the Content-Type boundary itself. */
+  upload: <T>(url: string, formData: FormData) =>
+    request<T>(url, { method: "POST", body: formData }),
   delete: <T>(url: string) => request<T>(url, { method: "DELETE" }),
 };

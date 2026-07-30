@@ -11,6 +11,7 @@ import { HpBar } from "@/components/shared/hp-bar";
 import { EntityActions } from "@/components/shared/entity-actions";
 import { SpellsTab } from "@/components/characters/spells-tab";
 import { InventoryTab } from "@/components/characters/inventory-tab";
+import { ExportSheetButton } from "@/components/characters/export-sheet-button";
 import { ABILITIES, SKILLS, EXHAUSTION_EFFECTS, hitDieForClass } from "@/lib/constants";
 import { abilityModifier, formatModifier } from "@/lib/dnd";
 import { api } from "@/lib/client";
@@ -58,6 +59,7 @@ export function CharacterDetail({
           ) : null}
         </div>
         <div className="flex items-center gap-2">
+          <ExportSheetButton characterId={character.id} />
           <Button asChild variant="outline">
             <Link href={`/campaign/${campaignId}/characters/${character.id}/edit`}>
               <Pencil className="size-4" /> Edit

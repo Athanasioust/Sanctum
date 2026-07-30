@@ -87,9 +87,26 @@ export function CampaignSettingsForm({ campaign }: { campaign: Campaign }) {
 
       {calendarType === "custom" ? (
         <FormSection title="Custom calendar" description="Define the months of your world's year.">
-          <div className="grid grid-cols-2 gap-3 sm:max-w-md">
+          <div className="grid gap-3 sm:grid-cols-3 sm:max-w-2xl">
             <Field label="Year label">
               <Input value={config.yearLabel ?? ""} onChange={(e) => setConfig((c) => ({ ...c, yearLabel: e.target.value }))} placeholder="AG, DR…" />
+            </Field>
+            <Field
+              label="First year"
+              hint="The epoch your reckoning starts from — weekdays are anchored to day 1 of this year."
+            >
+              <Input
+                type="number"
+                value={config.yearOne ?? 1}
+                onChange={(e) =>
+                  setConfig((c) => ({
+                    ...c,
+                    yearOne: Number.isFinite(Number(e.target.value)) && e.target.value !== ""
+                      ? Math.trunc(Number(e.target.value))
+                      : 1,
+                  }))
+                }
+              />
             </Field>
             <Field label="Weekdays (comma-separated)">
               <Input

@@ -1,11 +1,14 @@
 # Releasing Sanctum on itch.io
 
 A step-by-step guide for publishing the Windows desktop build to itch.io and
-shipping updates. Two phases: **one-time setup** (do once), then the **release
+shipping updates. Two phases: **one-time setup** (done), then the **release
 loop** (repeat for every update).
 
-> Replace `USERNAME` throughout with your itch.io username, and assume the
-> project URL slug is `sanctum`.
+> The project lives at <https://athanasioust.itch.io/sanctum>; the butler target
+> is `athanasioust/sanctum`.
+
+**If you just want to ship an update, skip to [The release loop](#the-release-loop).**
+Everything before it is one-time setup that has already been done.
 
 ---
 
@@ -15,10 +18,10 @@ loop** (repeat for every update).
    ```
    npm run desktop:build
    ```
-   This produces, in `dist/`:
-   - `Sanctum-0.1.0-portable.exe` — no-install, double-click to run
-   - `Sanctum Setup 0.1.0.exe` — installer
-   - `win-unpacked/` — the raw app folder (used by butler, see Phase 3)
+   This produces, in `dist/` (`<ver>` is whatever `package.json` says):
+   - `Sanctum-<ver>-portable.exe` — no-install, double-click to run (~117 MB)
+   - `Sanctum Setup <ver>.exe` — installer (~117 MB)
+   - `win-unpacked/` — the raw app folder (~444 MB; this is what butler pushes)
 
 2. **Make sure the source is publicly available.** Sanctum is **AGPL-3.0**, which
    means anyone you give the binary to is entitled to the corresponding source.
@@ -37,16 +40,16 @@ loop** (repeat for every update).
    | Field | Recommended value |
    |-------|-------------------|
    | **Title** | Sanctum |
-   | **Project URL** | `USERNAME.itch.io/sanctum` |
+   | **Project URL** | `athanasioust.itch.io/sanctum` |
    | **Short description** | e.g. "A local-first D&D 5e campaign manager for Dungeon Masters." |
    | **Classification** | **Tools** (a utility; TTRPG projects also fit under Games — your call) |
    | **Kind of project** | **Downloadable** (NOT "HTML" — Sanctum is a desktop app, not a web game) |
    | **Pricing** | **No payments** or **"Name your own price"** with $0 minimum (lets people tip but keeps it free) |
 
 3. **Uploads** → drag in your file. For the first release, the simplest choice is
-   the **portable exe** (`Sanctum-0.1.0-portable.exe`). After it uploads:
+   the **portable exe** (`Sanctum-<ver>-portable.exe`). After it uploads:
    - Tick the **Windows** platform icon on that file.
-   - (Optional) also upload `Sanctum Setup 0.1.0.exe` and label it "Installer".
+   - (Optional) also upload `Sanctum Setup <ver>.exe` and label it "Installer".
 
 4. **Details / page body** — this is what testers read:
    - Write what Sanctum does and what feedback you want.
@@ -77,63 +80,69 @@ loop** (repeat for every update).
 
 ---
 
-## Phase 2 — Shipping an update the simple way (web upload)
-
-For each new version:
-
-1. Bump the version in `package.json` (e.g. `0.1.0` → `0.1.1`).
-2. `npm run desktop:build`
-3. On the project's **Edit** page → **Uploads**, delete the old exe and upload the
-   new one (keep the Windows platform tick).
-4. Save. Done — browser-download testers get the new file next time they visit.
-
-This is fine for early feedback. The downside: every update re-uploads the full
-~180 MB, and users must manually re-download. **Phase 3 fixes both.**
-
----
-
-## Phase 3 — Smoother updates with butler (recommended once rolling)
+## Phase 2 — butler setup (done)
 
 `butler` is itch's command-line tool. It uploads only the **changed bytes**
 (delta patching) and, combined with the free **itch desktop app**, gives testers
-**automatic updates**.
+**automatic updates**. It is already installed and authenticated on the dev
+machine:
 
-### One-time butler setup
-1. Download butler: <https://itchio.itch.io/butler> (or `itch` app → it bundles it).
-2. Log in:
-   ```
-   butler login
-   ```
+- **Binary**: `C:\Users\athan\.local\bin\butler.exe` (that directory is on the
+  Windows user PATH — note `C:\Users\athan\bin` is **not**, it is only on Git
+  Bash's PATH). Downloaded from
+  <https://broth.itch.zone/butler/windows-amd64/LATEST/archive/default>.
+- **Credentials**: `%USERPROFILE%\.config\itch\butler_creds`, written by
+  `butler login`. If that file is gone, re-run `butler login` in a terminal —
+  it opens a browser for authorisation and cannot be scripted.
 
-### Push a release
-Push the **unpacked app folder** (not the installer) so itch can patch it and the
-itch app can auto-update users:
-```
-butler push "dist/win-unpacked" USERNAME/sanctum:windows --userversion 0.1.1
-```
-- `USERNAME/sanctum` — your project.
-- `windows` — the **channel** name (itch infers the platform from it).
-- `--userversion 0.1.1` — keep this in sync with `package.json`.
+---
 
-Check status anytime:
-```
-butler status USERNAME/sanctum:windows
-```
+## The release loop
 
-### The full release loop with butler
+Every update, from a clean tree:
+
 ```
-# 1. bump "version" in package.json
+# 1. bump "version" in package.json  (e.g. 0.3.0 -> 0.3.1)
 # 2. build
 npm run desktop:build
-# 3. push
-butler push "dist/win-unpacked" USERNAME/sanctum:windows --userversion <new-version>
+# 3. push the unpacked folder, NOT the installer
+butler push "dist/win-unpacked" athanasioust/sanctum:windows --userversion 0.3.1
+# 4. confirm itch finished processing the build
+butler status athanasioust/sanctum:windows
 ```
-End to end: ~3 min to build + seconds-to-minutes to push. Testers on the itch app
-update automatically; the push appears on your page immediately.
 
-> You can keep BOTH: a butler-pushed `windows` channel (for itch-app auto-update)
-> and a manually-uploaded portable exe (for people who just want a direct
-> download). They coexist on the page as separate files.
+- `windows` is the **channel** name — itch infers the platform from it.
+- `--userversion` must match `package.json`; nothing enforces this, so check it.
+- `butler status` shows `√` next to the build number once processing is done.
+  Until then the push is uploaded but not yet served.
+
+The first push uploaded 443 MiB as a 179 MiB patch. Later pushes only send what
+changed, so they are much smaller and usually finish in under a minute.
+
+### Also update the direct-download file
+
+The butler channel and the web-uploaded exe are **two separate things on the same
+page**. A butler push does *not* touch the browser-download file — people who
+download from the page instead of using the itch app will keep getting the old
+version until you swap it manually:
+
+Project **Edit** page → **Uploads** → delete the old exe, drag in the new
+`dist/Sanctum-<ver>-portable.exe`, keep the **Windows** platform tick, **Save**.
+
+Keeping both is deliberate: the channel gives itch-app users auto-updates, the
+exe serves people who just want a direct download.
+
+### Before you push
+
+- **Smoke-test the packaged build.** Copy `dist/win-unpacked` *outside* the
+  project tree first (inside it, Node resolves `better-sqlite3` up to the
+  project's root `node_modules` and reports a bogus ABI mismatch). Launch it and
+  check that **API routes** answer, not just that the window opens — the
+  Turbopack standalone trace has silently dropped the next-server runtimes
+  before, which 500s every route while pages still render fine.
+- **Push the source to GitHub.** Sanctum is AGPL-3.0: anyone given a binary is
+  entitled to the corresponding source, and the itch page points them at the
+  public repo. Ship the commit before (or with) the release, not weeks after.
 
 ---
 
@@ -143,13 +152,15 @@ update automatically; the push appears on your page immediately.
 |------|------------------|
 | Develop (no exe) | `npm run dev` |
 | Build release exes | `npm run desktop:build` |
-| First publish | itch.io web uploader (Phase 1) |
-| Simple update | re-upload exe on Edit page (Phase 2) |
-| Smooth update | `butler push "dist/win-unpacked" USERNAME/sanctum:windows --userversion X` |
+| Ship an update | `butler push "dist/win-unpacked" athanasioust/sanctum:windows --userversion X` |
+| Check a push landed | `butler status athanasioust/sanctum:windows` |
+| Update direct download | re-upload the portable exe on the Edit page |
 | Private testing | Project visibility → **Restricted**, share link |
 | Go live | Project visibility → **Public** |
 
 ## Don't forget
-- Bump `version` in `package.json` every release.
-- Keep the source repo public (AGPL) and linked on the page.
-- Warn users about the SmartScreen prompt in the page body.
+- Bump `version` in `package.json` every release, and pass the same value to
+  `--userversion`.
+- Commit and push the source (AGPL) — the repo is linked from the itch page.
+- Swap the direct-download exe too; butler does not do it for you.
+- Warn users about the SmartScreen prompt in the page body (the app is unsigned).
