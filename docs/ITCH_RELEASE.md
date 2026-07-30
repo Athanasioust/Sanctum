@@ -105,32 +105,37 @@ Every update, from a clean tree:
 # 1. bump "version" in package.json  (e.g. 0.3.0 -> 0.3.1)
 # 2. build
 npm run desktop:build
-# 3. push the unpacked folder, NOT the installer
+# 3. push both channels
 butler push "dist/win-unpacked" athanasioust/sanctum:windows --userversion 0.3.1
-# 4. confirm itch finished processing the build
+butler push "dist/Sanctum-0.3.1-portable.exe" athanasioust/sanctum:windows-portable --userversion 0.3.1
+# 4. confirm itch finished processing each build
 butler status athanasioust/sanctum:windows
+butler status athanasioust/sanctum:windows-portable
 ```
 
-- `windows` is the **channel** name — itch infers the platform from it.
+- `windows` / `windows-portable` are **channel** names — itch infers the platform
+  from the `windows` in them.
 - `--userversion` must match `package.json`; nothing enforces this, so check it.
 - `butler status` shows `√` next to the build number once processing is done.
-  Until then the push is uploaded but not yet served.
+  Until then the push is uploaded but not yet served, and the channel may report
+  "no channel found" for a few seconds on its very first push.
 
-The first push uploaded 443 MiB as a 179 MiB patch. Later pushes only send what
-changed, so they are much smaller and usually finish in under a minute.
+**Nothing on the itch page is uploaded by hand.** Both downloads are butler
+channels, so a release is entirely CLI.
 
-### Also update the direct-download file
+### The two channels
 
-The butler channel and the web-uploaded exe are **two separate things on the same
-page**. A butler push does *not* touch the browser-download file — people who
-download from the page instead of using the itch app will keep getting the old
-version until you swap it manually:
+| Channel | Contents | For |
+|---------|----------|-----|
+| `windows` | `win-unpacked/`, served as a zip | itch-app users — installs and **auto-updates** in place |
+| `windows-portable` | the single portable exe | browser users — download, double-click, done |
 
-Project **Edit** page → **Uploads** → delete the old exe, drag in the new
-`dist/Sanctum-<ver>-portable.exe`, keep the **Windows** platform tick, **Save**.
-
-Keeping both is deliberate: the channel gives itch-app users auto-updates, the
-exe serves people who just want a direct download.
+Push sizes differ a lot, and it is worth knowing why. `win-unpacked` is loose
+files, so butler diffs it file-by-file: the first push sent 443 MiB as a 179 MiB
+patch, and later ones send only what changed. The portable exe is a compressed
+self-extracting blob — change one line of source and nearly every byte differs
+(measured: 0.28% savings), so that channel re-uploads its full ~117 MB every
+time. That is the price of the one-click download; it is not a misconfiguration.
 
 ### Before you push
 
@@ -153,8 +158,8 @@ exe serves people who just want a direct download.
 | Develop (no exe) | `npm run dev` |
 | Build release exes | `npm run desktop:build` |
 | Ship an update | `butler push "dist/win-unpacked" athanasioust/sanctum:windows --userversion X` |
-| Check a push landed | `butler status athanasioust/sanctum:windows` |
-| Update direct download | re-upload the portable exe on the Edit page |
+| …and the direct download | `butler push "dist/Sanctum-X-portable.exe" athanasioust/sanctum:windows-portable --userversion X` |
+| Check a push landed | `butler status athanasioust/sanctum:windows[-portable]` |
 | Private testing | Project visibility → **Restricted**, share link |
 | Go live | Project visibility → **Public** |
 
@@ -162,5 +167,6 @@ exe serves people who just want a direct download.
 - Bump `version` in `package.json` every release, and pass the same value to
   `--userversion`.
 - Commit and push the source (AGPL) — the repo is linked from the itch page.
-- Swap the direct-download exe too; butler does not do it for you.
+- Push **both** channels; a `windows` push alone leaves direct downloaders on the
+  old version.
 - Warn users about the SmartScreen prompt in the page body (the app is unsigned).
