@@ -20,8 +20,10 @@ Everything before it is one-time setup that has already been done.
    ```
    This produces, in `dist/` (`<ver>` is whatever `package.json` says):
    - `Sanctum-<ver>-portable.exe` — no-install, double-click to run (~117 MB).
-     **This is the file that ships**, see [The release loop](#the-release-loop).
-   - `Sanctum Setup <ver>.exe` — installer (~117 MB); not currently published
+   - `Sanctum Setup <ver>.exe` — installer, adds Start-menu and desktop
+     shortcuts and an uninstall entry (~117 MB).
+
+     **Both of these ship**, see [The release loop](#the-release-loop).
    - `win-unpacked/` — the raw app folder (~444 MB); used for smoke-testing, and
      what a `windows` channel would push if auto-updates are ever wanted back
 
@@ -48,10 +50,11 @@ Everything before it is one-time setup that has already been done.
    | **Kind of project** | **Downloadable** (NOT "HTML" — Sanctum is a desktop app, not a web game) |
    | **Pricing** | **No payments** or **"Name your own price"** with $0 minimum (lets people tip but keeps it free) |
 
-3. **Uploads** → drag in your file. For the first release, the simplest choice is
-   the **portable exe** (`Sanctum-<ver>-portable.exe`). After it uploads:
-   - Tick the **Windows** platform icon on that file.
-   - (Optional) also upload `Sanctum Setup <ver>.exe` and label it "Installer".
+3. **Uploads** → nothing to drag in: both files arrive as butler channels (see
+   [The release loop](#the-release-loop)). After the first push of each, itch
+   lists them automatically — set the display name on each so the choice is
+   obvious ("Portable — no install" and "Installer"), and check the **Windows**
+   platform icon is ticked.
 
 4. **Details / page body** — this is what testers read:
    - Write what Sanctum does and what feedback you want.
@@ -104,29 +107,36 @@ machine:
 Every update, from a clean tree:
 
 ```
-# 1. bump "version" in package.json  (e.g. 0.3.0 -> 0.3.1)
+# 1. bump "version" in package.json  (e.g. 0.3.1 -> 0.4.0)
 # 2. build
 npm run desktop:build
-# 3. push the portable exe
-butler push "dist/Sanctum-0.3.1-portable.exe" athanasioust/sanctum:windows-portable --userversion 0.3.1
-# 4. confirm itch finished processing the build
+# 3. push both downloads
+butler push "dist/Sanctum-0.4.0-portable.exe" athanasioust/sanctum:windows-portable --userversion 0.4.0
+butler push "dist/Sanctum Setup 0.4.0.exe" athanasioust/sanctum:windows-installer --userversion 0.4.0
+# 4. confirm itch finished processing both builds
 butler status athanasioust/sanctum:windows-portable
+butler status athanasioust/sanctum:windows-installer
 ```
 
-- `windows-portable` is the **channel** name — itch infers the platform from the
-  `windows` in it.
+- `windows-portable` and `windows-installer` are **channel** names — itch infers
+  the platform from the `windows` in them.
 - `--userversion` must match `package.json`; nothing enforces this, so check it.
 - `butler status` shows `√` next to the build number once processing is done.
   Until then the push is uploaded but not yet served, and a brand-new channel may
   report "no channel found" for a few seconds after its first push.
+- Push **both** channels every release. A channel keeps serving its last build
+  forever, so skipping one leaves a stale version on the page next to the new
+  one — the most likely way to confuse a tester.
 
-**Nothing on the itch page is uploaded by hand.** The single download is a butler
-channel, so a release is entirely CLI.
+**Nothing on the itch page is uploaded by hand.** Both downloads are butler
+channels, so a release is entirely CLI.
 
-### Why only the portable exe
+### The two published downloads
 
-The page deliberately offers **one** file: `Sanctum-<ver>-portable.exe`. Download,
-double-click, done.
+The page offers the portable exe (download, double-click, done — nothing is
+written outside `%APPDATA%\Sanctum`) and the installer (Start-menu and desktop
+shortcuts, an entry in Add/Remove Programs, choose-your-own install directory).
+They are the same app; the choice is only whether it gets installed.
 
 butler can also push `dist/win-unpacked` (the raw app folder) to a channel — that
 is in fact butler's native shape, and it buys two things: real delta patching
@@ -145,10 +155,11 @@ Restoring it is one command — build history on itch is unaffected:
 butler push "dist/win-unpacked" athanasioust/sanctum:windows --userversion <ver>
 ```
 
-Note the portable exe gets no meaningful delta savings (measured: 0.28%) because
-it is a compressed self-extracting blob — change one line of source and nearly
-every byte differs. Each release re-uploads its full ~117 MB. That is the price
-of the one-click download, not a misconfiguration.
+Note neither published exe gets meaningful delta savings (measured on the
+portable: 0.28%) because both are compressed self-extracting blobs — change one
+line of source and nearly every byte differs. Each release re-uploads both in
+full, ~230 MB together. That is the price of the one-click downloads, not a
+misconfiguration.
 
 ### Before you push
 
@@ -170,8 +181,9 @@ of the one-click download, not a misconfiguration.
 |------|------------------|
 | Develop (no exe) | `npm run dev` |
 | Build release exes | `npm run desktop:build` |
-| Ship an update | `butler push "dist/Sanctum-X-portable.exe" athanasioust/sanctum:windows-portable --userversion X` |
-| Check a push landed | `butler status athanasioust/sanctum:windows-portable` |
+| Ship an update (portable) | `butler push "dist/Sanctum-X-portable.exe" athanasioust/sanctum:windows-portable --userversion X` |
+| Ship an update (installer) | `butler push "dist/Sanctum Setup X.exe" athanasioust/sanctum:windows-installer --userversion X` |
+| Check a push landed | `butler status athanasioust/sanctum:windows-portable` (and `:windows-installer`) |
 | Private testing | Project visibility → **Restricted**, share link |
 | Go live | Project visibility → **Public** |
 
@@ -179,5 +191,6 @@ of the one-click download, not a misconfiguration.
 - Bump `version` in `package.json` every release, and pass the same value to
   `--userversion`.
 - Commit and push the source (AGPL) — the repo is linked from the itch page.
-- Check the page after pushing — one download, one version, no stale files.
+- Push **both** channels, then check the page — two downloads, both on the new
+  version, no stale files.
 - Warn users about the SmartScreen prompt in the page body (the app is unsigned).

@@ -31,6 +31,7 @@ export const campaignCreateSchema = z.object({
   inWorldCalendarType: z.enum(["real", "custom"]).optional().default("real"),
   customCalendarConfig: customCalendarConfigSchema,
   currentInWorldDate: z.string().max(120).nullable().optional(),
+  rulebooks: z.array(z.string().trim().min(1).max(80)).max(80).optional(),
 });
 
 export const campaignUpdateSchema = campaignCreateSchema.partial();

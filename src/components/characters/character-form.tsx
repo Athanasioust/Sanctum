@@ -17,7 +17,9 @@ import {
 import { Field, FormSection } from "@/components/shared/form";
 import { AbilityScoresEditor } from "@/components/shared/ability-scores-editor";
 import { CheckboxGroup } from "@/components/shared/checkbox-group";
+import { Combobox } from "@/components/shared/combobox";
 import { ObjectListEditor } from "@/components/shared/object-list-editor";
+import { useCampaignOptions } from "@/components/campaigns/campaign-options-context";
 import { api } from "@/lib/client";
 import {
   ABILITIES,
@@ -28,6 +30,14 @@ import {
   ALIGNMENTS,
   EXHAUSTION_EFFECTS,
 } from "@/lib/constants";
+import {
+  BACKGROUND_CATALOG,
+  CLASS_CATALOG,
+  RACE_CATALOG,
+  optionsFor,
+  subclassOptions,
+  withCampaignValues,
+} from "@/lib/character-options";
 import { abilityModifier, proficiencyBonusForLevel, formatModifier } from "@/lib/dnd";
 import type { Character, MulticlassEntry } from "@/db/schema";
 
@@ -83,6 +93,7 @@ type CharacterFormState = ReturnType<typeof defaults>;
 
 export function CharacterForm({ campaignId, character }: Props) {
   const router = useRouter();
+  const { rulebooks, used } = useCampaignOptions();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<CharacterFormState>(() => {
@@ -117,6 +128,35 @@ export function CharacterForm({ campaignId, character }: Props) {
   const proficiencyBonus = useMemo(
     () => proficiencyBonusForLevel(form.level),
     [form.level],
+  );
+
+  const raceChoices = useMemo(
+    () =>
+      withCampaignValues(
+        optionsFor(RACE_CATALOG, rulebooks).map((value) => ({ value })),
+        used.races,
+      ),
+    [rulebooks, used.races],
+  );
+  const classChoices = useMemo(
+    () =>
+      withCampaignValues(
+        optionsFor(CLASS_CATALOG, rulebooks).map((value) => ({ value })),
+        used.classes,
+      ),
+    [rulebooks, used.classes],
+  );
+  const backgroundChoices = useMemo(
+    () =>
+      withCampaignValues(
+        optionsFor(BACKGROUND_CATALOG, rulebooks).map((value) => ({ value })),
+        used.backgrounds,
+      ),
+    [rulebooks, used.backgrounds],
+  );
+  const subclassChoices = useMemo(
+    () => withCampaignValues(subclassOptions(form.class, rulebooks), used.subclasses),
+    [form.class, rulebooks, used.subclasses],
   );
   const perceptionProficient = form.skillProficiencies.includes("perception");
   const passivePerception =
@@ -178,16 +218,44 @@ export function CharacterForm({ campaignId, character }: Props) {
             />
           </Field>
           <Field label="Race" htmlFor="race">
-            <Input id="race" value={form.race} onChange={(e) => set("race", e.target.value)} />
+            <Combobox
+              id="race"
+              value={form.race}
+              onValueChange={(v) => set("race", v)}
+              options={raceChoices}
+              placeholder="Select a race"
+            />
           </Field>
           <Field label="Class" htmlFor="class">
-            <Input id="class" value={form.class} onChange={(e) => set("class", e.target.value)} />
+            <Combobox
+              id="class"
+              value={form.class}
+              onValueChange={(v) => set("class", v)}
+              options={classChoices}
+              placeholder="Select a class"
+            />
           </Field>
-          <Field label="Subclass" htmlFor="subclass">
-            <Input id="subclass" value={form.subclass} onChange={(e) => set("subclass", e.target.value)} />
+          <Field
+            label="Subclass"
+            htmlFor="subclass"
+            hint={form.class ? undefined : "Pick a class to narrow this list"}
+          >
+            <Combobox
+              id="subclass"
+              value={form.subclass}
+              onValueChange={(v) => set("subclass", v)}
+              options={subclassChoices}
+              placeholder="Select a subclass"
+            />
           </Field>
           <Field label="Background" htmlFor="background">
-            <Input id="background" value={form.background} onChange={(e) => set("background", e.target.value)} />
+            <Combobox
+              id="background"
+              value={form.background}
+              onValueChange={(v) => set("background", v)}
+              options={backgroundChoices}
+              placeholder="Select a background"
+            />
           </Field>
           <Field label="Level">
             <Select value={String(form.level)} onValueChange={(v) => set("level", Number(v))}>
@@ -347,7 +415,13 @@ export function CharacterForm({ campaignId, character }: Props) {
 
       {/* Multiclass */}
       <FormSection title="Multiclassing" description="Add the classes this character has levels in beyond the primary class.">
-        <MulticlassEditor value={form.multiclassInfo} onChange={(v) => set("multiclassInfo", v)} />
+        <MulticlassEditor
+          value={form.multiclassInfo}
+          onChange={(v) => set("multiclassInfo", v)}
+          classChoices={classChoices}
+          rulebooks={rulebooks}
+          usedSubclasses={used.subclasses}
+        />
       </FormSection>
 
       {/* Notes */}
@@ -373,9 +447,15 @@ export function CharacterForm({ campaignId, character }: Props) {
 function MulticlassEditor({
   value,
   onChange,
+  classChoices,
+  rulebooks,
+  usedSubclasses,
 }: {
   value: MulticlassEntry[];
   onChange: (next: MulticlassEntry[]) => void;
+  classChoices: { value: string; group?: string }[];
+  rulebooks: string[];
+  usedSubclasses: string[];
 }) {
   const [keys, setKeys] = useState<string[]>(() => value.map(nextMulticlassKey));
   useEffect(() => {
@@ -398,10 +478,23 @@ function MulticlassEditor({
       {value.map((entry, i) => (
         <div key={keys[i] ?? i} className="flex flex-wrap items-end gap-2 rounded-lg border border-border bg-muted/30 p-3">
           <Field label="Class" className="flex-1">
-            <Input value={entry.className} onChange={(e) => update(i, { className: e.target.value })} placeholder="Wizard" />
+            <Combobox
+              value={entry.className}
+              onValueChange={(v) => update(i, { className: v })}
+              options={classChoices}
+              placeholder="Wizard"
+            />
           </Field>
           <Field label="Subclass" className="flex-1">
-            <Input value={entry.subclass ?? ""} onChange={(e) => update(i, { subclass: e.target.value })} placeholder="Evocation" />
+            <Combobox
+              value={entry.subclass ?? ""}
+              onValueChange={(v) => update(i, { subclass: v })}
+              options={withCampaignValues(
+                subclassOptions(entry.className, rulebooks),
+                usedSubclasses,
+              )}
+              placeholder="School of Evocation"
+            />
           </Field>
           <Field label="Level" className="w-24">
             <Input type="number" min={1} value={entry.level} onChange={(e) => update(i, { level: Number(e.target.value || 1) })} />

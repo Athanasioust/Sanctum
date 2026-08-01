@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation";
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { campaigns } from "@/db/schema";
+import { campaigns, characters, npcs } from "@/db/schema";
 import {
   DesktopSidebar,
   MobileNavBar,
 } from "@/components/layout/campaign-nav";
+import { CampaignOptionsProvider } from "@/components/campaigns/campaign-options-context";
 import { CommandPalette } from "@/components/search/command-palette";
 import { RulesReference } from "@/components/shared/rules-reference";
 
@@ -35,17 +36,47 @@ export default async function CampaignLayout({
     .from(campaigns)
     .orderBy(asc(campaigns.name));
 
+  // Feeds the character/NPC pickers: whatever this campaign already uses stays
+  // offerable even when no rulebook lists it (homebrew classes, monster kinds).
+  const [charValues, npcValues] = await Promise.all([
+    db
+      .selectDistinct({
+        race: characters.race,
+        className: characters.class,
+        subclass: characters.subclass,
+        background: characters.background,
+      })
+      .from(characters)
+      .where(eq(characters.campaignId, id)),
+    db
+      .selectDistinct({ race: npcs.race, className: npcs.class })
+      .from(npcs)
+      .where(eq(npcs.campaignId, id)),
+  ]);
+
+  const campaignOptions = {
+    rulebooks: campaign.rulebooks ?? [],
+    used: {
+      classes: [...charValues, ...npcValues].map((r) => r.className),
+      subclasses: charValues.map((r) => r.subclass),
+      races: [...charValues, ...npcValues].map((r) => r.race),
+      backgrounds: charValues.map((r) => r.background),
+    },
+  };
+
   return (
-    <div className="flex min-h-screen">
-      <DesktopSidebar campaign={campaign} campaigns={allCampaigns} />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <MobileNavBar campaign={campaign} campaigns={allCampaigns} />
-        <main className="flex-1">{children}</main>
+    <CampaignOptionsProvider value={campaignOptions}>
+      <div className="flex min-h-screen">
+        <DesktopSidebar campaign={campaign} campaigns={allCampaigns} />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <MobileNavBar campaign={campaign} campaigns={allCampaigns} />
+          <main className="flex-1">{children}</main>
+        </div>
+        <CommandPalette campaignId={campaign.id} />
+        <div className="fixed bottom-4 right-4 z-40">
+          <RulesReference />
+        </div>
       </div>
-      <CommandPalette campaignId={campaign.id} />
-      <div className="fixed bottom-4 right-4 z-40">
-        <RulesReference />
-      </div>
-    </div>
+    </CampaignOptionsProvider>
   );
 }

@@ -15,8 +15,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Field, FormSection } from "@/components/shared/form";
+import { CheckboxGroup } from "@/components/shared/checkbox-group";
+import { ChipInput } from "@/components/shared/chip-input";
 import { api } from "@/lib/client";
 import { DEFAULT_CUSTOM_CALENDAR } from "@/lib/constants";
+import { SOURCE_BOOKS } from "@/lib/character-options";
 import type { Campaign, CustomCalendarConfig } from "@/db/schema";
 
 export function CampaignSettingsForm({ campaign }: { campaign: Campaign }) {
@@ -29,6 +32,10 @@ export function CampaignSettingsForm({ campaign }: { campaign: Campaign }) {
   const [config, setConfig] = useState<CustomCalendarConfig>(
     campaign.customCalendarConfig ?? DEFAULT_CUSTOM_CALENDAR,
   );
+  const [rulebooks, setRulebooks] = useState<string[]>(campaign.rulebooks ?? []);
+
+  const bookKeys = new Set(SOURCE_BOOKS.map((b) => b.key));
+  const customBooks = rulebooks.filter((b) => !bookKeys.has(b));
 
   async function save() {
     if (!name.trim()) {
@@ -43,6 +50,7 @@ export function CampaignSettingsForm({ campaign }: { campaign: Campaign }) {
         setting,
         inWorldCalendarType: calendarType,
         customCalendarConfig: calendarType === "custom" ? config : null,
+        rulebooks,
       });
       toast.success("Campaign updated");
       router.refresh();
@@ -83,6 +91,30 @@ export function CampaignSettingsForm({ campaign }: { campaign: Campaign }) {
             <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
           </Field>
         </div>
+      </FormSection>
+
+      <FormSection
+        title="Rulebooks"
+        description="Tick the books your table plays with — character race, class, subclass and background pickers narrow to what those books allow. Leave everything unticked to allow all options."
+      >
+        <CheckboxGroup
+          columns={3}
+          options={SOURCE_BOOKS.map((b) => ({ value: b.key, label: b.label }))}
+          value={rulebooks}
+          onChange={setRulebooks}
+        />
+        <Field
+          label="Homebrew rulebooks"
+          hint="Anything you can't find above. These are recorded for reference — the pickers always let you type an option in by hand."
+        >
+          <ChipInput
+            value={customBooks}
+            onChange={(next) =>
+              setRulebooks([...rulebooks.filter((b) => bookKeys.has(b)), ...next])
+            }
+            placeholder="Name a homebrew book and press Enter…"
+          />
+        </Field>
       </FormSection>
 
       {calendarType === "custom" ? (

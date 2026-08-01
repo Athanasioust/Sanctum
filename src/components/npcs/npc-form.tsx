@@ -19,8 +19,16 @@ import { Field, FormSection } from "@/components/shared/form";
 import { AbilityScoresEditor } from "@/components/shared/ability-scores-editor";
 import { CheckboxGroup } from "@/components/shared/checkbox-group";
 import { ChipInput } from "@/components/shared/chip-input";
+import { Combobox } from "@/components/shared/combobox";
 import { ObjectListEditor } from "@/components/shared/object-list-editor";
+import { useCampaignOptions } from "@/components/campaigns/campaign-options-context";
 import { api } from "@/lib/client";
+import {
+  CLASS_CATALOG,
+  RACE_CATALOG,
+  optionsFor,
+  withCampaignValues,
+} from "@/lib/character-options";
 import {
   ABILITIES,
   SKILLS,
@@ -84,6 +92,7 @@ export function NpcForm({
   redirectBase?: "npcs" | "bestiary";
 }) {
   const router = useRouter();
+  const { rulebooks, used } = useCampaignOptions();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<NpcFormState>(() => {
@@ -187,10 +196,27 @@ export function NpcForm({
             </Select>
           </Field>
           <Field label="Race / Kind">
-            <Input value={form.race} onChange={(e) => set("race", e.target.value)} placeholder="Goblinoid" />
+            <Combobox
+              value={form.race}
+              onValueChange={(v) => set("race", v)}
+              options={withCampaignValues(
+                optionsFor(RACE_CATALOG, rulebooks).map((value) => ({ value })),
+                used.races,
+              )}
+              placeholder="Goblinoid"
+              searchPlaceholder="Search, or type any creature kind…"
+            />
           </Field>
           <Field label="Class (optional)">
-            <Input value={form.class} onChange={(e) => set("class", e.target.value)} />
+            <Combobox
+              value={form.class}
+              onValueChange={(v) => set("class", v)}
+              options={withCampaignValues(
+                optionsFor(CLASS_CATALOG, rulebooks).map((value) => ({ value })),
+                used.classes,
+              )}
+              placeholder="Select a class"
+            />
           </Field>
           <Field label="Challenge Rating">
             <Select value={form.challengeRating || "none"} onValueChange={(v) => onCrChange(v === "none" ? "" : v)}>

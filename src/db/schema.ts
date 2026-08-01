@@ -89,6 +89,14 @@ export const campaigns = sqliteTable("campaigns", {
     mode: "json",
   }).$type<CustomCalendarConfig | null>(),
   currentInWorldDate: text("current_in_world_date"),
+  /**
+   * Source books this table plays with, by `SOURCE_BOOKS` key (plus any
+   * homebrew book names typed in settings). Empty means "allow everything".
+   */
+  rulebooks: text("rulebooks", { mode: "json" })
+    .notNull()
+    .default("[]")
+    .$type<string[]>(),
   ...timestamps,
 });
 

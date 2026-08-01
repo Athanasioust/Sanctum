@@ -111,21 +111,8 @@ export const ALIGNMENTS = [
   "Unaligned",
 ] as const;
 
-export const CLASSES = [
-  "Barbarian",
-  "Bard",
-  "Cleric",
-  "Druid",
-  "Fighter",
-  "Monk",
-  "Paladin",
-  "Ranger",
-  "Rogue",
-  "Sorcerer",
-  "Warlock",
-  "Wizard",
-  "Artificer",
-] as const;
+/* Pickable class/race/background *names* live in `character-options.ts`, which
+ * tags each one with the rulebooks it comes from. */
 
 /** Hit die size (dN) per class, for hit-dice healing on a short rest. */
 export const CLASS_HIT_DICE: Record<string, number> = {
@@ -148,25 +135,6 @@ export const CLASS_HIT_DICE: Record<string, number> = {
 export function hitDieForClass(cls: string): number {
   return CLASS_HIT_DICE[cls?.trim()] ?? 8;
 }
-
-export const RACES = [
-  "Human",
-  "Elf",
-  "Dwarf",
-  "Halfling",
-  "Gnome",
-  "Half-Elf",
-  "Half-Orc",
-  "Tiefling",
-  "Dragonborn",
-  "Aasimar",
-  "Goliath",
-  "Tabaxi",
-  "Firbolg",
-  "Genasi",
-  "Orc",
-  "Other",
-] as const;
 
 export const LANGUAGES = [
   "Common",

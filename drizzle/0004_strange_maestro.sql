@@ -1,0 +1,1 @@
+ALTER TABLE `campaigns` ADD `rulebooks` text DEFAULT '[]' NOT NULL;
