@@ -155,11 +155,11 @@ Restoring it is one command — build history on itch is unaffected:
 butler push "dist/win-unpacked" athanasioust/sanctum:windows --userversion <ver>
 ```
 
-Note neither published exe gets meaningful delta savings (measured on the
-portable: 0.28%) because both are compressed self-extracting blobs — change one
-line of source and nearly every byte differs. Each release re-uploads both in
-full, ~230 MB together. That is the price of the one-click downloads, not a
-misconfiguration.
+An earlier note here claimed the portable exe gets no useful delta savings
+(0.28%). That did not hold up: the 0.4.0 push re-used 96.77% of the previous
+build and sent a **3.63 MiB patch (96.90% savings)** for a 118 MB file. Expect
+pushes after the first to be quick. A channel's first push has no baseline and
+uploads in full, so the installer's debut cost the whole 118 MB.
 
 ### Before you push
 
