@@ -411,12 +411,22 @@ function allowed(entry: CatalogEntry, rulebooks: string[]): boolean {
 }
 
 /**
+ * Rulebooks reaching here come from a json database column and from imported
+ * bundles, so a row written by an older build can hold something that is not an
+ * array. Treat anything unusable as "no books ticked" — the pickers then offer
+ * everything, which is the same graceful behaviour as a fresh campaign.
+ */
+function bookList(rulebooks: string[]): string[] {
+  return Array.isArray(rulebooks) ? rulebooks.filter((b) => typeof b === "string") : [];
+}
+
+/**
  * Names from `catalog` that the campaign's rulebooks allow, in catalog order.
  * An empty (or all-homebrew) selection filters nothing — a campaign that has
  * never opened settings must still see every option.
  */
 export function optionsFor(catalog: CatalogEntry[], rulebooks: string[]): string[] {
-  const books = rulebooks ?? [];
+  const books = bookList(rulebooks);
   const filtering = books.some((b) => SOURCE_BOOKS.some((s) => s.key === b));
   const entries = filtering ? catalog.filter((e) => allowed(e, books)) : catalog;
   return [...new Set(entries.map((e) => e.name))];
@@ -447,7 +457,7 @@ export function subclassOptions(
   className: string,
   rulebooks: string[],
 ): { value: string; group?: string }[] {
-  const books = rulebooks ?? [];
+  const books = bookList(rulebooks);
   const filtering = books.some((b) => SOURCE_BOOKS.some((s) => s.key === b));
   const pool = filtering
     ? SUBCLASS_CATALOG.filter((e) => allowed(e, books))

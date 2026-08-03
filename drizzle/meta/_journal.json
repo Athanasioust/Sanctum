@@ -36,6 +36,13 @@
       "when": 1785603497011,
       "tag": "0004_strange_maestro",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1785603497012,
+      "tag": "0005_json_default_repair",
+      "breakpoints": true
     }
   ]
 }

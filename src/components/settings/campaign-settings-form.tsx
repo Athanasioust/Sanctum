@@ -32,7 +32,11 @@ export function CampaignSettingsForm({ campaign }: { campaign: Campaign }) {
   const [config, setConfig] = useState<CustomCalendarConfig>(
     campaign.customCalendarConfig ?? DEFAULT_CUSTOM_CALENDAR,
   );
-  const [rulebooks, setRulebooks] = useState<string[]>(campaign.rulebooks ?? []);
+  const [rulebooks, setRulebooks] = useState<string[]>(
+    // Settings is where a broken campaign gets repaired, so it must survive a
+    // row whose json rulebooks column is not an array.
+    Array.isArray(campaign.rulebooks) ? campaign.rulebooks : [],
+  );
 
   const bookKeys = new Set(SOURCE_BOOKS.map((b) => b.key));
   const customBooks = rulebooks.filter((b) => !bookKeys.has(b));

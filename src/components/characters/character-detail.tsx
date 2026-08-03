@@ -342,7 +342,11 @@ const COINS = [
 
 function CurrencyTracker({ characterId, initial }: { characterId: number; initial: Currency | null }) {
   const defaultCurrency: Currency = { pp: 0, gp: 0, ep: 0, sp: 0, cp: 0 };
-  const [currency, setCurrency] = useState<Currency>(initial ?? defaultCurrency);
+  const [currency, setCurrency] = useState<Currency>(
+    // A row written by an older build can hold the encoded string rather than
+    // an object, which would render every coin box blank.
+    initial && typeof initial === "object" ? initial : defaultCurrency,
+  );
   const [editing, setEditing] = useState<Record<string, string>>({});
 
   async function save(updated: Currency) {

@@ -95,7 +95,10 @@ export const campaigns = sqliteTable("campaigns", {
    */
   rulebooks: text("rulebooks", { mode: "json" })
     .notNull()
-    .default("[]")
+    // Must be a real array, not the string "[]" — a json-mode column encodes
+    // whatever it is given, so a string default lands in the row as '"[]"' and
+    // reads back as a string, breaking every `rulebooks.some(...)` caller.
+    .default([])
     .$type<string[]>(),
   ...timestamps,
 });
@@ -190,7 +193,7 @@ export const characters = sqliteTable("characters", {
   // Feature 4: Currency tracking (PP/GP/EP/SP/CP)
   currency: text("currency", { mode: "json" })
     .notNull()
-    .default('{"pp":0,"gp":0,"ep":0,"sp":0,"cp":0}')
+    .default({ pp: 0, gp: 0, ep: 0, sp: 0, cp: 0 })
     .$type<Currency>(),
 
   // Feature 5: Rest mechanics — hit dice pool
