@@ -39,6 +39,8 @@ import {
   ChevronDown,
   ChevronUp,
   Users,
+  Pencil,
+  Tag,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -91,6 +93,32 @@ export type Addable = {
 };
 
 type EncounterWithParts = Encounter & { participants: CombatParticipant[] };
+
+/** What "Add combatant" hands back — everything needed to create the rows. */
+type AddInput = {
+  name: string;
+  hpMax: number;
+  armorClass: number;
+  initiativeMod?: number;
+  entityId?: number;
+  entityType?: "character" | "npc";
+  /** Add this many copies at once, auto-numbered (Goblin 1, Goblin 2, …). */
+  count?: number;
+};
+
+/**
+ * Keep every combatant's name distinct so the DM can always tell which goblin
+ * is which: "Goblin" → "Goblin 2", "Goblin 3"… An existing trailing number is
+ * counted from rather than stacked on ("Goblin 2" never becomes "Goblin 2 2").
+ */
+function uniqueName(base: string, taken: Set<string>) {
+  if (!taken.has(base)) return base;
+  const match = base.match(/^(.*?)\s*(\d+)$/);
+  const stem = match ? match[1] : base;
+  let n = match ? Number(match[2]) + 1 : 2;
+  while (taken.has(`${stem} ${n}`)) n++;
+  return `${stem} ${n}`;
+}
 
 export function CombatTracker({
   encounter,
@@ -249,28 +277,39 @@ export function CombatTracker({
     }
   }
 
-  async function addParticipant(input: {
-    name: string;
-    hpMax: number;
-    armorClass: number;
-    initiativeMod?: number;
-    entityId?: number;
-    entityType?: "character" | "npc";
-  }) {
-    try {
-      const created = await api.post<CombatParticipant>("/api/participants", {
+  async function addParticipant(input: AddInput) {
+    const count = Math.max(1, Math.min(30, Math.round(input.count ?? 1)));
+    const base = input.name.trim() || "Combatant";
+    const taken = new Set(partsRef.current.map((p) => p.name));
+
+    const payloads = Array.from({ length: count }, (_, i) => {
+      // A batch is numbered from 1; a single add keeps the plain name unless
+      // that name is already in the fight.
+      const name = uniqueName(count > 1 ? `${base} ${i + 1}` : base, taken);
+      taken.add(name);
+      return {
         encounterId: encounter.id,
-        name: input.name,
+        name,
         hpMax: input.hpMax,
         hpCurrent: input.hpMax,
         armorClass: input.armorClass,
         initiativeMod: input.initiativeMod ?? 0,
         entityId: input.entityId ?? null,
         entityType: input.entityType ?? null,
-        turnOrder: parts.length,
-      });
-      setParts((prev) => [...prev, created]);
-      toast.success(`Added ${input.name}`);
+        turnOrder: partsRef.current.length + i,
+      };
+    });
+
+    try {
+      const created = await api.post<CombatParticipant[]>("/api/participants", payloads);
+      const next = [...partsRef.current, ...created];
+      partsRef.current = next;
+      setParts(next);
+      toast.success(
+        created.length > 1
+          ? `Added ${created.length} × ${base}`
+          : `Added ${created[0]?.name ?? base}`,
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to add combatant");
     }
@@ -637,9 +676,7 @@ function ParticipantRow({
         {/* Name + status */}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className={cn("font-medium", isDown && "text-muted-foreground line-through")}>
-              {p.name}
-            </span>
+            <EditableName participant={p} isDown={isDown} onSave={onSave} />
             {isCurrent ? <Badge className="bg-primary text-primary-foreground">Turn</Badge> : null}
             {isDown ? (
               <Badge variant="destructive" className="gap-1">
@@ -730,6 +767,68 @@ function ParticipantRow({
         onConfirm={() => onRemove(p.id)}
       />
     </div>
+  );
+}
+
+/**
+ * The combatant's name, renamed in place. Monsters land in the fight under their
+ * template name ("Goblin 2"); clicking lets the DM call it whatever it is at the
+ * table — "Jerry", "Goblin with the crossbow", "Boss".
+ */
+function EditableName({
+  participant: p,
+  isDown,
+  onSave,
+}: {
+  participant: CombatParticipant;
+  isDown: boolean;
+  onSave: (id: number, patch: Partial<CombatParticipant>) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(p.name);
+
+  function begin() {
+    setDraft(p.name);
+    setEditing(true);
+  }
+
+  function commit() {
+    setEditing(false);
+    const name = draft.trim();
+    if (!name || name === p.name) return;
+    onSave(p.id, { name });
+  }
+
+  if (editing) {
+    return (
+      <Input
+        value={draft}
+        autoFocus
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commit();
+          if (e.key === "Escape") setEditing(false);
+        }}
+        maxLength={120}
+        className="h-7 w-44 px-2 text-sm font-medium"
+        aria-label="Combatant name"
+      />
+    );
+  }
+
+  return (
+    <button
+      onClick={begin}
+      title="Click to rename"
+      className={cn(
+        "group flex items-center gap-1.5 rounded px-1 -mx-1 text-left font-medium hover:bg-accent",
+        isDown && "text-muted-foreground line-through",
+      )}
+    >
+      {p.name}
+      <Pencil className="size-3 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+    </button>
   );
 }
 
@@ -1053,14 +1152,7 @@ function AddCombatantMenu({
   characters: Addable[];
   npcs: Addable[];
   bestiary: Addable[];
-  onAdd: (input: {
-    name: string;
-    hpMax: number;
-    armorClass: number;
-    initiativeMod?: number;
-    entityId?: number;
-    entityType?: "character" | "npc";
-  }) => void;
+  onAdd: (input: AddInput) => void;
 }) {
   const [quickOpen, setQuickOpen] = useState(false);
   const [quick, setQuick] = useState({ name: "", hpMax: 10, armorClass: 10, initiativeMod: 0 });
@@ -1323,7 +1415,8 @@ function CombatLogPanel({
 
 /**
  * Searchable picker for dropping Bestiary templates straight into the fight.
- * Stays open after each pick so a DM can add a whole pack of monsters quickly.
+ * Tapping a creature adds it immediately (so a DM can rattle off a whole pack);
+ * the tag button opens a small form to name it and add several at once.
  */
 function BestiaryPicker({
   open,
@@ -1334,16 +1427,14 @@ function BestiaryPicker({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   bestiary: Addable[];
-  onAdd: (input: {
-    name: string;
-    hpMax: number;
-    armorClass: number;
-    initiativeMod?: number;
-    entityId?: number;
-    entityType?: "character" | "npc";
-  }) => void;
+  onAdd: (input: AddInput) => void;
 }) {
   const [search, setSearch] = useState("");
+  // The creature currently being named, if any — swaps the list for a form.
+  const [naming, setNaming] = useState<Addable | null>(null);
+  const [customName, setCustomName] = useState("");
+  const [count, setCount] = useState("1");
+
   const q = search.trim().toLowerCase();
   const filtered = q
     ? bestiary.filter(
@@ -1352,88 +1443,174 @@ function BestiaryPicker({
       )
     : bestiary;
 
+  function startNaming(entity: Addable) {
+    setNaming(entity);
+    setCustomName(entity.name);
+    setCount("1");
+  }
+
+  function confirmNaming() {
+    if (!naming) return;
+    const qty = Math.max(1, Math.min(30, Math.round(Number(count) || 1)));
+    onAdd({
+      name: customName.trim() || naming.name,
+      hpMax: naming.hpMax,
+      armorClass: naming.armorClass,
+      initiativeMod: naming.initiativeMod,
+      entityId: naming.id,
+      entityType: "npc",
+      count: qty,
+    });
+    setNaming(null);
+  }
+
   return (
     <Dialog
       open={open}
       onOpenChange={(o) => {
         onOpenChange(o);
-        if (!o) setSearch("");
+        if (!o) {
+          setSearch("");
+          setNaming(null);
+        }
       }}
     >
       <DialogContent className="flex max-h-[85vh] max-w-md flex-col">
         <DialogHeader>
-          <DialogTitle>Add from Bestiary</DialogTitle>
+          <DialogTitle>
+            {naming ? `Add ${naming.name}` : "Add from Bestiary"}
+          </DialogTitle>
         </DialogHeader>
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search monsters…"
-            className="pl-8"
-            autoFocus
-          />
-        </div>
-        <p className="-mt-1 text-xs text-muted-foreground">
-          Tap a creature to add it — add several to drop in a whole pack.
-        </p>
-        <div className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-border">
-          {filtered.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">
-              No monsters match.
+
+        {naming ? (
+          <div className="space-y-4 py-1">
+            <Field
+              label="Name in this fight"
+              hint="What you'll call it at the table — “Jerry”, “Goblin Boss”, “Archer”."
+            >
+              <Input
+                value={customName}
+                onChange={(e) => setCustomName(e.target.value)}
+                placeholder={naming.name}
+                maxLength={120}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") confirmNaming();
+                }}
+              />
+            </Field>
+            <Field label="How many?" hint="More than one gets numbered — Jerry 1, Jerry 2…">
+              <Input
+                type="number"
+                min={1}
+                max={30}
+                value={count}
+                onChange={(e) => setCount(e.target.value)}
+              />
+            </Field>
+            <p className="flex items-center gap-3 text-xs text-muted-foreground">
+              <span>HP {naming.hpMax}</span>
+              <span className="flex items-center gap-0.5">
+                <Shield className="size-3" /> {naming.armorClass}
+              </span>
+              <span>
+                Init {naming.initiativeMod >= 0 ? "+" : ""}
+                {naming.initiativeMod}
+              </span>
             </p>
-          ) : (
-            <div className="divide-y divide-border">
-              {filtered.map((b) => {
-                const noHpSet = b.hpMax <= 0;
-                const isDown = !noHpSet && b.hpCurrent <= 0;
-                const blocked = noHpSet || isDown;
-                return (
-                  <button
-                    key={b.id}
-                    type="button"
-                    disabled={blocked}
-                    title={
-                      blocked
-                        ? noHpSet
-                          ? "Can't add — set this creature's Max HP first"
-                          : "Can't add — currently at 0 HP"
-                        : undefined
-                    }
-                    onClick={() =>
-                      onAdd({
-                        name: b.name,
-                        hpMax: b.hpMax,
-                        armorClass: b.armorClass,
-                        initiativeMod: b.initiativeMod,
-                        entityId: b.id,
-                        entityType: "npc",
-                      })
-                    }
-                    className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <span className="min-w-0 truncate font-medium">{b.name}</span>
-                    {blocked ? (
-                      <span className="flex shrink-0 items-center gap-1 text-xs text-destructive/80">
-                        {isDown ? <Skull className="size-3" /> : null}
-                        {noHpSet ? "No HP set" : "Down · 0 HP"}
-                      </span>
-                    ) : (
-                      <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-                        {b.cr ? <span>CR {b.cr}</span> : null}
-                        <span>HP {b.hpMax}</span>
-                        <span className="flex items-center gap-0.5">
-                          <Shield className="size-3" />
-                          {b.armorClass}
-                        </span>
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setNaming(null)}>
+                Back
+              </Button>
+              <Button onClick={confirmNaming}>Add</Button>
+            </DialogFooter>
+          </div>
+        ) : (
+          <>
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search monsters…"
+                className="pl-8"
+                autoFocus
+              />
             </div>
-          )}
-        </div>
+            <p className="-mt-1 text-xs text-muted-foreground">
+              Tap a creature to add it, or use{" "}
+              <Tag className="inline size-3 align-[-2px]" /> to name it and add several.
+            </p>
+            <div className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-border">
+              {filtered.length === 0 ? (
+                <p className="py-6 text-center text-sm text-muted-foreground">
+                  No monsters match.
+                </p>
+              ) : (
+                <div className="divide-y divide-border">
+                  {filtered.map((b) => {
+                    const noHpSet = b.hpMax <= 0;
+                    const isDown = !noHpSet && b.hpCurrent <= 0;
+                    const blocked = noHpSet || isDown;
+                    const blockedReason = noHpSet
+                      ? "Can't add — set this creature's Max HP first"
+                      : "Can't add — currently at 0 HP";
+                    return (
+                      <div
+                        key={b.id}
+                        className="flex items-stretch transition-colors hover:bg-accent"
+                      >
+                        <button
+                          type="button"
+                          disabled={blocked}
+                          title={blocked ? blockedReason : `Add ${b.name}`}
+                          onClick={() =>
+                            onAdd({
+                              name: b.name,
+                              hpMax: b.hpMax,
+                              armorClass: b.armorClass,
+                              initiativeMod: b.initiativeMod,
+                              entityId: b.id,
+                              entityType: "npc",
+                            })
+                          }
+                          className="flex min-w-0 flex-1 items-center justify-between gap-3 px-3 py-2 text-left text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <span className="min-w-0 truncate font-medium">{b.name}</span>
+                          {blocked ? (
+                            <span className="flex shrink-0 items-center gap-1 text-xs text-destructive/80">
+                              {isDown ? <Skull className="size-3" /> : null}
+                              {noHpSet ? "No HP set" : "Down · 0 HP"}
+                            </span>
+                          ) : (
+                            <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+                              {b.cr ? <span>CR {b.cr}</span> : null}
+                              <span>HP {b.hpMax}</span>
+                              <span className="flex items-center gap-0.5">
+                                <Shield className="size-3" />
+                                {b.armorClass}
+                              </span>
+                            </span>
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={blocked}
+                          onClick={() => startNaming(b)}
+                          title={blocked ? blockedReason : `Name ${b.name} and add several`}
+                          aria-label={`Add ${b.name} with a custom name`}
+                          className="flex shrink-0 items-center border-l border-border px-2.5 text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <Tag className="size-3.5" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );

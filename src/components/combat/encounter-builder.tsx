@@ -46,6 +46,9 @@ export function EncounterBuilder({
     () => new Set(party.map((c) => c.id)),
   );
   const [counts, setCounts] = useState<Record<number, number>>({});
+  // Per-monster name for this fight, keyed by bestiary id. Blank = use the
+  // template's own name.
+  const [labels, setLabels] = useState<Record<number, string>>({});
   const [search, setSearch] = useState("");
   const [name, setName] = useState("");
   const [starting, setStarting] = useState(false);
@@ -130,12 +133,13 @@ export function EncounterBuilder({
       }
       for (const m of monsters) {
         const n = counts[m.id] ?? 0;
+        const base = labels[m.id]?.trim() || m.name;
         for (let i = 0; i < n; i++) {
           payloads.push({
             encounterId: encounter.id,
             entityId: m.id,
             entityType: "npc",
-            name: n > 1 ? `${m.name} ${i + 1}` : m.name,
+            name: n > 1 ? `${base} ${i + 1}` : base,
             hpMax: m.hpMax,
             hpCurrent: m.hpMax,
             armorClass: m.armorClass,
@@ -229,25 +233,39 @@ export function EncounterBuilder({
                     <div
                       key={m.id}
                       className={cn(
-                        "flex items-center justify-between gap-2 rounded-lg border px-2.5 py-1.5 text-sm",
+                        "rounded-lg border px-2.5 py-1.5 text-sm",
                         n > 0 ? "border-primary/40 bg-primary/5" : "border-border",
                       )}
                     >
-                      <span className="min-w-0">
-                        <span className="font-medium">{m.name}</span>
-                        <span className="block text-xs text-muted-foreground">
-                          {m.cr ? `CR ${m.cr} · ` : ""}{m.xp.toLocaleString()} XP
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="min-w-0">
+                          <span className="font-medium">{m.name}</span>
+                          <span className="block text-xs text-muted-foreground">
+                            {m.cr ? `CR ${m.cr} · ` : ""}{m.xp.toLocaleString()} XP
+                          </span>
                         </span>
-                      </span>
-                      <span className="flex shrink-0 items-center gap-1">
-                        <Button size="icon" variant="outline" className="size-7" onClick={() => setCount(m.id, n - 1)} disabled={n === 0} aria-label={`Remove ${m.name}`}>
-                          <Minus className="size-3.5" />
-                        </Button>
-                        <span className="w-5 text-center tabular-nums">{n}</span>
-                        <Button size="icon" variant="outline" className="size-7" onClick={() => setCount(m.id, n + 1)} aria-label={`Add ${m.name}`}>
-                          <Plus className="size-3.5" />
-                        </Button>
-                      </span>
+                        <span className="flex shrink-0 items-center gap-1">
+                          <Button size="icon" variant="outline" className="size-7" onClick={() => setCount(m.id, n - 1)} disabled={n === 0} aria-label={`Remove ${m.name}`}>
+                            <Minus className="size-3.5" />
+                          </Button>
+                          <span className="w-5 text-center tabular-nums">{n}</span>
+                          <Button size="icon" variant="outline" className="size-7" onClick={() => setCount(m.id, n + 1)} aria-label={`Add ${m.name}`}>
+                            <Plus className="size-3.5" />
+                          </Button>
+                        </span>
+                      </div>
+                      {n > 0 ? (
+                        <Input
+                          value={labels[m.id] ?? ""}
+                          onChange={(e) =>
+                            setLabels((l) => ({ ...l, [m.id]: e.target.value }))
+                          }
+                          placeholder={`Name in this fight (default “${m.name}”)`}
+                          maxLength={100}
+                          aria-label={`Name for ${m.name} in this encounter`}
+                          className="mt-1.5 h-7 text-xs"
+                        />
+                      ) : null}
                     </div>
                   );
                 })}

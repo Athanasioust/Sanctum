@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { Plus, Network, Pencil, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -163,7 +163,46 @@ type NodeData = {
   name: string;
   x: number;
   y: number;
+  /** Unit vector pointing away from the graph's centre — where the label goes. */
+  ux: number;
+  uy: number;
 };
+
+/** Live width of an element, so the graph can be laid out for the space it has. */
+function useElementWidth<T extends HTMLElement>() {
+  const ref = useRef<T | null>(null);
+  const [width, setWidth] = useState(0);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    setWidth(el.getBoundingClientRect().width);
+    const observer = new ResizeObserver(([entry]) => {
+      setWidth(entry.contentRect.width);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return [ref, width] as const;
+}
+
+/** "Sildar Hallwinter" → "SH", "Klarg" → "KL" — fits inside a node dot. */
+function initials(name: string) {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "?";
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
+}
+
+function truncate(name: string, max: number) {
+  return name.length > max ? name.slice(0, max - 1) + "…" : name;
+}
+
+const NODE_R = 20;
+/** Room reserved around the ring for the labels that sit outside the nodes. */
+const LABEL_MARGIN_X = 92;
+const LABEL_MARGIN_Y = 46;
 
 function RelationGraph({
   npcs,
@@ -173,11 +212,15 @@ function RelationGraph({
   relationships: NpcRelationship[];
 }) {
   const [hovered, setHovered] = useState<number | null>(null);
-  const W = 700;
-  const H = 500;
+  const [wrapRef, measured] = useElementWidth<HTMLDivElement>();
+
+  // Falls back to a sensible width for the first paint (and for SSR), then
+  // re-lays out against the real container size.
+  const W = Math.max(320, Math.round(measured || 760));
+  const H = Math.max(340, Math.min(680, Math.round(W * 0.66)));
   const CX = W / 2;
   const CY = H / 2;
-  const R = 180;
+  const R = Math.max(70, Math.min(CX - LABEL_MARGIN_X, CY - LABEL_MARGIN_Y));
 
   // Only include NPCs that appear in at least one relationship
   const involvedIds = useMemo(() => {
@@ -192,21 +235,69 @@ function RelationGraph({
   const nodes: NodeData[] = useMemo(() => {
     const visible = npcs.filter((n) => involvedIds.has(n.id));
     if (visible.length === 0) return [];
+    if (visible.length === 1) {
+      const [only] = visible;
+      return [{ id: only.id, name: only.name, x: CX, y: CY, ux: 0, uy: 1 }];
+    }
     return visible.map((npc, i) => {
       const angle = (2 * Math.PI * i) / visible.length - Math.PI / 2;
-      return {
-        id: npc.id,
-        name: npc.name,
-        x: CX + R * Math.cos(angle),
-        y: CY + R * Math.sin(angle),
-      };
+      const ux = Math.cos(angle);
+      const uy = Math.sin(angle);
+      return { id: npc.id, name: npc.name, x: CX + R * ux, y: CY + R * uy, ux, uy };
     });
-  }, [npcs, involvedIds]);
+  }, [npcs, involvedIds, CX, CY, R]);
 
   const nodeMap = useMemo(
     () => Object.fromEntries(nodes.map((n) => [n.id, n])),
     [nodes],
   );
+
+  // Two NPCs can be linked more than once (A→B "rival" and B→A "employer").
+  // Fan those edges out along the pair's normal so none hide behind another.
+  const edges = useMemo(() => {
+    const seen = new Map<string, number>();
+    const total = new Map<string, number>();
+    for (const rel of relationships) {
+      const key = [rel.sourceNpcId, rel.targetNpcId].sort((a, b) => a - b).join("-");
+      total.set(key, (total.get(key) ?? 0) + 1);
+    }
+    return relationships.flatMap((rel) => {
+      const src = nodeMap[rel.sourceNpcId];
+      const tgt = nodeMap[rel.targetNpcId];
+      if (!src || !tgt) return [];
+      const key = [rel.sourceNpcId, rel.targetNpcId].sort((a, b) => a - b).join("-");
+      const index = seen.get(key) ?? 0;
+      seen.set(key, index + 1);
+
+      // Measure the normal along a canonical low-id → high-id direction. Taking
+      // it from src → tgt instead would flip it for a reciprocal pair (A→B and
+      // B→A), cancelling out the flip in `spread` and stacking both curves on
+      // exactly the same path.
+      const [a, b] =
+        rel.sourceNpcId <= rel.targetNpcId ? [src, tgt] : [tgt, src];
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const spread = (index - ((total.get(key) ?? 1) - 1) / 2) * 30;
+      // Control point: the midpoint pushed along the pair's normal.
+      const cx = (src.x + tgt.x) / 2 + (-dy / len) * spread;
+      const cy = (src.y + tgt.y) / 2 + (dx / len) * spread;
+      // Midpoint of the quadratic curve, where the type label sits.
+      const lx = (src.x + 2 * cx + tgt.x) / 4;
+      const ly = (src.y + 2 * cy + tgt.y) / 4;
+
+      return [{ rel, src, tgt, cx, cy, lx, ly }];
+    });
+  }, [relationships, nodeMap]);
+
+  const usedTypes = useMemo(() => {
+    const set = new Set(relationships.map((r) => r.relationshipType));
+    return [...set].sort();
+  }, [relationships]);
+
+  // Edge labels are noise on a busy graph — show them all while the graph is
+  // small, otherwise only for the NPC being hovered.
+  const showAllLabels = edges.length <= 8;
 
   if (nodes.length === 0) {
     return (
@@ -217,80 +308,128 @@ function RelationGraph({
   }
 
   return (
-    <div className="overflow-x-auto">
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        className="w-full max-w-2xl rounded-xl border border-border bg-card/50"
-        style={{ minWidth: 320 }}
-      >
-        {/* Edges */}
-        {relationships.map((rel) => {
-          const src = nodeMap[rel.sourceNpcId];
-          const tgt = nodeMap[rel.targetNpcId];
-          if (!src || !tgt) return null;
-          const color = EDGE_COLORS[rel.relationshipType] ?? EDGE_COLORS.other;
-          const isHighlighted = hovered === rel.sourceNpcId || hovered === rel.targetNpcId;
-          const mx = (src.x + tgt.x) / 2;
-          const my = (src.y + tgt.y) / 2;
-          return (
-            <g key={rel.id}>
-              <line
-                x1={src.x}
-                y1={src.y}
-                x2={tgt.x}
-                y2={tgt.y}
-                stroke={color}
-                strokeWidth={isHighlighted ? 2.5 : 1.5}
-                strokeOpacity={isHighlighted ? 0.9 : 0.45}
-              />
-              <text
-                x={mx}
-                y={my - 4}
-                textAnchor="middle"
-                fontSize={9}
-                fill={color}
-                fillOpacity={isHighlighted ? 0.9 : 0.55}
-                className="pointer-events-none capitalize"
-              >
-                {rel.relationshipType}
-              </text>
-            </g>
-          );
-        })}
+    <div className="space-y-3">
+      <div ref={wrapRef} className="w-full">
+        <svg
+          width={W}
+          height={H}
+          viewBox={`0 0 ${W} ${H}`}
+          className="w-full rounded-xl border border-border bg-card/50"
+          onMouseLeave={() => setHovered(null)}
+        >
+          {/* Edges */}
+          {edges.map(({ rel, src, tgt, cx, cy, lx, ly }) => {
+            const color = EDGE_COLORS[rel.relationshipType] ?? EDGE_COLORS.other;
+            const touchesHovered =
+              hovered === rel.sourceNpcId || hovered === rel.targetNpcId;
+            const dimmed = hovered !== null && !touchesHovered;
+            return (
+              <g key={rel.id} className="pointer-events-none">
+                <path
+                  d={`M ${src.x} ${src.y} Q ${cx} ${cy} ${tgt.x} ${tgt.y}`}
+                  fill="none"
+                  stroke={color}
+                  strokeWidth={touchesHovered ? 3 : 1.75}
+                  strokeOpacity={dimmed ? 0.15 : touchesHovered ? 1 : 0.6}
+                  strokeLinecap="round"
+                />
+                {showAllLabels || touchesHovered ? (
+                  <text
+                    x={lx}
+                    y={ly - 5}
+                    textAnchor="middle"
+                    fontSize={10}
+                    fontWeight={600}
+                    fill={color}
+                    fillOpacity={dimmed ? 0.2 : 1}
+                    stroke="var(--card)"
+                    strokeWidth={3}
+                    strokeLinejoin="round"
+                    paintOrder="stroke"
+                    className="select-none capitalize"
+                  >
+                    {rel.relationshipType}
+                  </text>
+                ) : null}
+              </g>
+            );
+          })}
 
-        {/* Nodes */}
-        {nodes.map((node) => {
-          const isHighlighted = hovered === node.id;
-          return (
-            <g
-              key={node.id}
-              onMouseEnter={() => setHovered(node.id)}
-              onMouseLeave={() => setHovered(null)}
-              className="cursor-pointer"
-            >
-              <circle
-                cx={node.x}
-                cy={node.y}
-                r={isHighlighted ? 22 : 18}
-                fill={isHighlighted ? "hsl(var(--primary))" : "hsl(var(--card))"}
-                stroke={isHighlighted ? "hsl(var(--primary))" : "hsl(var(--border))"}
-                strokeWidth={2}
-                className="transition-all"
-              />
-              <text
-                x={node.x}
-                y={node.y + 4}
-                textAnchor="middle"
-                fontSize={isHighlighted ? 11 : 10}
-                fill="hsl(var(--foreground))"
-                className="pointer-events-none select-none font-medium"
+          {/* Nodes */}
+          {nodes.map((node) => {
+            const isHovered = hovered === node.id;
+            const dimmed = hovered !== null && !isHovered;
+            const labelX = node.x + node.ux * (NODE_R + 12);
+            const labelY = node.y + node.uy * (NODE_R + 12) + 4;
+            // Push the label off to whichever side of the ring the node is on,
+            // so it never lands on top of the dot or the edges.
+            const anchor =
+              Math.abs(node.ux) < 0.35 ? "middle" : node.ux > 0 ? "start" : "end";
+            return (
+              <g
+                key={node.id}
+                onMouseEnter={() => setHovered(node.id)}
+                onFocus={() => setHovered(node.id)}
+                onBlur={() => setHovered(null)}
+                tabIndex={0}
+                className="cursor-pointer outline-none"
+                opacity={dimmed ? 0.45 : 1}
               >
-                {node.name.length > 10 ? node.name.slice(0, 10) + "…" : node.name}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
+                <circle
+                  cx={node.x}
+                  cy={node.y}
+                  r={isHovered ? NODE_R + 3 : NODE_R}
+                  fill={isHovered ? "var(--primary)" : "var(--secondary)"}
+                  stroke={isHovered ? "var(--primary)" : "var(--border)"}
+                  strokeWidth={2}
+                />
+                <text
+                  x={node.x}
+                  y={node.y + 4}
+                  textAnchor="middle"
+                  fontSize={11}
+                  fontWeight={700}
+                  fill={isHovered ? "var(--primary-foreground)" : "var(--foreground)"}
+                  className="pointer-events-none select-none"
+                >
+                  {initials(node.name)}
+                </text>
+                <text
+                  x={labelX}
+                  y={labelY}
+                  textAnchor={anchor}
+                  fontSize={12}
+                  fontWeight={isHovered ? 700 : 500}
+                  fill={isHovered ? "var(--primary)" : "var(--foreground)"}
+                  stroke="var(--card)"
+                  strokeWidth={3.5}
+                  strokeLinejoin="round"
+                  paintOrder="stroke"
+                  className="pointer-events-none select-none"
+                >
+                  {truncate(node.name, 18)}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+
+      {/* Legend — only the types actually in play */}
+      <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+        {usedTypes.map((type) => (
+          <span key={type} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span
+              className="size-2.5 rounded-full"
+              style={{ backgroundColor: EDGE_COLORS[type] ?? EDGE_COLORS.other }}
+            />
+            <span className="capitalize">{type}</span>
+          </span>
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Hover an NPC to isolate their connections.
+      </p>
     </div>
   );
 }

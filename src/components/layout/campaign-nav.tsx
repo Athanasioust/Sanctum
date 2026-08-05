@@ -146,7 +146,7 @@ function NavLinks({
             href={href}
             onClick={onNavigate}
             className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              "flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
               active
                 ? "bg-primary/15 text-primary"
                 : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-foreground",
@@ -168,13 +168,15 @@ export function CampaignNavContent({
   onNavigate,
 }: Props & { onNavigate?: () => void }) {
   return (
-    <div className="flex h-full flex-col gap-4 p-3">
+    // `min-h-0` on the flex children is what lets the nav list scroll instead of
+    // growing past the rail and pushing the badge off-screen on short windows.
+    <div className="flex h-full min-h-0 flex-col gap-3 p-3">
       <CampaignSwitcher campaign={campaign} campaigns={campaigns} />
       <SearchTrigger onNavigate={onNavigate} />
-      <ScrollArea className="-mx-1 flex-1 px-1">
+      <ScrollArea className="-mx-1 min-h-0 flex-1 px-1">
         <NavLinks campaign={campaign} onNavigate={onNavigate} />
       </ScrollArea>
-      <BuiltByBadge className="border-t border-sidebar-border pt-3" />
+      <BuiltByBadge className="shrink-0 border-t border-sidebar-border pt-3" />
     </div>
   );
 }
@@ -182,7 +184,7 @@ export function CampaignNavContent({
 /** Desktop sidebar rail (always visible at md+). */
 export function DesktopSidebar(props: Props) {
   return (
-    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-sidebar-border bg-sidebar md:block">
+    <aside className="sticky top-0 hidden h-screen w-56 shrink-0 overflow-hidden border-r border-sidebar-border bg-sidebar md:block lg:w-64">
       <CampaignNavContent {...props} />
     </aside>
   );

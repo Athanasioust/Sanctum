@@ -9,7 +9,7 @@
 // In development (`app.isPackaged === false`) no server is spawned — the window
 // simply loads a `next dev` instance (default http://localhost:3000).
 
-const { app, BrowserWindow, shell, dialog } = require("electron");
+const { app, BrowserWindow, Menu, screen, shell, dialog } = require("electron");
 const path = require("node:path");
 const fs = require("node:fs");
 const net = require("node:net");
@@ -135,12 +135,200 @@ function openLogStream() {
   }
 }
 
+/* -------------------------------------------------------------------------- */
+/* Window state                                                                */
+
+// Preferred size on a first run; always shrunk to whatever the display can
+// actually show (a 1400x900 window does not fit a 1280x720 work area, which is
+// what a 1080p screen at 150% scaling reports — the window then gets clipped
+// and parts of the UI become unreachable).
+const PREFERRED_SIZE = { width: 1400, height: 900 };
+const MIN_SIZE = { width: 820, height: 560 };
+const ZOOM_LIMITS = { min: 0.5, max: 2 };
+
+/** @type {{width:number,height:number,x?:number,y?:number,maximized:boolean,zoomFactor:number}} */
+let windowState = { ...PREFERRED_SIZE, maximized: false, zoomFactor: 1 };
+let saveStateTimer = null;
+
+function windowStatePath() {
+  return path.join(app.getPath("userData"), "window-state.json");
+}
+
+function loadWindowState() {
+  try {
+    const raw = JSON.parse(fs.readFileSync(windowStatePath(), "utf8"));
+    if (typeof raw !== "object" || raw === null) return;
+    const num = (v) => (typeof v === "number" && Number.isFinite(v) ? v : undefined);
+    windowState = {
+      width: num(raw.width) ?? PREFERRED_SIZE.width,
+      height: num(raw.height) ?? PREFERRED_SIZE.height,
+      x: num(raw.x),
+      y: num(raw.y),
+      maximized: raw.maximized === true,
+      zoomFactor: clampZoom(num(raw.zoomFactor) ?? 1),
+    };
+  } catch {
+    /* first run, or an unreadable file — the defaults are fine */
+  }
+}
+
+function saveWindowState() {
+  clearTimeout(saveStateTimer);
+  saveStateTimer = setTimeout(() => {
+    try {
+      fs.writeFileSync(windowStatePath(), JSON.stringify(windowState, null, 2));
+    } catch {
+      /* persisting the layout is best-effort */
+    }
+  }, 300);
+}
+
+/** Snapshot the live window into `windowState` (skipping bounds while maximized). */
+function captureWindowState() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  const maximized = mainWindow.isMaximized() || mainWindow.isFullScreen();
+  if (!maximized) {
+    const { x, y, width, height } = mainWindow.getBounds();
+    windowState = { ...windowState, x, y, width, height };
+  }
+  windowState.maximized = maximized;
+  saveWindowState();
+}
+
+function clampZoom(factor) {
+  return Math.min(ZOOM_LIMITS.max, Math.max(ZOOM_LIMITS.min, factor));
+}
+
+/**
+ * Clamp the remembered bounds to a display that still exists, so the window can
+ * never open larger than the screen or off the edge of it (e.g. after
+ * unplugging a monitor or changing the display scale).
+ */
+function fitToWorkArea(state) {
+  const hasPosition = state.x !== undefined && state.y !== undefined;
+  const display = hasPosition
+    ? screen.getDisplayMatching({
+        x: state.x,
+        y: state.y,
+        width: state.width,
+        height: state.height,
+      })
+    : screen.getPrimaryDisplay();
+  const area = display.workArea;
+
+  const width = Math.min(state.width, area.width);
+  const height = Math.min(state.height, area.height);
+
+  const fitsOnScreen =
+    hasPosition &&
+    state.x + width > area.x &&
+    state.x < area.x + area.width &&
+    state.y + height > area.y &&
+    state.y < area.y + area.height;
+
+  const x = fitsOnScreen
+    ? Math.max(area.x, Math.min(state.x, area.x + area.width - width))
+    : area.x + Math.round((area.width - width) / 2);
+  const y = fitsOnScreen
+    ? Math.max(area.y, Math.min(state.y, area.y + area.height - height))
+    : area.y + Math.round((area.height - height) / 2);
+
+  // On a display too small for the preferred size, open maximized rather than
+  // handing the user a window they have to resize before anything fits.
+  const clamped = width < state.width || height < state.height;
+
+  return { x, y, width, height, clamped };
+}
+
+function setZoom(factor) {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  const next = clampZoom(Math.round(factor * 20) / 20);
+  mainWindow.webContents.setZoomFactor(next);
+  windowState.zoomFactor = next;
+  saveWindowState();
+}
+
+/**
+ * Minimal menu. Zoom lives here (rather than on Electron's stock View role) so
+ * the chosen level is remembered between launches.
+ */
+function buildMenu() {
+  const zoomBy = (step) => () => {
+    if (!mainWindow) return;
+    setZoom(mainWindow.webContents.getZoomFactor() + step);
+  };
+
+  return Menu.buildFromTemplate([
+    {
+      label: "File",
+      submenu: [
+        {
+          label: "Reload",
+          accelerator: "CmdOrCtrl+R",
+          click: () => mainWindow?.webContents.reload(),
+        },
+        { type: "separator" },
+        { role: "quit" },
+      ],
+    },
+    { role: "editMenu" },
+    {
+      label: "View",
+      submenu: [
+        { label: "Zoom In", accelerator: "CmdOrCtrl+Plus", click: zoomBy(0.1) },
+        { label: "Zoom In", accelerator: "CmdOrCtrl+=", visible: false, click: zoomBy(0.1) },
+        { label: "Zoom Out", accelerator: "CmdOrCtrl+-", click: zoomBy(-0.1) },
+        { label: "Actual Size", accelerator: "CmdOrCtrl+0", click: () => setZoom(1) },
+        { type: "separator" },
+        { role: "togglefullscreen" },
+        {
+          label: "Reset Window Size",
+          click: () => {
+            if (!mainWindow) return;
+            if (mainWindow.isFullScreen()) mainWindow.setFullScreen(false);
+            if (mainWindow.isMaximized()) mainWindow.unmaximize();
+            const fitted = fitToWorkArea({ ...PREFERRED_SIZE });
+            mainWindow.setBounds({
+              x: fitted.x,
+              y: fitted.y,
+              width: fitted.width,
+              height: fitted.height,
+            });
+            setZoom(1);
+          },
+        },
+        { type: "separator" },
+        { role: "toggleDevTools" },
+      ],
+    },
+    {
+      label: "Help",
+      submenu: [
+        {
+          label: "Open Data Folder",
+          click: () => shell.openPath(app.getPath("userData")),
+        },
+        {
+          label: "Open Diagnostic Log",
+          click: () => shell.openPath(logFilePath()),
+        },
+      ],
+    },
+  ]);
+}
+
 function createWindow(url) {
+  const fitted = fitToWorkArea(windowState);
+
   mainWindow = new BrowserWindow({
-    width: 1400,
-    height: 900,
-    minWidth: 940,
-    minHeight: 600,
+    x: fitted.x,
+    y: fitted.y,
+    width: fitted.width,
+    height: fitted.height,
+    // Never demand more room than the display has, or the window becomes
+    // unresizable below its own minimum and the edges stay cut off.
+    minWidth: Math.min(MIN_SIZE.width, fitted.width),
+    minHeight: Math.min(MIN_SIZE.height, fitted.height),
     backgroundColor: "#0a0a0a",
     show: false,
     icon: path.join(__dirname, "icon.ico"),
@@ -151,7 +339,27 @@ function createWindow(url) {
     },
   });
 
+  Menu.setApplicationMenu(buildMenu());
+
+  if (windowState.maximized || fitted.clamped) mainWindow.maximize();
+
   mainWindow.once("ready-to-show", () => mainWindow.show());
+
+  // Restore the remembered zoom level once a document exists to apply it to.
+  mainWindow.webContents.on("did-finish-load", () => {
+    mainWindow?.webContents.setZoomFactor(windowState.zoomFactor);
+  });
+
+  // Ctrl+wheel zooming bypasses the menu — keep the saved level in step.
+  mainWindow.webContents.on("zoom-changed", (_event, direction) => {
+    setZoom(mainWindow.webContents.getZoomFactor() + (direction === "in" ? 0.1 : -0.1));
+  });
+
+  mainWindow.on("resize", captureWindowState);
+  mainWindow.on("move", captureWindowState);
+  mainWindow.on("maximize", captureWindowState);
+  mainWindow.on("unmaximize", captureWindowState);
+  mainWindow.on("close", captureWindowState);
 
   // Open external (non-app) links in the user's default browser.
   mainWindow.webContents.setWindowOpenHandler(({ url: target }) => {
@@ -170,6 +378,7 @@ function createWindow(url) {
 
 async function boot() {
   openLogStream();
+  loadWindowState();
 
   let url;
   try {
@@ -220,6 +429,13 @@ if (!gotLock) {
 
   app.on("before-quit", () => {
     app.isQuitting = true;
+    // Flush the debounced layout write before the process goes away.
+    clearTimeout(saveStateTimer);
+    try {
+      fs.writeFileSync(windowStatePath(), JSON.stringify(windowState, null, 2));
+    } catch {
+      /* best-effort */
+    }
     if (serverProcess) {
       log("Stopping server");
       serverProcess.kill();
