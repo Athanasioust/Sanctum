@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Plus, Trash2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -39,6 +40,7 @@ import {
   withCampaignValues,
 } from "@/lib/character-options";
 import { abilityModifier, proficiencyBonusForLevel, formatModifier } from "@/lib/dnd";
+import { cn } from "@/lib/utils";
 import type { Character, MulticlassEntry } from "@/db/schema";
 
 type Props = { campaignId: number; character?: Character };
@@ -70,6 +72,7 @@ function defaults(campaignId: number) {
     speed: 30,
     initiativeBonus: 0,
     initiative: 0,
+    darkvision: 0,
     savingThrowProficiencies: [] as string[],
     skillProficiencies: [] as string[],
     resistances: [] as string[],
@@ -81,6 +84,7 @@ function defaults(campaignId: number) {
     bonds: "",
     flaws: "",
     personalityTraits: "",
+    backstory: "",
     feats: [] as { name: string; description: string }[],
     multiclassInfo: [] as MulticlassEntry[],
     conditions: [] as string[],
@@ -123,6 +127,15 @@ export function CharacterForm({ campaignId, character }: Props) {
       hpCurrent:
         f.hpCurrent === f.hpMax || f.hpCurrent === 0 ? next : f.hpCurrent,
     }));
+  }
+
+  // The checkbox is tracked separately from the range so clearing the number
+  // box mid-edit doesn't collapse the field out from under the cursor.
+  const [hasDarkvision, setHasDarkvision] = useState(() => (character?.darkvision ?? 0) > 0);
+
+  function toggleDarkvision(on: boolean) {
+    setHasDarkvision(on);
+    set("darkvision", on ? form.darkvision || 60 : 0);
   }
 
   const proficiencyBonus = useMemo(
@@ -248,15 +261,6 @@ export function CharacterForm({ campaignId, character }: Props) {
               placeholder="Select a subclass"
             />
           </Field>
-          <Field label="Background" htmlFor="background">
-            <Combobox
-              id="background"
-              value={form.background}
-              onValueChange={(v) => set("background", v)}
-              options={backgroundChoices}
-              placeholder="Select a background"
-            />
-          </Field>
           <Field label="Level">
             <Select value={String(form.level)} onValueChange={(v) => set("level", Number(v))}>
               <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
@@ -315,6 +319,34 @@ export function CharacterForm({ campaignId, character }: Props) {
         <p className="text-sm text-muted-foreground">
           Passive Perception: <span className="font-medium text-foreground">{passivePerception}</span> (auto-calculated)
         </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <label
+            className={cn(
+              "flex cursor-pointer items-center gap-2 rounded-md border border-border px-2.5 py-1.5 text-sm transition-colors",
+              hasDarkvision ? "border-primary/50 bg-primary/10" : "hover:bg-muted",
+            )}
+          >
+            <Checkbox
+              checked={hasDarkvision}
+              onCheckedChange={(c) => toggleDarkvision(c === true)}
+            />
+            <span className="select-none">Darkvision</span>
+          </label>
+          {hasDarkvision ? (
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min={0}
+                step={30}
+                className="w-24"
+                value={form.darkvision}
+                onChange={(e) => set("darkvision", Math.max(0, Number(e.target.value || 0)))}
+                aria-label="Darkvision range in feet"
+              />
+              <span className="text-sm text-muted-foreground">ft — commonly 60 or 120</span>
+            </div>
+          ) : null}
+        </div>
       </FormSection>
 
       {/* Ability Scores */}
@@ -376,8 +408,8 @@ export function CharacterForm({ campaignId, character }: Props) {
         </FormSection>
       </div>
 
-      {/* Personality */}
-      <FormSection title="Personality & Background">
+      {/* Characteristics */}
+      <FormSection title="Characteristics" description="What this character is like at the table.">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Personality Traits">
             <Textarea value={form.personalityTraits} onChange={(e) => set("personalityTraits", e.target.value)} rows={3} />
@@ -392,6 +424,27 @@ export function CharacterForm({ campaignId, character }: Props) {
             <Textarea value={form.flaws} onChange={(e) => set("flaws", e.target.value)} rows={3} />
           </Field>
         </div>
+      </FormSection>
+
+      {/* Background */}
+      <FormSection title="Background" description="Where this character came from.">
+        <Field label="Background" htmlFor="background" className="sm:max-w-sm">
+          <Combobox
+            id="background"
+            value={form.background}
+            onValueChange={(v) => set("background", v)}
+            options={backgroundChoices}
+            placeholder="Select a background"
+          />
+        </Field>
+        <Field label="Backstory">
+          <Textarea
+            value={form.backstory}
+            onChange={(e) => set("backstory", e.target.value)}
+            rows={6}
+            placeholder="How they grew up, what drove them to adventure, who they left behind…"
+          />
+        </Field>
       </FormSection>
 
       {/* Features & feats */}

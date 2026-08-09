@@ -843,6 +843,11 @@ function proficienciesPanel(f: Fonts, c: Character): Panel | null {
   return { title: "Languages", units: paragraphUnits(f.body, languages, 7.5) };
 }
 
+function sensesPanel(f: Fonts, c: Character): Panel | null {
+  if (c.darkvision <= 0) return null;
+  return { title: "Senses", units: paragraphUnits(f.body, `Darkvision ${c.darkvision} ft.`, 7.5) };
+}
+
 function defencesPanel(f: Fonts, c: Character): Panel | null {
   const units = [
     ...labelledUnits(f, "Resistances", c.resistances.join(", ")),
@@ -910,14 +915,19 @@ function multiclassPanel(f: Fonts, c: Character): Panel | null {
   return { title: "Multiclass", units };
 }
 
-function personalityPanel(f: Fonts, c: Character): Panel | null {
+function characteristicsPanel(f: Fonts, c: Character): Panel | null {
   const units = [
     ...labelledUnits(f, "Personality Traits", c.personalityTraits),
     ...labelledUnits(f, "Ideals", c.ideals),
     ...labelledUnits(f, "Bonds", c.bonds),
     ...labelledUnits(f, "Flaws", c.flaws),
   ];
-  return units.length > 0 ? { title: "Personality", units } : null;
+  return units.length > 0 ? { title: "Characteristics", units } : null;
+}
+
+function backstoryPanel(f: Fonts, c: Character): Panel | null {
+  if (!c.backstory.trim()) return null;
+  return { title: "Backstory", units: paragraphUnits(f.body, c.backstory, 7.2) };
 }
 
 /** Shared shape for features, feats and magic items: a bold name then prose. */
@@ -1186,7 +1196,11 @@ function writeRoundTripFields(ctx: Ctx, data: CharacterSheetData) {
   hiddenField(ctx, "Bonds", c.bonds);
   hiddenField(ctx, "Flaws", c.flaws);
   hiddenField(ctx, "Treasure", magicItems.map((item) => item.name).join("\n"));
-  hiddenField(ctx, "Backstory", c.notes);
+  hiddenField(ctx, "Backstory", c.backstory);
+  // Not a WotC field — notes used to ride in "Backstory", which now carries the
+  // real backstory, so they get their own slot for the round trip.
+  hiddenField(ctx, "SanctumNotes", c.notes);
+  if (c.darkvision > 0) hiddenField(ctx, "Darkvision", String(c.darkvision));
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1265,11 +1279,13 @@ export async function buildCharacterSheetPdf(data: CharacterSheetData): Promise<
     savesPanel(fonts, c, scores),
     skillsPanel(fonts, c, scores),
     proficienciesPanel(fonts, c),
+    sensesPanel(fonts, c),
     defencesPanel(fonts, c),
     conditionsPanel(fonts, c),
     currencyPanel(c.currency),
     multiclassPanel(fonts, c),
-    personalityPanel(fonts, c),
+    characteristicsPanel(fonts, c),
+    backstoryPanel(fonts, c),
     featuresPanel(fonts, c),
     featsPanel(fonts, c),
     equipmentPanel(fonts, data.inventory),

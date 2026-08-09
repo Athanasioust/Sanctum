@@ -134,6 +134,8 @@ export const characters = sqliteTable("characters", {
   initiativeBonus: integer("initiative_bonus").notNull().default(0),
   initiative: integer("initiative").notNull().default(0),
   passivePerception: integer("passive_perception").notNull().default(10),
+  /** Darkvision range in feet; 0 = none. */
+  darkvision: integer("darkvision").notNull().default(0),
 
   savingThrowProficiencies: text("saving_throw_proficiencies", { mode: "json" })
     .notNull()
@@ -174,6 +176,8 @@ export const characters = sqliteTable("characters", {
   bonds: text("bonds").notNull().default(""),
   flaws: text("flaws").notNull().default(""),
   personalityTraits: text("personality_traits").notNull().default(""),
+  /** Free-text background story, separate from the background name above. */
+  backstory: text("backstory").notNull().default(""),
 
   feats: text("feats", { mode: "json" })
     .notNull()

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { Pencil, Heart, Shield, Gauge, Zap, Eye, Award, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState, useEffect, useTransition } from "react";
+import { Pencil, Heart, Shield, Gauge, Zap, Eye, Award, Sparkles, Moon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -95,6 +96,7 @@ export function CharacterDetail({
           <TabsTrigger value="spells">Spells</TabsTrigger>
           <TabsTrigger value="inventory">Inventory</TabsTrigger>
           <TabsTrigger value="magic-items">Magic Items</TabsTrigger>
+          <TabsTrigger value="characteristics">Characteristics</TabsTrigger>
           <TabsTrigger value="background">Background</TabsTrigger>
           <TabsTrigger value="features">Features &amp; Feats</TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
@@ -108,6 +110,9 @@ export function CharacterDetail({
             <StatTile icon={Zap} label="Initiative" value={character.initiative} />
             <StatTile icon={Zap} label="Initiative Bonus" value={formatModifier(character.initiativeBonus)} />
             <StatTile icon={Eye} label="Passive Perception" value={character.passivePerception} />
+            {character.darkvision > 0 ? (
+              <StatTile icon={Moon} label="Darkvision" value={`${character.darkvision} ft`} />
+            ) : null}
             <StatTile icon={Award} label="Proficiency" value={formatModifier(prof)} />
             <StatTile icon={Heart} label="Experience" value={character.experiencePoints} />
           </div>
@@ -131,10 +136,10 @@ export function CharacterDetail({
           <HitDiceTracker
             characterId={character.id}
             level={character.level}
-            initialTotal={character.hitDiceTotal}
-            initialUsed={character.hitDiceUsed}
-            initialHp={character.hpCurrent}
-            initialExhaustion={character.exhaustionLevel}
+            total={character.hitDiceTotal}
+            used={character.hitDiceUsed}
+            hp={character.hpCurrent}
+            exhaustion={character.exhaustionLevel}
             hpMax={character.hpMax}
             conMod={abilityModifier(character.con)}
             hitDie={hitDieForClass(character.class)}
@@ -210,12 +215,18 @@ export function CharacterDetail({
           <CharacterMagicItemsTab characterId={character.id} campaignId={campaignId} />
         </TabsContent>
 
-        {/* Background */}
-        <TabsContent value="background" className="space-y-4">
+        {/* Characteristics */}
+        <TabsContent value="characteristics" className="space-y-4">
           <TextBlock title="Personality Traits" text={character.personalityTraits} />
           <TextBlock title="Ideals" text={character.ideals} />
           <TextBlock title="Bonds" text={character.bonds} />
           <TextBlock title="Flaws" text={character.flaws} />
+        </TabsContent>
+
+        {/* Background */}
+        <TabsContent value="background" className="space-y-4">
+          <TextBlock title="Background" text={character.background} />
+          <TextBlock title="Backstory" text={character.backstory} />
         </TabsContent>
 
         {/* Features & feats */}
@@ -410,28 +421,32 @@ function CurrencyTracker({ characterId, initial }: { characterId: number; initia
 function HitDiceTracker({
   characterId,
   level,
-  initialTotal,
-  initialUsed,
-  initialHp,
-  initialExhaustion,
+  total: totalProp,
+  used,
+  hp,
+  exhaustion,
   hpMax,
   conMod,
   hitDie,
 }: {
   characterId: number;
   level: number;
-  initialTotal: number;
-  initialUsed: number;
-  initialHp: number;
-  initialExhaustion: number;
+  total: number;
+  used: number;
+  hp: number;
+  exhaustion: number;
   hpMax: number;
   conMod: number;
   hitDie: number;
 }) {
-  const [used, setUsed] = useState(initialUsed);
-  const [hp, setHp] = useState(initialHp);
-  const [exhaustion, setExhaustion] = useState(initialExhaustion);
-  const total = initialTotal > 0 ? initialTotal : level;
+  const router = useRouter();
+  // Every value shown here comes from the server-fetched character, so a rest
+  // can't leave the tracker and the header showing different HP. `saving`
+  // covers the window between the PATCH and the refreshed props arriving.
+  const [saving, setSaving] = useState(false);
+  const [refreshing, startRefresh] = useTransition();
+  const busy = saving || refreshing;
+  const total = totalProp > 0 ? totalProp : level;
   const available = Math.max(0, total - used);
 
   async function spendHitDie() {
@@ -439,25 +454,26 @@ function HitDiceTracker({
     const roll = Math.floor(Math.random() * hitDie) + 1;
     const healed = Math.max(1, roll + conMod);
     const newHp = Math.min(hpMax, hp + healed);
-    const newUsed = used + 1;
-    setUsed(newUsed);
-    setHp(newHp);
-    toast.success(`Spent hit die — rolled d${hitDie} (${roll}) + CON ${conMod} = +${healed} HP`);
+    setSaving(true);
     try {
-      await api.patch(`/api/characters/${characterId}`, { hitDiceUsed: newUsed, hpCurrent: newHp });
+      await api.patch(`/api/characters/${characterId}`, { hitDiceUsed: used + 1, hpCurrent: newHp });
+      toast.success(`Spent hit die — rolled d${hitDie} (${roll}) + CON ${conMod} = +${healed} HP`);
+      startRefresh(() => router.refresh());
     } catch {
       toast.error("Failed to save");
+    } finally {
+      setSaving(false);
     }
   }
 
   async function longRest() {
-    // Recover HP to full, half your hit dice (min 1), one level of exhaustion,
-    // clear temp HP / death saves, and reset all spell slots.
-    const newUsed = Math.max(0, used - Math.max(1, Math.floor(total / 2)));
+    // Recover HP to full, every hit die, one level of exhaustion, clear temp HP
+    // / death saves, and reset all spell slots. RAW 5e only gives back half your
+    // hit dice; we refund them all by request — at low levels the halved refund
+    // reads as "one die per rest".
+    const newUsed = 0;
     const nextExhaustion = Math.max(0, exhaustion - 1);
-    setUsed(newUsed);
-    setHp(hpMax);
-    setExhaustion(nextExhaustion);
+    setSaving(true);
     try {
       await api.patch(`/api/characters/${characterId}`, {
         hitDiceUsed: newUsed,
@@ -476,8 +492,11 @@ function HitDiceTracker({
           .map((s) => api.patch(`/api/spell-slots/${s.id}`, { used: 0 })),
       );
       toast.success("Long rest taken — HP, hit dice and spell slots restored");
+      startRefresh(() => router.refresh());
     } catch {
       toast.error("Failed to save");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -508,11 +527,11 @@ function HitDiceTracker({
           variant="outline"
           size="sm"
           onClick={spendHitDie}
-          disabled={available <= 0}
+          disabled={available <= 0 || busy}
         >
           Short Rest (spend 1d{hitDie})
         </Button>
-        <Button variant="outline" size="sm" onClick={longRest}>
+        <Button variant="outline" size="sm" onClick={longRest} disabled={busy}>
           Long Rest
         </Button>
       </div>

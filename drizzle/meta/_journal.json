@@ -43,6 +43,13 @@
       "when": 1785603497012,
       "tag": "0005_json_default_repair",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1786237018942,
+      "tag": "0006_funny_tempest",
+      "breakpoints": true
     }
   ]
 }

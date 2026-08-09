@@ -219,6 +219,7 @@ export type ParsedCharacterSheet = {
     speed: number;
     initiativeBonus: number;
     passivePerception: number;
+    darkvision: number;
     savingThrowProficiencies: string[];
     skillProficiencies: string[];
     languages: string[];
@@ -228,6 +229,7 @@ export type ParsedCharacterSheet = {
     bonds: string;
     flaws: string;
     personalityTraits: string;
+    backstory: string;
     currency: { pp: number; gp: number; ep: number; sp: number; cp: number };
     hitDiceTotal: number;
     hitDiceUsed: number;
@@ -536,7 +538,8 @@ export function mapSheetToCharacter(fields: SheetFields): ParsedCharacterSheet {
   const noteParts: string[] = [];
   appendSection(noteParts, "Attacks & Spellcasting", pick(fields, ["AttacksSpellcasting", "Attacks and Spellcasting"]));
   appendSection(noteParts, "Other Proficiencies & Languages", proficienciesLang);
-  appendSection(noteParts, "Backstory", pick(fields, ["Backstory", "Character Backstory"]));
+  // "Backstory" now lands in its own column, so it no longer doubles up here.
+  appendSection(noteParts, "Notes", pick(fields, ["SanctumNotes"]));
   appendSection(noteParts, "Allies & Organizations", pick(fields, ["Allies", "AlliesOrganizations", "FactionName"]));
   appendSection(noteParts, "Treasure", pick(fields, ["Treasure"]));
 
@@ -605,6 +608,7 @@ export function mapSheetToCharacter(fields: SheetFields): ParsedCharacterSheet {
       speed: clamp(pickInt(fields, ["Speed"]) ?? 30, 0, 500),
       initiativeBonus: parseSigned(pick(fields, ["Initiative", "InitiativeBonus"])) ?? abilityModifier(abilities.dex),
       passivePerception: clamp(pickInt(fields, ["Passive", "Passive Perception"]) ?? 10, 0, 40),
+      darkvision: clamp(pickInt(fields, ["Darkvision"]) ?? 0, 0, 999),
       savingThrowProficiencies,
       skillProficiencies,
       languages,
@@ -614,6 +618,7 @@ export function mapSheetToCharacter(fields: SheetFields): ParsedCharacterSheet {
       bonds: (pick(fields, ["Bonds"]) ?? "").slice(0, 2000),
       flaws: (pick(fields, ["Flaws"]) ?? "").slice(0, 2000),
       personalityTraits: (pick(fields, ["PersonalityTraits ", "PersonalityTraits", "Personality Traits"]) ?? "").slice(0, 2000),
+      backstory: (pick(fields, ["Backstory", "Character Backstory"]) ?? "").slice(0, 20000),
       currency: {
         pp: clamp(pickInt(fields, ["PP"]) ?? 0, 0, 999999),
         gp: clamp(pickInt(fields, ["GP"]) ?? 0, 0, 999999),
