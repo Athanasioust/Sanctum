@@ -171,15 +171,22 @@ carry. The native `better-sqlite3` binary is fine either way — the prebuilt
 download strategy publishes `electron-v146-linux-x64` too — but the packaging
 step is not.
 
+butler must be installed **inside WSL** too — the Windows `butler.exe` cannot
+see the WSL filesystem's executable bits. It is already set up at
+`~/.local/bin/butler`, using a copy of the same API key
+(`cp /mnt/c/Users/athan/.config/itch/butler_creds ~/.config/itch/`); that file
+is a plain one-line key and is portable across platforms, so no second
+`butler login` is needed.
+
 From a WSL checkout of the repo (its own `npm ci`, not the Windows
 `node_modules` — the native binaries differ):
 
 ```
 npm ci
 npm run desktop:build:linux
-butler push "dist/Sanctum-0.4.3.AppImage" athanasioust/sanctum:linux --userversion 0.4.3
-butler push "dist/sanctum-0.4.3.tar.gz" athanasioust/sanctum:linux-tar --userversion 0.4.3
-butler status athanasioust/sanctum:linux
+butler push "dist/Sanctum-0.4.4.AppImage" athanasioust/sanctum:linux-appimage --userversion 0.4.4
+butler push "dist/sanctum-0.4.4.tar.gz" athanasioust/sanctum:linux-tar --userversion 0.4.4
+butler status athanasioust/sanctum
 ```
 
 Note the casing: electron-builder names the AppImage from `productName`
