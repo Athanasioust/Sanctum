@@ -1,11 +1,12 @@
 {
   "name": "sanctum",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "private": true,
   "license": "AGPL-3.0-only",
   "author": "athanasioust",
   "description": "Sanctum — a local-first D&D 5e campaign manager for Dungeon Masters.",
   "main": "electron/main.js",
+  "desktopName": "sanctum.desktop",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -14,6 +15,8 @@
     "electron": "electron .",
     "desktop:dev": "electron .",
     "desktop:build": "node scripts/build-desktop.mjs",
+    "desktop:build:win": "node scripts/build-desktop.mjs --win",
+    "desktop:build:linux": "node scripts/build-desktop.mjs --linux",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/migrate.ts",
     "db:push": "drizzle-kit push",

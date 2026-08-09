@@ -161,6 +161,55 @@ build and sent a **3.63 MiB patch (96.90% savings)** for a 118 MB file. Expect
 pushes after the first to be quick. A channel's first push has no baseline and
 uploads in full, so the installer's debut cost the whole 118 MB.
 
+### Linux builds
+
+Linux artifacts must be built **on Linux** — WSL is fine. `npm run desktop:build`
+refuses to cross-build rather than producing something subtly broken:
+electron-builder needs `fpm` for deb/rpm (no Windows build), and AppImage/tar.gz
+need real executable bits and the setuid `chrome-sandbox`, which NTFS cannot
+carry. The native `better-sqlite3` binary is fine either way — the prebuilt
+download strategy publishes `electron-v146-linux-x64` too — but the packaging
+step is not.
+
+From a WSL checkout of the repo (its own `npm ci`, not the Windows
+`node_modules` — the native binaries differ):
+
+```
+npm ci
+npm run desktop:build:linux
+butler push "dist/Sanctum-0.4.3.AppImage" athanasioust/sanctum:linux --userversion 0.4.3
+butler push "dist/sanctum-0.4.3.tar.gz" athanasioust/sanctum:linux-tar --userversion 0.4.3
+butler status athanasioust/sanctum:linux
+```
+
+Note the casing: electron-builder names the AppImage from `productName`
+(`Sanctum-…`) but the tarball from `executableName` (`sanctum-…`). Copy the
+names from `ls dist/` rather than typing them.
+
+- **AppImage is the primary download.** It is self-contained and handles its own
+  sandboxing; the tar.gz is for people who prefer to unpack it, and on some
+  distros an unpacked build needs `--no-sandbox` to launch.
+- Tick **Linux** in the itch page's platform list, or the downloads are offered
+  to Windows users only.
+- Build on the oldest distro you intend to support. glibc is forward- but not
+  backward-compatible, so an Ubuntu 24.04 build will not run on 22.04.
+- Linux filesystems are case-sensitive. A wrongly-cased import builds fine on
+  Windows and fails in WSL — that build is the check, so don't skip it before a
+  release that touched imports.
+- **AppImage bundles Sanctum, not Chromium's system libraries.** Electron links
+  against the distro's NSS and ALSA, so a minimal install (a bare WSL Ubuntu, a
+  slim container, some server images) cannot launch it. The 0.4.3 build was
+  missing `libnspr4.so`, `libnss3.so`, `libnssutil3.so`, `libsmime3.so` and
+  `libasound.so.2`, i.e.:
+
+  ```
+  sudo apt install -y libnss3 libnspr4 libasound2t64   # libasound2 pre-24.04
+  ```
+
+  A normal Ubuntu/Fedora desktop already has all of these — this only bites
+  minimal environments. Say so on the itch page anyway; it is the single most
+  likely "it doesn't start" report.
+
 ### Before you push
 
 - **Smoke-test the packaged build.** Copy `dist/win-unpacked` *outside* the

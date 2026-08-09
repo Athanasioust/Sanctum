@@ -331,7 +331,9 @@ function createWindow(url) {
     minHeight: Math.min(MIN_SIZE.height, fitted.height),
     backgroundColor: "#0a0a0a",
     show: false,
-    icon: path.join(__dirname, "icon.ico"),
+    // Windows reads the .ico; Linux window managers need a PNG. (macOS takes
+    // its icon from the bundle, so the option is ignored there.)
+    icon: path.join(__dirname, process.platform === "win32" ? "icon.ico" : "icon.png"),
     title: "Sanctum",
     webPreferences: {
       contextIsolation: true,

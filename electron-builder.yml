@@ -52,3 +52,32 @@ nsis:
 
 portable:
   artifactName: Sanctum-${version}-portable.exe
+
+# Linux artifacts must be built ON Linux (WSL is fine) — see the note in
+# scripts/build-desktop.mjs. AppImage is the primary download: it is self
+# contained and bundles its own sandbox handling. The tar.gz is a fallback for
+# people who prefer to unpack it themselves; on some distros an unpacked build
+# needs `--no-sandbox` (or a root-owned setuid chrome-sandbox) to launch.
+linux:
+  icon: electron/icon.png
+  # Sanctum ships on itch.io alongside games and players look for it in the
+  # Games menu; switch to Utility if you would rather it filed as a tool.
+  category: Game
+  synopsis: Local-first D&D 5e campaign manager
+  description: >-
+    A local-first Dungeon Master's campaign manager for D&D 5e. Characters,
+    NPCs, combat, maps, quests and notes live in a single SQLite database on
+    your machine. No account, no cloud.
+  executableName: sanctum
+  # Without this the desktop environment cannot associate the running window
+  # with the .desktop entry, so the taskbar shows a generic icon instead of
+  # Sanctum's. It syncs Electron's WM_CLASS to the `desktopName` declared in
+  # package.json (which is where electron-builder reads that name from).
+  syncDesktopName: true
+  target:
+    - target: AppImage
+      arch:
+        - x64
+    - target: tar.gz
+      arch:
+        - x64
