@@ -105,14 +105,14 @@ export function PlayerScreen({
   }, [load]);
 
   return (
-    <main className="min-h-screen bg-background px-4 py-6 sm:px-8">
-      <header className="mb-6 flex items-center justify-between">
+    <main className="min-h-screen bg-background px-3 py-4 sm:px-8 sm:py-6">
+      <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="flex size-10 items-center justify-center rounded-lg bg-primary/15 text-primary">
             <Swords className="size-5" />
           </div>
           <div>
-            <h1 className="font-heading text-2xl font-semibold tracking-tight">{campaignName}</h1>
+            <h1 className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">{campaignName}</h1>
             <p className="text-xs text-muted-foreground">Player view · updates live</p>
           </div>
         </div>
@@ -138,7 +138,7 @@ export function PlayerScreen({
             </section>
           )}
 
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_1fr]">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.4fr_1fr] lg:gap-6">
             {/* Initiative */}
             <section>
               <h2 className="mb-3 font-heading text-lg font-semibold text-muted-foreground">
@@ -179,7 +179,7 @@ export function PlayerScreen({
               <h2 className="mb-4 flex items-center gap-2 font-heading text-lg font-semibold text-muted-foreground">
                 <Image className="size-4" /> Handouts
               </h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
                 {state.handouts.map((h) => (
                   <HandoutCard key={h.id} handout={h} />
                 ))}
@@ -228,16 +228,16 @@ function InitiativeRow({ p, current }: { p: CombatParticipant; current: boolean 
   return (
     <div
       className={cn(
-        "flex items-center gap-4 rounded-xl border bg-card p-3 transition-colors",
+        "flex items-center gap-3 rounded-xl border bg-card p-3 transition-colors sm:gap-4",
         current ? "border-primary ring-2 ring-primary/40" : "border-border",
         down && "opacity-60",
       )}
     >
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-lg font-semibold tabular-nums">
+      <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-muted text-lg font-semibold tabular-nums sm:size-10">
         {p.initiativeTotal}
       </div>
       <div className="min-w-0 flex-1">
-        <p className={cn("truncate text-lg font-medium", down && "line-through")}>{p.name}</p>
+        <p className={cn("truncate text-base font-medium sm:text-lg", down && "line-through")}>{p.name}</p>
         {/* PCs show real HP; monsters show only a status so players can't metagame. */}
         {isPc ? (
           <div className="mt-1 h-2 w-full max-w-xs overflow-hidden rounded-full bg-muted">

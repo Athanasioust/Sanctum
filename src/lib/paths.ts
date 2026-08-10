@@ -16,6 +16,9 @@ const DATA_ROOT = process.env.SANCTUM_DATA_ROOT
   ? path.resolve(process.env.SANCTUM_DATA_ROOT)
   : process.cwd();
 
+/** The writable root itself, for settings files that sit beside the data. */
+export const DATA_ROOT_DIR = DATA_ROOT;
+
 export const DATA_DIR = path.join(DATA_ROOT, "data");
 export const DB_PATH = path.join(DATA_DIR, "sanctum.db");
 export const BACKUPS_DIR = path.join(DATA_ROOT, "backups");

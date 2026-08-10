@@ -7,6 +7,7 @@ import { PageContainer, PageHeader } from "@/components/shared/page-header";
 import { CampaignSettingsForm } from "@/components/settings/campaign-settings-form";
 import { BackupsManager } from "@/components/settings/backups-manager";
 import { DangerZone } from "@/components/settings/danger-zone";
+import { PlayerViewSharing } from "@/components/settings/player-view-sharing";
 import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +30,10 @@ export default async function SettingsPage({
       <div className="space-y-10">
         <section>
           <CampaignSettingsForm campaign={campaign} />
+        </section>
+
+        <section>
+          <PlayerViewSharing campaignId={campaignId} />
         </section>
 
         <section className="rounded-xl border border-border bg-card p-5">

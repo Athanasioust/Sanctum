@@ -17,7 +17,28 @@ const http = require("node:http");
 const { spawn } = require("node:child_process");
 
 const isDev = !app.isPackaged;
+// The window always talks to the server over loopback. What changes with
+// local-network sharing is what the server *binds* to, not how we reach it.
 const HOST = "127.0.0.1";
+
+/**
+ * Local-network sharing, off unless the DM turned it on in Settings.
+ *
+ * With it off the server binds to loopback and nothing it serves is reachable
+ * from another machine. With it on the server binds to every interface so
+ * players can open the read-only player view on their phones. Read here rather
+ * than asked for over IPC because the decision is needed before the server
+ * starts; the setting is written by /api/lan and takes effect on restart.
+ */
+function lanSharingEnabled() {
+  try {
+    const configPath = path.join(app.getPath("userData"), "lan.json");
+    const parsed = JSON.parse(fs.readFileSync(configPath, "utf8"));
+    return parsed?.enabled === true;
+  } catch {
+    return false;
+  }
+}
 
 /** @type {import('node:child_process').ChildProcess | null} */
 let serverProcess = null;
@@ -75,6 +96,7 @@ function waitForServer(port, timeoutMs = 30000) {
 }
 
 function startServer(port) {
+  const bindHost = lanSharingEnabled() ? "0.0.0.0" : HOST;
   const standaloneDir = path.join(process.resourcesPath, "standalone");
   const serverEntry = path.join(standaloneDir, "server.js");
 
@@ -88,13 +110,16 @@ function startServer(port) {
     ELECTRON_RUN_AS_NODE: "1",
     NODE_ENV: "production",
     PORT: String(port),
-    HOSTNAME: HOST,
+    HOSTNAME: bindHost,
     // Redirect all writable data to a per-user directory (install dir is read-only).
     SANCTUM_DATA_ROOT: app.getPath("userData"),
     SANCTUM_MIGRATIONS_DIR: path.join(standaloneDir, "drizzle"),
   };
 
-  log(`Starting server: ${serverEntry} on port ${port}`);
+  log(
+    `Starting server: ${serverEntry} on ${bindHost}:${port}` +
+      (bindHost === "0.0.0.0" ? " (local-network sharing ON)" : ""),
+  );
   const child = spawn(process.execPath, [serverEntry], {
     cwd: standaloneDir,
     env,
