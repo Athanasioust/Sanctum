@@ -3,13 +3,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import {
+  ArrowUpRight,
+  Circle as CircleIcon,
+  Eraser,
   Eye,
   EyeOff,
   Grid3x3,
   ImageIcon,
   Map as MapIcon,
+  MousePointer2,
+  Pencil,
   Plus,
+  Ruler,
+  Square,
   Trash2,
+  Triangle,
+  Type,
   Upload,
   Users,
 } from "lucide-react";
@@ -29,12 +38,13 @@ import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { api } from "@/lib/client";
 import { cn } from "@/lib/utils";
-import type { TokenStatus } from "@/components/combat/battle-map-canvas";
+import type { MapTool, TokenStatus } from "@/components/combat/battle-map-canvas";
 import type {
   BattleMap as BattleMapRow,
   BattleToken,
   CombatParticipant,
   Encounter,
+  MapAnnotation,
 } from "@/db/schema";
 
 const BattleMapCanvas = dynamic(() => import("@/components/combat/battle-map-canvas"), {
@@ -53,6 +63,23 @@ const TOKEN_COLORS = [
   "#7c3aed", "#dc2626", "#16a34a", "#2563eb", "#a16207", "#0891b2", "#db2777", "#65a30d",
 ];
 
+const TOOLS: { value: MapTool; label: string; icon: typeof MousePointer2; hint: string }[] = [
+  { value: "select", label: "Select", icon: MousePointer2, hint: "Select and drag tokens and shapes" },
+  { value: "measure", label: "Measure", icon: Ruler, hint: "Click to anchor, move to measure, click to clear" },
+  { value: "circle", label: "Sphere", icon: CircleIcon, hint: "Place a radius template" },
+  { value: "cone", label: "Cone", icon: Triangle, hint: "Place a cone template" },
+  { value: "line", label: "Line", icon: ArrowUpRight, hint: "Place a line template" },
+  { value: "cube", label: "Cube", icon: Square, hint: "Place a cube/square template" },
+  { value: "draw", label: "Draw", icon: Pencil, hint: "Freehand drawing" },
+  { value: "arrow", label: "Arrow", icon: ArrowUpRight, hint: "Drag to draw an arrow" },
+  { value: "text", label: "Text", icon: Type, hint: "Click to drop a label" },
+];
+
+/** Common 5e template sizes, in feet. */
+const TEMPLATE_SIZES = [5, 10, 15, 20, 30, 40, 60];
+
+const TEMPLATE_COLORS = ["#f97316", "#dc2626", "#7c3aed", "#2563eb", "#16a34a", "#facc15"];
+
 type EncounterWithParts = Encounter & { participants: CombatParticipant[] };
 
 export function BattleMap({
@@ -67,6 +94,10 @@ export function BattleMap({
   const [maps, setMaps] = useState(initialMaps);
   const [activeId, setActiveId] = useState<number | null>(initialMaps[0]?.id ?? null);
   const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
+  const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
+  const [tool, setTool] = useState<MapTool>("select");
+  const [templateSizeFt, setTemplateSizeFt] = useState(20);
+  const [templateColor, setTemplateColor] = useState(TEMPLATE_COLORS[0]);
   const [uploading, setUploading] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [fetched, setFetched] = useState<EncounterWithParts | null>(null);
@@ -282,7 +313,47 @@ export function BattleMap({
     toast.success(`Added ${added.length} combatant${added.length === 1 ? "" : "s"}`);
   }
 
+  /* ---------------------------------------------------------------------- */
+  /*  Annotations                                                            */
+  /* ---------------------------------------------------------------------- */
+
+  function addAnnotation(annotation: MapAnnotation) {
+    if (!map) return;
+    update({ annotations: [...map.annotations, annotation] });
+    setSelectedAnnotationId(annotation.id);
+  }
+
+  function patchAnnotation(id: string, patch: Partial<MapAnnotation>) {
+    if (!map) return;
+    update({
+      annotations: map.annotations.map((a) => (a.id === id ? { ...a, ...patch } : a)),
+    });
+  }
+
+  function moveAnnotation(id: string, x: number, y: number) {
+    patchAnnotation(id, { x, y });
+  }
+
+  function removeAnnotation(id: string) {
+    if (!map) return;
+    update({ annotations: map.annotations.filter((a) => a.id !== id) });
+    setSelectedAnnotationId(null);
+  }
+
+  function clearAnnotations() {
+    if (!map) return;
+    update({ annotations: [] }, { immediate: true });
+    setSelectedAnnotationId(null);
+    toast.success("Cleared all drawings and templates");
+  }
+
   const selectedToken = map?.tokens.find((t) => t.id === selectedTokenId) ?? null;
+  const selectedAnnotation =
+    map?.annotations.find((a) => a.id === selectedAnnotationId) ?? null;
+  /** Templates have a size and rotation to edit; freehand and text don't. */
+  const isTemplate =
+    selectedAnnotation !== null &&
+    ["circle", "cone", "line", "cube"].includes(selectedAnnotation.kind);
 
   if (maps.length === 0) {
     return (
@@ -421,6 +492,84 @@ export function BattleMap({
             )}
           </div>
 
+          {/* Tools */}
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-3">
+            <div className="flex flex-wrap gap-1">
+              {TOOLS.map((t) => (
+                <button
+                  key={t.value}
+                  onClick={() => {
+                    setTool(t.value);
+                    if (t.value !== "select") {
+                      setSelectedTokenId(null);
+                      setSelectedAnnotationId(null);
+                    }
+                  }}
+                  title={t.hint}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm transition-colors",
+                    tool === t.value
+                      ? "border-primary bg-primary/15 text-primary"
+                      : "border-border hover:bg-muted",
+                  )}
+                >
+                  <t.icon className="size-3.5" />
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="ml-auto flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-muted-foreground">Size</span>
+                <Select
+                  value={String(templateSizeFt)}
+                  onValueChange={(v) => setTemplateSizeFt(Number(v))}
+                >
+                  <SelectTrigger className="h-8 w-24"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {TEMPLATE_SIZES.map((ft) => (
+                      <SelectItem key={ft} value={String(ft)}>{ft} ft</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex gap-1.5">
+                {TEMPLATE_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setTemplateColor(c)}
+                    className={cn(
+                      "size-5 rounded-full border-2",
+                      templateColor === c ? "border-foreground" : "border-transparent",
+                    )}
+                    style={{ backgroundColor: c }}
+                    aria-label={`Template colour ${c}`}
+                  />
+                ))}
+              </div>
+              <Select
+                value={map.diagonalRule}
+                onValueChange={(v) =>
+                  update({ diagonalRule: v as BattleMapRow["diagonalRule"] }, { immediate: true })
+                }
+              >
+                <SelectTrigger className="h-8 w-36" title="How diagonal movement is counted">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5-10-5">5-10-5 diagonals</SelectItem>
+                  <SelectItem value="5-5-5">5-5-5 diagonals</SelectItem>
+                </SelectContent>
+              </Select>
+              {map.annotations.length > 0 && (
+                <Button variant="ghost" size="sm" onClick={clearAnnotations}>
+                  <Eraser className="size-3.5" /> Clear drawings
+                </Button>
+              )}
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_280px]">
             <BattleMapCanvas
               map={{
@@ -428,12 +577,28 @@ export function BattleMap({
                 gridSize: map.gridSize,
                 gridCols: map.gridCols,
                 gridRows: map.gridRows,
+                feetPerCell: map.feetPerCell,
+                diagonalRule: map.diagonalRule,
                 tokens: map.tokens,
+                annotations: map.annotations,
               }}
               statuses={statuses}
+              tool={tool}
+              templateSizeFt={templateSizeFt}
+              templateColor={templateColor}
               selectedTokenId={selectedTokenId}
-              onSelectToken={setSelectedTokenId}
+              selectedAnnotationId={selectedAnnotationId}
+              onSelectToken={(id) => {
+                setSelectedTokenId(id);
+                if (id) setSelectedAnnotationId(null);
+              }}
+              onSelectAnnotation={(id) => {
+                setSelectedAnnotationId(id);
+                if (id) setSelectedTokenId(null);
+              }}
               onMoveToken={moveToken}
+              onAddAnnotation={addAnnotation}
+              onMoveAnnotation={moveAnnotation}
             />
 
             {/* Token inspector */}
@@ -500,11 +665,99 @@ export function BattleMap({
                     <Trash2 className="size-4" /> Remove token
                   </Button>
                 </div>
+              ) : selectedAnnotation ? (
+                <div className="space-y-3 rounded-xl border border-border bg-card p-4">
+                  <h3 className="font-medium capitalize">{selectedAnnotation.kind}</h3>
+                  {isTemplate && (
+                    <>
+                      <Field label="Size" hint={`${selectedAnnotation.sizeFt ?? 0} ft`}>
+                        <Input
+                          type="number"
+                          min={5}
+                          max={200}
+                          step={5}
+                          value={selectedAnnotation.sizeFt ?? 0}
+                          onChange={(e) =>
+                            patchAnnotation(selectedAnnotation.id, {
+                              sizeFt: clamp(e.target.value, 5, 200),
+                            })
+                          }
+                        />
+                      </Field>
+                      {selectedAnnotation.kind === "line" && (
+                        <Field label="Width">
+                          <Input
+                            type="number"
+                            min={5}
+                            max={50}
+                            step={5}
+                            value={selectedAnnotation.widthFt ?? 5}
+                            onChange={(e) =>
+                              patchAnnotation(selectedAnnotation.id, {
+                                widthFt: clamp(e.target.value, 5, 50),
+                              })
+                            }
+                          />
+                        </Field>
+                      )}
+                      {selectedAnnotation.kind !== "circle" && (
+                        <Field
+                          label="Rotation"
+                          hint={`${Math.round(selectedAnnotation.rotation ?? 0)}°`}
+                        >
+                          <input
+                            type="range"
+                            min={0}
+                            max={359}
+                            value={selectedAnnotation.rotation ?? 0}
+                            onChange={(e) =>
+                              patchAnnotation(selectedAnnotation.id, {
+                                rotation: Number(e.target.value),
+                              })
+                            }
+                            className="w-full accent-primary"
+                            aria-label="Rotation"
+                          />
+                        </Field>
+                      )}
+                    </>
+                  )}
+                  <Field label="Colour">
+                    <div className="flex flex-wrap gap-2">
+                      {TEMPLATE_COLORS.map((c) => (
+                        <button
+                          key={c}
+                          onClick={() => patchAnnotation(selectedAnnotation.id, { color: c })}
+                          className={cn(
+                            "size-6 rounded-full border-2",
+                            selectedAnnotation.color === c
+                              ? "border-foreground"
+                              : "border-transparent",
+                          )}
+                          style={{ backgroundColor: c }}
+                          aria-label={`Colour ${c}`}
+                        />
+                      ))}
+                    </div>
+                  </Field>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => removeAnnotation(selectedAnnotation.id)}
+                  >
+                    <Trash2 className="size-4" /> Delete
+                  </Button>
+                </div>
               ) : (
                 <div className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
-                  {map.tokens.length === 0
-                    ? "No tokens yet. Add combatants from the linked encounter, or drop a blank token."
-                    : "Select a token to edit it. Drag tokens to move them — they snap to the grid."}
+                  {tool === "measure"
+                    ? "Click a square to anchor the tape, move to read the distance, click again to clear."
+                    : tool !== "select"
+                      ? TOOLS.find((t) => t.value === tool)?.hint
+                      : map.tokens.length === 0
+                        ? "No tokens yet. Add combatants from the linked encounter, or drop a blank token."
+                        : "Select a token or shape to edit it. Drag tokens to move them — they snap to the grid."}
                 </div>
               )}
 
