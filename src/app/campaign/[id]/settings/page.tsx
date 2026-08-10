@@ -8,6 +8,8 @@ import { CampaignSettingsForm } from "@/components/settings/campaign-settings-fo
 import { BackupsManager } from "@/components/settings/backups-manager";
 import { DangerZone } from "@/components/settings/danger-zone";
 import { PlayerViewSharing } from "@/components/settings/player-view-sharing";
+import { LanguageSwitcher } from "@/components/settings/language-switcher";
+import { getLocale } from "@/lib/i18n/server";
 import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +20,7 @@ export default async function SettingsPage({
   params: Promise<{ id: string }>;
 }) {
   const campaignId = Number((await params).id);
+  const locale = await getLocale();
   const [campaign] = await db.select().from(campaigns).where(eq(campaigns.id, campaignId));
   if (!campaign) notFound();
 
@@ -34,6 +37,10 @@ export default async function SettingsPage({
 
         <section>
           <PlayerViewSharing campaignId={campaignId} />
+        </section>
+
+        <section>
+          <LanguageSwitcher current={locale} />
         </section>
 
         <section className="rounded-xl border border-border bg-card p-5">

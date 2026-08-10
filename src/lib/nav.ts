@@ -27,7 +27,10 @@ import {
 } from "lucide-react";
 
 export type NavItem = {
+  /** English label, and the fallback if a dictionary is missing the key. */
   label: string;
+  /** Key into the i18n dictionaries; see src/lib/i18n/dictionaries. */
+  labelKey: string;
   href: (campaignId: number) => string;
   icon: LucideIcon;
   /** Match the active state on sub-routes too. */
@@ -37,144 +40,168 @@ export type NavItem = {
 export const CAMPAIGN_NAV: NavItem[] = [
   {
     label: "Dashboard",
+    labelKey: "nav.dashboard",
     href: (id) => `/campaign/${id}`,
     icon: LayoutDashboard,
     segment: null,
   },
   {
     label: "Combat",
+    labelKey: "nav.combat",
     href: (id) => `/campaign/${id}/combat`,
     icon: Swords,
     segment: "combat",
   },
   {
     label: "Battle Map",
+    labelKey: "nav.battleMap",
     href: (id) => `/campaign/${id}/battle-map`,
     icon: Grid3x3,
     segment: "battle-map",
   },
   {
     label: "Characters",
+    labelKey: "nav.characters",
     href: (id) => `/campaign/${id}/characters`,
     icon: Users,
     segment: "characters",
   },
   {
     label: "NPCs & Monsters",
+    labelKey: "nav.npcs",
     href: (id) => `/campaign/${id}/npcs`,
     icon: Skull,
     segment: "npcs",
   },
   {
     label: "Bestiary",
+    labelKey: "nav.bestiary",
     href: (id) => `/campaign/${id}/bestiary`,
     icon: BookOpen,
     segment: "bestiary",
   },
   {
     label: "World",
+    labelKey: "nav.world",
     href: (id) => `/campaign/${id}/world`,
     icon: Map,
     segment: "world",
   },
   {
     label: "Story",
+    labelKey: "nav.story",
     href: (id) => `/campaign/${id}/story`,
     icon: ScrollText,
     segment: "story",
   },
   {
     label: "Factions",
+    labelKey: "nav.factions",
     href: (id) => `/campaign/${id}/factions`,
     icon: Flag,
     segment: "factions",
   },
   {
     label: "Calendar",
+    labelKey: "nav.calendar",
     href: (id) => `/campaign/${id}/calendar`,
     icon: Calendar,
     segment: "calendar",
   },
   {
     label: "Shops & Loot",
+    labelKey: "nav.shops",
     href: (id) => `/campaign/${id}/shops`,
     icon: Coins,
     segment: "shops",
   },
   {
     label: "Sessions",
+    labelKey: "nav.sessions",
     href: (id) => `/campaign/${id}/sessions`,
     icon: ClipboardList,
     segment: "sessions",
   },
   {
     label: "Soundpad",
+    labelKey: "nav.soundpad",
     href: (id) => `/campaign/${id}/soundpad`,
     icon: Music,
     segment: "soundpad",
   },
   {
     label: "Notes",
+    labelKey: "nav.notes",
     href: (id) => `/campaign/${id}/notes`,
     icon: StickyNote,
     segment: "notes",
   },
   {
     label: "Quests",
+    labelKey: "nav.quests",
     href: (id) => `/campaign/${id}/quests`,
     icon: ListTodo,
     segment: "quests",
   },
   {
     label: "Magic Items",
+    labelKey: "nav.magicItems",
     href: (id) => `/campaign/${id}/magic-items`,
     icon: Sparkles,
     segment: "magic-items",
   },
   {
     label: "Handouts",
+    labelKey: "nav.handouts",
     href: (id) => `/campaign/${id}/handouts`,
     icon: Image,
     segment: "handouts",
   },
   {
     label: "Rumors",
+    labelKey: "nav.rumors",
     href: (id) => `/campaign/${id}/rumors`,
     icon: MessageCircleQuestion,
     segment: "rumors",
   },
   {
     label: "Relations",
+    labelKey: "nav.relations",
     href: (id) => `/campaign/${id}/relations`,
     icon: Network,
     segment: "relations",
   },
   {
     label: "Documents",
+    labelKey: "nav.documents",
     href: (id) => `/campaign/${id}/documents`,
     icon: FileText,
     segment: "documents",
   },
   {
     label: "Homebrew",
+    labelKey: "nav.homebrew",
     href: (id) => `/campaign/${id}/homebrew`,
     icon: FlaskConical,
     segment: "homebrew",
   },
   {
     label: "Mind Map",
+    labelKey: "nav.mindMap",
     href: (id) => `/campaign/${id}/mind-map`,
     icon: Waypoints,
     segment: "mind-map",
   },
   {
     label: "Import",
+    labelKey: "nav.import",
     href: (id) => `/campaign/${id}/import`,
     icon: Upload,
     segment: "import",
   },
   {
     label: "Settings",
+    labelKey: "nav.settings",
     href: (id) => `/campaign/${id}/settings`,
     icon: Settings,
     segment: "settings",

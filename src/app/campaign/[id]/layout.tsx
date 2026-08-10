@@ -12,6 +12,8 @@ import { RulesReference } from "@/components/shared/rules-reference";
 import { DiceRoller } from "@/components/dice/dice-roller";
 import { SoundpadProvider } from "@/components/soundpad/soundpad-context";
 import { SoundpadButton } from "@/components/soundpad/soundpad-button";
+import { I18nProvider } from "@/components/i18n/i18n-provider";
+import { getLocale } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +26,8 @@ export default async function CampaignLayout({
 }) {
   const id = Number((await params).id);
   if (!Number.isInteger(id) || id <= 0) notFound();
+
+  const locale = await getLocale();
 
   const campaign = await db.query.campaigns.findFirst({
     where: eq(campaigns.id, id),
@@ -68,7 +72,8 @@ export default async function CampaignLayout({
   };
 
   return (
-    <CampaignOptionsProvider value={campaignOptions}>
+    <I18nProvider locale={locale}>
+      <CampaignOptionsProvider value={campaignOptions}>
       {/*
         The soundpad engine lives at the layout level so music keeps playing
         while the DM moves between pages — a page-level player would stop the
@@ -88,7 +93,8 @@ export default async function CampaignLayout({
             <RulesReference />
           </div>
         </div>
-      </SoundpadProvider>
-    </CampaignOptionsProvider>
+        </SoundpadProvider>
+      </CampaignOptionsProvider>
+    </I18nProvider>
   );
 }

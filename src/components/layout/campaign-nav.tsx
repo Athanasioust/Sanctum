@@ -29,6 +29,8 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { BuiltByBadge } from "@/components/shared/built-by-badge";
 import { openCommandPalette } from "@/components/search/command-palette";
+import { useT } from "@/components/i18n/i18n-provider";
+import type { TranslationKey } from "@/lib/i18n";
 import { CAMPAIGN_NAV } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import type { Campaign } from "@/db/schema";
@@ -47,6 +49,7 @@ function useShortcutLabel() {
 /** Visible affordance for the global search palette (opened via ⌘K/Ctrl+K). */
 function SearchTrigger({ onNavigate }: { onNavigate?: () => void }) {
   const shortcut = useShortcutLabel();
+  const t = useT();
   return (
     <button
       onClick={() => {
@@ -56,7 +59,7 @@ function SearchTrigger({ onNavigate }: { onNavigate?: () => void }) {
       className="flex w-full items-center gap-2 rounded-lg border border-sidebar-border bg-sidebar-accent/40 px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
     >
       <Search className="size-4 shrink-0" />
-      <span className="flex-1">Search…</span>
+      <span className="flex-1">{t("nav.search")}</span>
       {shortcut ? (
         <kbd className="rounded border border-sidebar-border bg-background/60 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
           {shortcut}
@@ -72,6 +75,7 @@ type Props = {
 };
 
 function CampaignSwitcher({ campaign, campaigns }: Props) {
+  const t = useT();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -113,7 +117,7 @@ function CampaignSwitcher({ campaign, campaigns }: Props) {
         <DropdownMenuItem asChild>
           <Link href="/">
             <Home className="size-4" />
-            All campaigns
+            {t("nav.allCampaigns")}
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -129,6 +133,7 @@ function NavLinks({
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
+  const t = useT();
   const base = `/campaign/${campaign.id}`;
 
   return (
@@ -142,7 +147,7 @@ function NavLinks({
         const Icon = item.icon;
         return (
           <Link
-            key={item.label}
+            key={item.labelKey}
             href={href}
             onClick={onNavigate}
             className={cn(
@@ -153,7 +158,7 @@ function NavLinks({
             )}
           >
             <Icon className="size-4.5 shrink-0" />
-            {item.label}
+            {t(item.labelKey as TranslationKey)}
           </Link>
         );
       })}

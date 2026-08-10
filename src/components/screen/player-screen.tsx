@@ -8,6 +8,7 @@ import { fogForGrid } from "@/lib/battle-map";
 import { hpBarColor } from "@/lib/ui";
 import { renderMarkdown } from "@/lib/markdown";
 import { cn } from "@/lib/utils";
+import { useT } from "@/components/i18n/i18n-provider";
 import type {
   BattleMap,
   Character,
@@ -52,6 +53,7 @@ export function PlayerScreen({
 }) {
   const [state, setState] = useState<ScreenState>(EMPTY);
   const [ready, setReady] = useState(false);
+  const t = useT();
 
   const load = useCallback(async () => {
     try {
@@ -113,19 +115,19 @@ export function PlayerScreen({
           </div>
           <div>
             <h1 className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">{campaignName}</h1>
-            <p className="text-xs text-muted-foreground">Player view · updates live</p>
+            <p className="text-xs text-muted-foreground">{t("player.live")}</p>
           </div>
         </div>
         {state.active ? (
           <div className="text-right">
-            <p className="text-xs uppercase text-muted-foreground">Round</p>
+            <p className="text-xs uppercase text-muted-foreground">{t("common.round")}</p>
             <p className="font-heading text-3xl font-semibold tabular-nums">{state.round}</p>
           </div>
         ) : null}
       </header>
 
       {!ready ? (
-        <p className="py-20 text-center text-muted-foreground">Loading…</p>
+        <p className="py-20 text-center text-muted-foreground">{t("common.loading")}</p>
       ) : (
         <>
           {/* Battle map — only when the DM has flagged one to show */}
@@ -142,7 +144,7 @@ export function PlayerScreen({
             {/* Initiative */}
             <section>
               <h2 className="mb-3 font-heading text-lg font-semibold text-muted-foreground">
-                {state.active ? state.encounterName || "Initiative" : "Initiative"}
+                {state.active ? state.encounterName || t("player.initiative") : t("player.initiative")}
               </h2>
               {state.active && state.participants.length > 0 ? (
                 <div className="space-y-2">
@@ -152,17 +154,17 @@ export function PlayerScreen({
                 </div>
               ) : (
                 <div className="rounded-xl border border-dashed border-border bg-card/40 py-16 text-center">
-                  <p className="text-lg text-muted-foreground">No active encounter</p>
-                  <p className="text-sm text-muted-foreground">The party rests… for now.</p>
+                  <p className="text-lg text-muted-foreground">{t("player.noEncounter")}</p>
+                  <p className="text-sm text-muted-foreground">{t("player.resting")}</p>
                 </div>
               )}
             </section>
 
             {/* Party */}
             <section>
-              <h2 className="mb-3 font-heading text-lg font-semibold text-muted-foreground">The Party</h2>
+              <h2 className="mb-3 font-heading text-lg font-semibold text-muted-foreground">{t("player.party")}</h2>
               {state.party.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No characters yet.</p>
+                <p className="text-sm text-muted-foreground">{t("player.noCharacters")}</p>
               ) : (
                 <div className="space-y-2">
                   {state.party.map((c) => (
@@ -177,7 +179,7 @@ export function PlayerScreen({
           {state.handouts.length > 0 && (
             <section className="mt-8">
               <h2 className="mb-4 flex items-center gap-2 font-heading text-lg font-semibold text-muted-foreground">
-                <Image className="size-4" /> Handouts
+                <Image className="size-4" /> {t("player.handouts")}
               </h2>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
                 {state.handouts.map((h) => (
@@ -223,6 +225,7 @@ function PlayerBattleMap({ map }: { map: BattleMap }) {
 }
 
 function InitiativeRow({ p, current }: { p: CombatParticipant; current: boolean }) {
+  const t = useT();
   const isPc = p.entityType === "character";
   const down = p.hpCurrent <= 0;
   return (
@@ -252,7 +255,7 @@ function InitiativeRow({ p, current }: { p: CombatParticipant; current: boolean 
       </div>
       {current ? (
         <span className="shrink-0 rounded-full bg-primary px-3 py-1 text-sm font-medium text-primary-foreground">
-          Turn
+          {t("common.turn")}
         </span>
       ) : null}
     </div>
@@ -260,14 +263,15 @@ function InitiativeRow({ p, current }: { p: CombatParticipant; current: boolean 
 }
 
 function MonsterStatus({ current, max }: { current: number; max: number }) {
+  const t = useT();
   const ratio = max > 0 ? current / max : 0;
-  let label = "Healthy";
+  let label = t("player.healthy");
   let tone = "text-success";
   if (current <= 0) {
-    label = "Down";
+    label = t("player.down");
     tone = "text-destructive";
   } else if (ratio <= 0.5) {
-    label = "Bloodied";
+    label = t("player.bloodied");
     tone = "text-orange-400";
   }
   return (
