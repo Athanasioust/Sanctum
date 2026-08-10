@@ -13,6 +13,7 @@ import { EntityActions } from "@/components/shared/entity-actions";
 import { SpellsTab } from "@/components/characters/spells-tab";
 import { InventoryTab } from "@/components/characters/inventory-tab";
 import { ExportSheetButton } from "@/components/characters/export-sheet-button";
+import { LevelUpDialog } from "@/components/characters/level-up-dialog";
 import { rollDice } from "@/components/dice/dice-roller";
 import { RollableStat } from "@/components/dice/rollable-stat";
 import { ABILITIES, SKILLS, EXHAUSTION_EFFECTS, hitDieForClass } from "@/lib/constants";
@@ -63,6 +64,7 @@ export function CharacterDetail({
           ) : null}
         </div>
         <div className="flex items-center gap-2">
+          <LevelUpDialog character={character} />
           <ExportSheetButton characterId={character.id} />
           <Button asChild variant="outline">
             <Link href={`/campaign/${campaignId}/characters/${character.id}/edit`}>
