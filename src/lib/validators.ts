@@ -186,6 +186,7 @@ export const characterCreateSchema = z.object({
     .optional(),
   hitDiceTotal: z.number().int().min(0).optional().default(0),
   hitDiceUsed: z.number().int().min(0).optional().default(0),
+  weaponMasteries: stringArray,
   notes: optionalString(20000),
 });
 export const characterUpdateSchema = characterCreateSchema.partial();
@@ -229,6 +230,7 @@ export const npcCreateSchema = z.object({
   conditions: stringArray,
   exhaustionLevel: z.number().int().min(0).max(6).optional().default(0),
   isTemplate: z.boolean().optional().default(false),
+  source: optionalString(40),
   notes: optionalString(20000),
 });
 export const npcUpdateSchema = npcCreateSchema.partial();
@@ -252,6 +254,7 @@ export const spellCreateSchema = z.object({
   description: optionalString(10000),
   isPrepared: z.boolean().optional().default(false),
   isConcentration: z.boolean().optional().default(false),
+  source: optionalString(40),
 });
 export const spellUpdateSchema = spellCreateSchema.partial();
 
@@ -356,6 +359,33 @@ export const battleMapUpdateSchema = battleMapCreateSchema.partial();
 
 export type BattleMapCreateInput = z.infer<typeof battleMapCreateSchema>;
 export type BattleMapUpdateInput = z.infer<typeof battleMapUpdateSchema>;
+
+/* -------------------------------------------------------------------------- */
+/*  Homebrew libraries                                                         */
+/* -------------------------------------------------------------------------- */
+
+export const homebrewSpellCreateSchema = z.object({
+  campaignId: z.number().int(),
+  name: z.string().trim().min(1, "Name is required").max(120),
+  level: z.number().int().min(0).max(9).optional().default(0),
+  school: optionalString(40),
+  castingTime: optionalString(80),
+  range: optionalString(80),
+  components: optionalString(120),
+  duration: optionalString(80),
+  description: optionalString(20000),
+  isConcentration: z.boolean().optional().default(false),
+  classes: stringArray,
+});
+export const homebrewSpellUpdateSchema = homebrewSpellCreateSchema.partial();
+
+export const homebrewFeatCreateSchema = z.object({
+  campaignId: z.number().int(),
+  name: z.string().trim().min(1, "Name is required").max(120),
+  prerequisite: optionalString(200),
+  description: optionalString(20000),
+});
+export const homebrewFeatUpdateSchema = homebrewFeatCreateSchema.partial();
 
 /* -------------------------------------------------------------------------- */
 /*  Mind maps                                                                  */
@@ -618,6 +648,7 @@ export const magicItemCreateSchema = z.object({
   chargesMax: z.number().int().min(0).nullable().optional(),
   rechargeCondition: optionalString(200),
   isCursed: z.boolean().optional().default(false),
+  source: optionalString(40),
   notes: optionalString(10000),
 });
 export const magicItemUpdateSchema = magicItemCreateSchema.partial();

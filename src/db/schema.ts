@@ -121,6 +121,13 @@ const abilityScores = {
 
 const ownerType = ["character", "npc"] as const;
 
+/**
+ * Where a piece of content came from. Empty means "as it shipped" (SRD seed or
+ * plain hand entry); "homebrew" marks content the DM authored in the homebrew
+ * tools, so it can be badged, filtered and exported separately.
+ */
+const source = text("source").notNull().default("");
+
 /* -------------------------------------------------------------------------- */
 /*  Campaigns                                                                  */
 /* -------------------------------------------------------------------------- */
@@ -250,6 +257,20 @@ export const characters = sqliteTable("characters", {
     .default({ pp: 0, gp: 0, ep: 0, sp: 0, cp: 0 })
     .$type<Currency>(),
 
+  /**
+   * 2024 weapon mastery properties this character has chosen.
+   *
+   * Uses a real SQL `.default([])` rather than `$defaultFn`: this column is
+   * added to an existing table, and SQLite refuses to ADD a NOT NULL column
+   * that has no default. The default must be an actual array — a json-mode
+   * column encodes whatever it is given, so the string "[]" would land in the
+   * row as '"[]"' and read back as a string.
+   */
+  weaponMasteries: text("weapon_masteries", { mode: "json" })
+    .notNull()
+    .default([])
+    .$type<string[]>(),
+
   // Feature 5: Rest mechanics — hit dice pool
   hitDiceTotal: integer("hit_dice_total").notNull().default(0),
   hitDiceUsed: integer("hit_dice_used").notNull().default(0),
@@ -278,6 +299,7 @@ export const spells = sqliteTable("spells", {
   isConcentration: integer("is_concentration", { mode: "boolean" })
     .notNull()
     .default(false),
+  source,
   ...timestamps,
 });
 
@@ -395,6 +417,7 @@ export const npcs = sqliteTable("npcs", {
   exhaustionLevel: integer("exhaustion_level").notNull().default(0),
 
   isTemplate: integer("is_template", { mode: "boolean" }).notNull().default(false),
+  source,
   notes: text("notes").notNull().default(""),
   ...timestamps,
 });
@@ -490,6 +513,54 @@ export const combatLogEntries = sqliteTable("combat_log_entries", {
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()
     .$defaultFn(() => new Date()),
+});
+
+/* -------------------------------------------------------------------------- */
+/*  Homebrew libraries                                                         */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Campaign-level spell and feat libraries the DM authors.
+ *
+ * Monsters and magic items already have campaign-scoped homes (`npcs` with
+ * `isTemplate`, and `magic_items`) and are marked homebrew with their `source`
+ * column. Spells and feats had no campaign-level home — `spells` rows belong to
+ * one character or NPC, and feats live in a character's JSON — so these two
+ * tables are the library those pickers draw from.
+ */
+export const homebrewSpells = sqliteTable("homebrew_spells", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  campaignId: integer("campaign_id")
+    .notNull()
+    .references(() => campaigns.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  level: integer("level").notNull().default(0),
+  school: text("school").notNull().default(""),
+  castingTime: text("casting_time").notNull().default(""),
+  range: text("range").notNull().default(""),
+  components: text("components").notNull().default(""),
+  duration: text("duration").notNull().default(""),
+  description: text("description").notNull().default(""),
+  isConcentration: integer("is_concentration", { mode: "boolean" })
+    .notNull()
+    .default(false),
+  /** Classes that can take it, so the picker can hint at who it's for. */
+  classes: text("classes", { mode: "json" })
+    .notNull()
+    .$type<string[]>()
+    .$defaultFn(() => []),
+  ...timestamps,
+});
+
+export const homebrewFeats = sqliteTable("homebrew_feats", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  campaignId: integer("campaign_id")
+    .notNull()
+    .references(() => campaigns.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  prerequisite: text("prerequisite").notNull().default(""),
+  description: text("description").notNull().default(""),
+  ...timestamps,
 });
 
 /* -------------------------------------------------------------------------- */
@@ -890,6 +961,7 @@ export const magicItems = sqliteTable("magic_items", {
   chargesMax: integer("charges_max"),
   rechargeCondition: text("recharge_condition").notNull().default(""),
   isCursed: integer("is_cursed", { mode: "boolean" }).notNull().default(false),
+  source,
   notes: text("notes").notNull().default(""),
   ...timestamps,
 });
@@ -976,6 +1048,10 @@ export type CombatLogEntry = typeof combatLogEntries.$inferSelect;
 export type NewCombatLogEntry = typeof combatLogEntries.$inferInsert;
 export type BattleMap = typeof battleMaps.$inferSelect;
 export type NewBattleMap = typeof battleMaps.$inferInsert;
+export type HomebrewSpell = typeof homebrewSpells.$inferSelect;
+export type NewHomebrewSpell = typeof homebrewSpells.$inferInsert;
+export type HomebrewFeat = typeof homebrewFeats.$inferSelect;
+export type NewHomebrewFeat = typeof homebrewFeats.$inferInsert;
 export type MindMap = typeof mindMaps.$inferSelect;
 export type NewMindMap = typeof mindMaps.$inferInsert;
 export type SoundAsset = typeof soundAssets.$inferSelect;

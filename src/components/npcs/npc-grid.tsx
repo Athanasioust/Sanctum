@@ -66,9 +66,14 @@ export function NpcGrid({
                       {[n.size, n.race].filter(Boolean).join(" ") || (n.type === "monster" ? "Monster" : "NPC")}
                     </p>
                   </div>
-                  <Badge variant={n.type === "monster" ? "destructive" : "secondary"}>
-                    {n.type === "monster" ? "Monster" : "NPC"}
-                  </Badge>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <Badge variant={n.type === "monster" ? "destructive" : "secondary"}>
+                      {n.type === "monster" ? "Monster" : "NPC"}
+                    </Badge>
+                    {n.source === "homebrew" ? (
+                      <Badge variant="secondary" className="text-[10px]">Homebrew</Badge>
+                    ) : null}
+                  </div>
                 </div>
                 <div className="mt-4 space-y-3">
                   <HpBar current={n.hpCurrent} max={n.hpMax} />

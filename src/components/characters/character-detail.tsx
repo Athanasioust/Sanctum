@@ -14,6 +14,7 @@ import { SpellsTab } from "@/components/characters/spells-tab";
 import { InventoryTab } from "@/components/characters/inventory-tab";
 import { ExportSheetButton } from "@/components/characters/export-sheet-button";
 import { LevelUpDialog } from "@/components/characters/level-up-dialog";
+import { WeaponMasterySection } from "@/components/characters/weapon-mastery-section";
 import { rollDice } from "@/components/dice/dice-roller";
 import { RollableStat } from "@/components/dice/rollable-stat";
 import { ABILITIES, SKILLS, EXHAUSTION_EFFECTS, hitDieForClass } from "@/lib/constants";
@@ -226,7 +227,7 @@ export function CharacterDetail({
         </TabsContent>
 
         <TabsContent value="spells">
-          <SpellsTab ownerId={character.id} ownerType="character" />
+          <SpellsTab ownerId={character.id} ownerType="character" campaignId={campaignId} />
         </TabsContent>
 
         <TabsContent value="inventory">
@@ -253,6 +254,7 @@ export function CharacterDetail({
 
         {/* Features & feats */}
         <TabsContent value="features" className="space-y-6">
+          <WeaponMasterySection character={character} />
           <EntryList title="Features & Traits" entries={character.featuresAndTraits} empty="No features recorded." />
           <EntryList title="Feats" entries={character.feats} empty="No feats recorded." />
           {character.multiclassInfo.length > 0 ? (

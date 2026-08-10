@@ -20,6 +20,7 @@ import {
   MessageCircleQuestion,
   Network,
   Waypoints,
+  FlaskConical,
   Upload,
   type LucideIcon,
 } from "lucide-react";
@@ -146,6 +147,12 @@ export const CAMPAIGN_NAV: NavItem[] = [
     href: (id) => `/campaign/${id}/relations`,
     icon: Network,
     segment: "relations",
+  },
+  {
+    label: "Homebrew",
+    href: (id) => `/campaign/${id}/homebrew`,
+    icon: FlaskConical,
+    segment: "homebrew",
   },
   {
     label: "Mind Map",

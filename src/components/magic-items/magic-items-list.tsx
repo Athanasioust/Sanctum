@@ -107,7 +107,9 @@ function MagicItemDialog({
       };
       const saved: MagicItem = itemId
         ? await api.patch(`/api/magic-items/${itemId}`, payload)
-        : await api.post("/api/magic-items", payload);
+        // Items written here are the DM's own; the marker keeps them
+        // distinguishable from anything Sanctum ships or imports.
+        : await api.post("/api/magic-items", { ...payload, source: "homebrew" });
       onSaved(saved);
       toast.success(itemId ? "Item updated" : "Item created");
       setOpen(false);
@@ -335,6 +337,7 @@ export function MagicItemsList({
                     </Badge>
                   )}
                   {item.isCursed && <Badge variant="destructive">Cursed</Badge>}
+                  {item.source === "homebrew" && <Badge variant="secondary">Homebrew</Badge>}
                   {holder && <Badge variant="outline">{holder.name}</Badge>}
                 </div>
 

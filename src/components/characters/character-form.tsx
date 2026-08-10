@@ -20,6 +20,7 @@ import { AbilityScoresEditor } from "@/components/shared/ability-scores-editor";
 import { CheckboxGroup } from "@/components/shared/checkbox-group";
 import { Combobox } from "@/components/shared/combobox";
 import { ObjectListEditor } from "@/components/shared/object-list-editor";
+import { HomebrewFeatPicker } from "@/components/characters/homebrew-feat-picker";
 import { useCampaignOptions } from "@/components/campaigns/campaign-options-context";
 import { api } from "@/lib/client";
 import {
@@ -458,6 +459,11 @@ export function CharacterForm({ campaignId, character }: Props) {
       </FormSection>
 
       <FormSection title="Feats">
+        <HomebrewFeatPicker
+          campaignId={campaignId}
+          value={form.feats}
+          onChange={(v) => set("feats", v)}
+        />
         <ObjectListEditor
           value={form.feats}
           onChange={(v) => set("feats", v)}

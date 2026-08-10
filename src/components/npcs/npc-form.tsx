@@ -74,6 +74,9 @@ function defaults(campaignId: number, isTemplate: boolean) {
     conditions: [] as string[],
     exhaustionLevel: 0,
     isTemplate,
+    // Anything hand-authored here is the DM's own content; the SRD bestiary
+    // seeder writes its rows without this marker.
+    source: "homebrew",
     notes: "",
   };
 }

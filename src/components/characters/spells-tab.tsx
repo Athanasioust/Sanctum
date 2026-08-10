@@ -29,7 +29,7 @@ import { DeleteIconButton } from "@/components/shared/delete-icon-button";
 import { api } from "@/lib/client";
 import { SPELL_SCHOOLS } from "@/lib/constants";
 import { SRD_SPELLS, type SeedSpell } from "@/lib/srd-spells";
-import type { Spell, SpellSlot } from "@/db/schema";
+import type { HomebrewSpell, Spell, SpellSlot } from "@/db/schema";
 
 type OwnerType = "character" | "npc";
 
@@ -38,9 +38,12 @@ const LEVEL_LABEL = (lvl: number) => (lvl === 0 ? "Cantrips" : `Level ${lvl}`);
 export function SpellsTab({
   ownerId,
   ownerType,
+  campaignId,
 }: {
   ownerId: number;
   ownerType: OwnerType;
+  /** Enables the campaign's homebrew spells in the compendium picker. */
+  campaignId?: number;
 }) {
   const [spells, setSpells] = useState<Spell[]>([]);
   const [slots, setSlots] = useState<SpellSlot[]>([]);
@@ -149,6 +152,7 @@ export function SpellsTab({
           <SpellCompendium
             ownerId={ownerId}
             ownerType={ownerType}
+            campaignId={campaignId}
             existingNames={new Set(spells.map((s) => s.name.toLowerCase()))}
             onSaved={load}
           />
@@ -327,18 +331,24 @@ function SpellDialog({
   );
 }
 
+/** An entry in the picker: an SRD spell, or one the DM wrote themselves. */
+type PickableSpell = SeedSpell & { homebrew: boolean };
+
 /**
- * Searchable SRD spell compendium. Pick a spell to drop a full, editable copy
- * onto this character/NPC — no retyping. Stays open so you can add several.
+ * Searchable spell compendium: the SRD list plus this campaign's homebrew
+ * spells. Pick one to drop a full, editable copy onto this character/NPC — no
+ * retyping. Stays open so you can add several.
  */
 function SpellCompendium({
   ownerId,
   ownerType,
+  campaignId,
   existingNames,
   onSaved,
 }: {
   ownerId: number;
   ownerType: OwnerType;
+  campaignId?: number;
   existingNames: Set<string>;
   onSaved: () => void;
 }) {
@@ -346,9 +356,42 @@ function SpellCompendium({
   const [search, setSearch] = useState("");
   const [level, setLevel] = useState("all");
   const [busy, setBusy] = useState<string | null>(null);
+  const [homebrew, setHomebrew] = useState<PickableSpell[]>([]);
+
+  /** Load the campaign's homebrew spells when the picker opens. */
+  async function loadHomebrew() {
+    if (!campaignId) return;
+    try {
+      const rows = await api.get<HomebrewSpell[]>(
+        `/api/homebrew-spells?campaignId=${campaignId}`,
+      );
+      setHomebrew(
+        rows.map((r) => ({
+          name: r.name,
+          level: r.level,
+          school: r.school,
+          castingTime: r.castingTime,
+          range: r.range,
+          components: r.components,
+          duration: r.duration,
+          description: r.description,
+          isConcentration: r.isConcentration,
+          classes: r.classes,
+          homebrew: true,
+        })),
+      );
+    } catch {
+      // Without the homebrew list the picker still offers the whole SRD.
+    }
+  }
 
   const q = search.trim().toLowerCase();
-  const filtered = SRD_SPELLS.filter((s) => {
+  // Homebrew sorts first — it's the shorter, more relevant list at most tables.
+  const pool: PickableSpell[] = [
+    ...homebrew,
+    ...SRD_SPELLS.map((s) => ({ ...s, homebrew: false })),
+  ];
+  const filtered = pool.filter((s) => {
     if (level !== "all" && String(s.level) !== level) return false;
     if (!q) return true;
     return (
@@ -358,7 +401,7 @@ function SpellCompendium({
     );
   });
 
-  async function add(spell: SeedSpell) {
+  async function add(spell: PickableSpell) {
     setBusy(spell.name);
     try {
       await api.post("/api/spells", {
@@ -373,6 +416,9 @@ function SpellCompendium({
         duration: spell.duration,
         description: spell.description,
         isConcentration: spell.isConcentration,
+        // The copy remembers it came from homebrew, so it stays distinguishable
+        // on the sheet and in exports.
+        source: spell.homebrew ? "homebrew" : "",
       });
       toast.success(`Added ${spell.name}`);
       onSaved();
@@ -388,17 +434,18 @@ function SpellCompendium({
       open={open}
       onOpenChange={(o) => {
         setOpen(o);
-        if (!o) setSearch("");
+        if (o) void loadHomebrew();
+        else setSearch("");
       }}
     >
       <DialogTrigger asChild>
         <Button size="sm" variant="outline">
-          <BookOpen className="size-4" /> Add from SRD
+          <BookOpen className="size-4" /> Add from compendium
         </Button>
       </DialogTrigger>
       <DialogContent className="flex max-h-[85vh] max-w-lg flex-col">
         <DialogHeader>
-          <DialogTitle>SRD Spell Compendium</DialogTitle>
+          <DialogTitle>Spell Compendium</DialogTitle>
         </DialogHeader>
         <div className="flex gap-2">
           <div className="relative flex-1">
@@ -434,7 +481,7 @@ function SpellCompendium({
                 const added = existingNames.has(s.name.toLowerCase());
                 return (
                   <button
-                    key={s.name}
+                    key={`${s.homebrew ? "hb" : "srd"}-${s.name}`}
                     type="button"
                     disabled={added || busy === s.name}
                     onClick={() => add(s)}
@@ -442,6 +489,11 @@ function SpellCompendium({
                   >
                     <span className="min-w-0">
                       <span className="font-medium">{s.name}</span>
+                      {s.homebrew ? (
+                        <Badge variant="secondary" className="ml-1.5 text-[10px]">
+                          Homebrew
+                        </Badge>
+                      ) : null}
                       {s.isConcentration ? (
                         <span className="ml-1.5 text-xs text-muted-foreground">(C)</span>
                       ) : null}
