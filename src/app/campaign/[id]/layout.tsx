@@ -9,6 +9,7 @@ import {
 import { CampaignOptionsProvider } from "@/components/campaigns/campaign-options-context";
 import { CommandPalette } from "@/components/search/command-palette";
 import { RulesReference } from "@/components/shared/rules-reference";
+import { DiceRoller } from "@/components/dice/dice-roller";
 
 export const dynamic = "force-dynamic";
 
@@ -73,7 +74,8 @@ export default async function CampaignLayout({
           <main className="flex-1">{children}</main>
         </div>
         <CommandPalette campaignId={campaign.id} />
-        <div className="fixed bottom-4 right-4 z-40">
+        <div className="fixed bottom-4 right-4 z-40 flex items-center gap-1 rounded-lg border border-border bg-card/90 p-0.5 shadow-lg backdrop-blur">
+          <DiceRoller campaignId={campaign.id} />
           <RulesReference />
         </div>
       </div>

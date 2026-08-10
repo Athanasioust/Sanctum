@@ -13,7 +13,10 @@ import { EntityActions } from "@/components/shared/entity-actions";
 import { SpellsTab } from "@/components/characters/spells-tab";
 import { InventoryTab } from "@/components/characters/inventory-tab";
 import { ExportSheetButton } from "@/components/characters/export-sheet-button";
+import { rollDice } from "@/components/dice/dice-roller";
+import { RollableStat } from "@/components/dice/rollable-stat";
 import { ABILITIES, SKILLS, EXHAUSTION_EFFECTS, hitDieForClass } from "@/lib/constants";
+import { checkFormula } from "@/lib/dice";
 import { abilityModifier, formatModifier } from "@/lib/dnd";
 import { api } from "@/lib/client";
 import type { AbilityKey } from "@/lib/constants";
@@ -151,12 +154,25 @@ export function CharacterDetail({
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
             {ABILITIES.map((a) => {
               const score = scores[a.key];
+              const mod = abilityModifier(score);
               return (
-                <div key={a.key} className="rounded-xl border border-border bg-card p-3 text-center">
+                <button
+                  key={a.key}
+                  type="button"
+                  onClick={() =>
+                    rollDice({
+                      formula: checkFormula(mod),
+                      label: `${a.label} check`,
+                      actorName: character.name,
+                    })
+                  }
+                  title={`Roll a ${a.label} check`}
+                  className="rounded-xl border border-border bg-card p-3 text-center transition-colors hover:border-primary/50 hover:bg-primary/5"
+                >
                   <p className="text-xs font-semibold uppercase text-muted-foreground">{a.short}</p>
                   <p className="text-2xl font-semibold tabular-nums">{score}</p>
-                  <p className="text-sm font-medium text-primary">{formatModifier(abilityModifier(score))}</p>
-                </div>
+                  <p className="text-sm font-medium text-primary">{formatModifier(mod)}</p>
+                </button>
               );
             })}
           </div>
@@ -169,13 +185,15 @@ export function CharacterDetail({
                   const proficient = character.savingThrowProficiencies.includes(a.key);
                   const bonus = abilityModifier(scores[a.key]) + (proficient ? prof : 0);
                   return (
-                    <div key={a.key} className="flex items-center justify-between rounded-md px-2 py-1 text-sm odd:bg-muted/40">
-                      <span className="flex items-center gap-1.5">
-                        <span className={`size-2 rounded-full ${proficient ? "bg-primary" : "bg-muted-foreground/30"}`} />
-                        {a.label}
-                      </span>
-                      <span className="font-medium tabular-nums">{formatModifier(bonus)}</span>
-                    </div>
+                    <RollableStat
+                      key={a.key}
+                      label={a.label}
+                      bonus={bonus}
+                      proficient={proficient}
+                      rollLabel={`${a.label} save`}
+                      actorName={character.name}
+                      className="odd:bg-muted/40"
+                    />
                   );
                 })}
               </div>
@@ -188,14 +206,16 @@ export function CharacterDetail({
                   const proficient = character.skillProficiencies.includes(s.key);
                   const bonus = abilityModifier(scores[s.ability]) + (proficient ? prof : 0);
                   return (
-                    <div key={s.key} className="flex items-center justify-between rounded-md px-2 py-1 text-sm odd:bg-muted/40">
-                      <span className="flex items-center gap-1.5">
-                        <span className={`size-2 rounded-full ${proficient ? "bg-primary" : "bg-muted-foreground/30"}`} />
-                        {s.label}
-                        <span className="text-xs uppercase text-muted-foreground">{s.ability}</span>
-                      </span>
-                      <span className="font-medium tabular-nums">{formatModifier(bonus)}</span>
-                    </div>
+                    <RollableStat
+                      key={s.key}
+                      label={s.label}
+                      ability={s.ability}
+                      bonus={bonus}
+                      proficient={proficient}
+                      rollLabel={`${s.label} check`}
+                      actorName={character.name}
+                      className="odd:bg-muted/40"
+                    />
                   );
                 })}
               </div>

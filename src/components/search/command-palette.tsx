@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Search, User, Skull, MapPin, ListTodo, Sparkles, Image, MessageCircleQuestion, X } from "lucide-react";
+import { Search, User, Skull, MapPin, ListTodo, Sparkles, Image, MessageCircleQuestion, X, Dices } from "lucide-react";
+import { rollDice } from "@/components/dice/dice-roller";
+import { formulaError } from "@/lib/dice";
 import { cn } from "@/lib/utils";
 import type { SearchResult } from "@/app/api/search/route";
 
@@ -102,21 +104,37 @@ export function CommandPalette({ campaignId }: { campaignId: number }) {
     }, 220);
   }, [query, campaignId]);
 
+  // A query that reads as dice notation ("2d6+3") becomes a roll option at the
+  // top of the list. Requires an actual die term so plain numbers don't match.
+  const trimmedQuery = query.trim();
+  const diceFormula =
+    /\d*d\d/i.test(trimmedQuery) && formulaError(trimmedQuery) === null
+      ? trimmedQuery
+      : null;
+  const diceOffset = diceFormula ? 1 : 0;
+  const optionCount = diceOffset + results.length;
+
   function navigate(result: SearchResult) {
     router.push(result.href);
     close();
+  }
+
+  function roll(formula: string) {
+    close();
+    rollDice({ formula });
   }
 
   function onKeyDownInPalette(e: React.KeyboardEvent) {
     if (e.key === "Escape") { close(); return; }
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setActiveIndex((i) => Math.min(i + 1, results.length - 1));
+      setActiveIndex((i) => Math.min(i + 1, optionCount - 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setActiveIndex((i) => Math.max(i - 1, 0));
-    } else if (e.key === "Enter" && results[activeIndex]) {
-      navigate(results[activeIndex]);
+    } else if (e.key === "Enter") {
+      if (diceFormula && activeIndex === 0) roll(diceFormula);
+      else if (results[activeIndex - diceOffset]) navigate(results[activeIndex - diceOffset]);
     }
   }
 
@@ -158,10 +176,27 @@ export function CommandPalette({ campaignId }: { campaignId: number }) {
 
         {/* Results */}
         <div className="max-h-[400px] overflow-y-auto p-2">
+          {diceFormula && (
+            <button
+              onClick={() => roll(diceFormula)}
+              onMouseEnter={() => setActiveIndex(0)}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
+                activeIndex === 0 ? "bg-primary/10 text-primary" : "hover:bg-muted",
+              )}
+            >
+              <Dices className="size-4 shrink-0 text-muted-foreground" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">Roll {diceFormula}</p>
+                <p className="text-xs text-muted-foreground">Open the dice roller</p>
+              </div>
+              <span className="shrink-0 text-xs text-muted-foreground">Dice</span>
+            </button>
+          )}
           {loading && (
             <p className="py-6 text-center text-sm text-muted-foreground">Searching…</p>
           )}
-          {!loading && query.length >= 2 && results.length === 0 && (
+          {!loading && !diceFormula && query.length >= 2 && results.length === 0 && (
             <p className="py-6 text-center text-sm text-muted-foreground">
               No results for &ldquo;{query}&rdquo;
             </p>
@@ -170,14 +205,15 @@ export function CommandPalette({ campaignId }: { campaignId: number }) {
             <ul>
               {results.map((result, i) => {
                 const Icon = TYPE_ICONS[result.type];
+                const index = i + diceOffset;
                 return (
                   <li key={`${result.type}-${result.id}`}>
                     <button
                       onClick={() => navigate(result)}
-                      onMouseEnter={() => setActiveIndex(i)}
+                      onMouseEnter={() => setActiveIndex(index)}
                       className={cn(
                         "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
-                        i === activeIndex ? "bg-primary/10 text-primary" : "hover:bg-muted",
+                        index === activeIndex ? "bg-primary/10 text-primary" : "hover:bg-muted",
                       )}
                     >
                       <Icon className="size-4 shrink-0 text-muted-foreground" />

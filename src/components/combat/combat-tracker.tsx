@@ -74,6 +74,7 @@ import { CheckboxGroup } from "@/components/shared/checkbox-group";
 import { Field } from "@/components/shared/form";
 import { HpBar } from "@/components/shared/hp-bar";
 import { Slider } from "@/components/ui/slider";
+import { COMBAT_LOG_ADDED_EVENT, rollDice } from "@/components/dice/dice-roller";
 import { api } from "@/lib/client";
 import { CONDITIONS, EXHAUSTION_EFFECTS } from "@/lib/constants";
 import { rollDie } from "@/lib/dnd";
@@ -152,12 +153,18 @@ export function CombatTracker({
     partsRef.current = parts;
   }, [parts]);
 
-  // Load this encounter's existing combat log so it survives reloads.
+  // Load this encounter's existing combat log so it survives reloads, and
+  // reload it when the global dice roller logs a roll against this encounter.
   useEffect(() => {
-    api
-      .get<CombatLogEntry[]>(`/api/combat-log?encounterId=${encounter.id}`)
-      .then(setLogEntries)
-      .catch(() => {});
+    function reload() {
+      api
+        .get<CombatLogEntry[]>(`/api/combat-log?encounterId=${encounter.id}`)
+        .then(setLogEntries)
+        .catch(() => {});
+    }
+    reload();
+    window.addEventListener(COMBAT_LOG_ADDED_EVENT, reload);
+    return () => window.removeEventListener(COMBAT_LOG_ADDED_EVENT, reload);
   }, [encounter.id]);
 
   // Per-participant debounced HP persistence: a long press updates the UI on
@@ -727,6 +734,18 @@ function ParticipantRow({
           <HpDialog participant={p} onSave={onSave} onAdjustHp={onAdjustHp} />
           <ConditionsDialog participant={p} onSave={onSave} />
           <ConcentrationDialog participant={p} onSave={onSave} />
+          <Button
+            size="icon"
+            variant="ghost"
+            className="size-8 text-muted-foreground"
+            onClick={() =>
+              rollDice({ formula: "1d20", label: `${p.name} d20`, actorName: p.name })
+            }
+            aria-label={`Roll a d20 for ${p.name}`}
+            title="Roll a d20 for this combatant"
+          >
+            <Dices className="size-4" />
+          </Button>
           <Button
             size="icon"
             variant="ghost"
