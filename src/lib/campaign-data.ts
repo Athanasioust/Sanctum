@@ -26,7 +26,14 @@ import {
   rumors,
   npcRelationships,
   combatLogEntries,
+  battleMaps,
+  soundAssets,
+  soundscapes,
+  mindMaps,
+  homebrewSpells,
+  homebrewFeats,
 } from "@/db/schema";
+import type { BattleToken, MindMapNode, SoundscapeTrack } from "@/db/schema";
 import { ApiError } from "@/lib/api";
 import {
   campaignCreateSchema,
@@ -52,6 +59,12 @@ import {
   rumorCreateSchema,
   npcRelationshipCreateSchema,
   combatLogEntryCreateSchema,
+  battleMapCreateSchema,
+  soundAssetCreateSchema,
+  soundscapeCreateSchema,
+  mindMapCreateSchema,
+  homebrewSpellCreateSchema,
+  homebrewFeatCreateSchema,
 } from "@/lib/validators";
 
 export const EXPORT_VERSION = 1;
@@ -91,6 +104,12 @@ export async function exportCampaign(campaignId: number) {
     handoutRows,
     rumorRows,
     relationshipRows,
+    battleMapRows,
+    soundAssetRows,
+    soundscapeRows,
+    mindMapRows,
+    homebrewSpellRows,
+    homebrewFeatRows,
   ] = await Promise.all([
     db.select().from(characters).where(eq(characters.campaignId, campaignId)),
     db.select().from(npcs).where(eq(npcs.campaignId, campaignId)),
@@ -108,6 +127,12 @@ export async function exportCampaign(campaignId: number) {
     db.select().from(handouts).where(eq(handouts.campaignId, campaignId)),
     db.select().from(rumors).where(eq(rumors.campaignId, campaignId)),
     db.select().from(npcRelationships).where(eq(npcRelationships.campaignId, campaignId)),
+    db.select().from(battleMaps).where(eq(battleMaps.campaignId, campaignId)),
+    db.select().from(soundAssets).where(eq(soundAssets.campaignId, campaignId)),
+    db.select().from(soundscapes).where(eq(soundscapes.campaignId, campaignId)),
+    db.select().from(mindMaps).where(eq(mindMaps.campaignId, campaignId)),
+    db.select().from(homebrewSpells).where(eq(homebrewSpells.campaignId, campaignId)),
+    db.select().from(homebrewFeats).where(eq(homebrewFeats.campaignId, campaignId)),
   ]);
 
   const charIds = characterRows.map((c) => c.id);
@@ -156,6 +181,12 @@ export async function exportCampaign(campaignId: number) {
     rumors: rumorRows,
     npcRelationships: relationshipRows,
     combatLogEntries: combatLogRows,
+    battleMaps: battleMapRows,
+    soundAssets: soundAssetRows,
+    soundscapes: soundscapeRows,
+    mindMaps: mindMapRows,
+    homebrewSpells: homebrewSpellRows,
+    homebrewFeats: homebrewFeatRows,
   };
 }
 
@@ -229,6 +260,12 @@ const ImportSchemas = {
     targetNpcId: true,
   }),
   combatLog: combatLogEntryCreateSchema.omit({ encounterId: true }),
+  battleMap: battleMapCreateSchema.omit({ campaignId: true, encounterId: true }),
+  soundAsset: soundAssetCreateSchema.omit({ campaignId: true }),
+  soundscape: soundscapeCreateSchema.omit({ campaignId: true }),
+  mindMap: mindMapCreateSchema.omit({ campaignId: true }),
+  homebrewSpell: homebrewSpellCreateSchema.omit({ campaignId: true }),
+  homebrewFeat: homebrewFeatCreateSchema.omit({ campaignId: true }),
 };
 
 /** Validate a bundle array, returning {raw, data} pairs for rows that pass. */
@@ -276,6 +313,12 @@ export async function importCampaign(raw: unknown): Promise<number> {
     const locMap = new Map<number, number>();
     const encMap = new Map<number, number>();
     const shopMap = new Map<number, number>();
+    // Needed by battle maps, mind maps and soundscapes, which point at rows
+    // whose ids all change on import.
+    const participantMap = new Map<number, number>();
+    const questMap = new Map<number, number>();
+    const factionMap = new Map<number, number>();
+    const soundAssetMap = new Map<number, number>();
 
     // Characters & NPCs
     for (const { raw: r, data } of validateRows(ImportSchemas.character, bundle.characters)) {
@@ -338,7 +381,13 @@ export async function importCampaign(raw: unknown): Promise<number> {
           : data.entityType === "character"
             ? charMap.get(Number(r.entityId)) ?? null
             : null;
-      tx.insert(combatParticipants).values({ ...data, encounterId, entityId } as never).run();
+      const id = rowId(r);
+      const created = tx
+        .insert(combatParticipants)
+        .values({ ...data, encounterId, entityId } as never)
+        .returning()
+        .all()[0] as { id: number };
+      if (id !== null) participantMap.set(id, created.id);
     }
 
     // Shops & items
@@ -371,11 +420,13 @@ export async function importCampaign(raw: unknown): Promise<number> {
       } as never).run();
     }
     for (const { raw: r, data } of validateRows(ImportSchemas.faction, bundle.factions)) {
-      tx.insert(factions).values({
+      const id = rowId(r);
+      const created = tx.insert(factions).values({
         ...data,
         campaignId,
         keyNpcIds: mapIds(r.keyNpcIds, npcMap),
-      } as never).run();
+      } as never).returning().all()[0] as { id: number };
+      if (id !== null) factionMap.set(id, created.id);
     }
     for (const { data } of validateRows(ImportSchemas.calendar, bundle.calendarEvents)) {
       tx.insert(calendarEvents).values({ ...data, campaignId } as never).run();
@@ -397,12 +448,14 @@ export async function importCampaign(raw: unknown): Promise<number> {
 
     // Quests, magic items, handouts, rumors, relationships, combat logs
     for (const { raw: r, data } of validateRows(ImportSchemas.quest, bundle.quests)) {
-      tx.insert(quests).values({
+      const id = rowId(r);
+      const created = tx.insert(quests).values({
         ...data,
         campaignId,
         linkedNpcIds: mapIds(r.linkedNpcIds, npcMap),
         linkedLocationIds: mapIds(r.linkedLocationIds, locMap),
-      } as never).run();
+      } as never).returning().all()[0] as { id: number };
+      if (id !== null) questMap.set(id, created.id);
     }
     for (const { raw: r, data } of validateRows(ImportSchemas.magicItem, bundle.magicItems)) {
       tx.insert(magicItems).values({
@@ -437,6 +490,72 @@ export async function importCampaign(raw: unknown): Promise<number> {
       const encounterId = encMap.get(Number(r.encounterId));
       if (!encounterId) continue;
       tx.insert(combatLogEntries).values({ ...data, encounterId } as never).run();
+    }
+
+    // Battle maps. Tokens carry participant ids, which all changed on import —
+    // a token whose combatant didn't come across keeps its position but loses
+    // the link, rather than pointing at somebody else's HP bar.
+    for (const { raw: r, data } of validateRows(ImportSchemas.battleMap, bundle.battleMaps)) {
+      const tokens = (Array.isArray(data.tokens) ? data.tokens : []).map((token) => {
+        const t = token as BattleToken;
+        if (t.participantId === undefined) return t;
+        const mapped = participantMap.get(t.participantId);
+        return mapped ? { ...t, participantId: mapped } : { ...t, participantId: undefined };
+      });
+      tx.insert(battleMaps).values({
+        ...data,
+        campaignId,
+        tokens,
+        encounterId: encMap.get(Number(r.encounterId)) ?? null,
+      } as never).run();
+    }
+
+    // Sound assets, then the soundscapes that point at them.
+    for (const { raw: r, data } of validateRows(ImportSchemas.soundAsset, bundle.soundAssets)) {
+      const id = rowId(r);
+      const created = tx
+        .insert(soundAssets)
+        .values({ ...data, campaignId } as never)
+        .returning()
+        .all()[0] as { id: number };
+      if (id !== null) soundAssetMap.set(id, created.id);
+    }
+    for (const { data } of validateRows(ImportSchemas.soundscape, bundle.soundscapes)) {
+      const tracks = data.tracks
+        .map((t) => {
+          const soundAssetId = soundAssetMap.get(t.soundAssetId);
+          return soundAssetId ? { ...t, soundAssetId } : null;
+        })
+        .filter((t): t is SoundscapeTrack => t !== null);
+      tx.insert(soundscapes).values({ ...data, campaignId, tracks } as never).run();
+    }
+
+    // Mind maps. Node entity links are remapped; a link to something that
+    // didn't come across is dropped so it can't resolve to an unrelated row.
+    const mindMapLinkMaps: Record<string, Map<number, number>> = {
+      npc: npcMap,
+      location: locMap,
+      quest: questMap,
+      faction: factionMap,
+      character: charMap,
+    };
+    for (const { data } of validateRows(ImportSchemas.mindMap, bundle.mindMaps)) {
+      const nodes: MindMapNode[] = data.nodes.map((node) => {
+        if (!node.linkType || node.linkId === undefined) return node as MindMapNode;
+        const mapped = mindMapLinkMaps[node.linkType]?.get(node.linkId);
+        return (mapped
+          ? { ...node, linkId: mapped }
+          : { ...node, linkType: undefined, linkId: undefined }) as MindMapNode;
+      });
+      tx.insert(mindMaps).values({ ...data, campaignId, nodes } as never).run();
+    }
+
+    // Homebrew libraries
+    for (const { data } of validateRows(ImportSchemas.homebrewSpell, bundle.homebrewSpells)) {
+      tx.insert(homebrewSpells).values({ ...data, campaignId } as never).run();
+    }
+    for (const { data } of validateRows(ImportSchemas.homebrewFeat, bundle.homebrewFeats)) {
+      tx.insert(homebrewFeats).values({ ...data, campaignId } as never).run();
     }
 
     return campaignId;
