@@ -493,6 +493,46 @@ export const combatLogEntries = sqliteTable("combat_log_entries", {
 });
 
 /* -------------------------------------------------------------------------- */
+/*  Soundpad                                                                   */
+/* -------------------------------------------------------------------------- */
+
+/** The three mixer channels. Music and ambience loop; SFX are one-shots. */
+export const SOUND_CATEGORIES = ["music", "ambience", "sfx"] as const;
+export type SoundCategory = (typeof SOUND_CATEGORIES)[number];
+
+/** One channel's setting inside a saved soundscape. */
+export type SoundscapeTrack = {
+  category: SoundCategory;
+  soundAssetId: number;
+  volume: number;
+};
+
+export const soundAssets = sqliteTable("sound_assets", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  campaignId: integer("campaign_id")
+    .notNull()
+    .references(() => campaigns.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  category: text("category", { enum: SOUND_CATEGORIES }).notNull().default("ambience"),
+  url: text("url").notNull(),
+  ...timestamps,
+});
+
+/** A named set of channel assignments — "Tavern", "Boss fight". */
+export const soundscapes = sqliteTable("soundscapes", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  campaignId: integer("campaign_id")
+    .notNull()
+    .references(() => campaigns.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  tracks: text("tracks", { mode: "json" })
+    .notNull()
+    .$type<SoundscapeTrack[]>()
+    .$defaultFn(() => []),
+  ...timestamps,
+});
+
+/* -------------------------------------------------------------------------- */
 /*  Battle Maps                                                                */
 /* -------------------------------------------------------------------------- */
 
@@ -885,6 +925,10 @@ export type CombatLogEntry = typeof combatLogEntries.$inferSelect;
 export type NewCombatLogEntry = typeof combatLogEntries.$inferInsert;
 export type BattleMap = typeof battleMaps.$inferSelect;
 export type NewBattleMap = typeof battleMaps.$inferInsert;
+export type SoundAsset = typeof soundAssets.$inferSelect;
+export type NewSoundAsset = typeof soundAssets.$inferInsert;
+export type Soundscape = typeof soundscapes.$inferSelect;
+export type NewSoundscape = typeof soundscapes.$inferInsert;
 export type Location = typeof locations.$inferSelect;
 export type NewLocation = typeof locations.$inferInsert;
 export type StoryEvent = typeof storyEvents.$inferSelect;

@@ -12,6 +12,7 @@ import {
   Coins,
   ClipboardList,
   StickyNote,
+  Music,
   Settings,
   ListTodo,
   Sparkles,
@@ -102,6 +103,12 @@ export const CAMPAIGN_NAV: NavItem[] = [
     href: (id) => `/campaign/${id}/sessions`,
     icon: ClipboardList,
     segment: "sessions",
+  },
+  {
+    label: "Soundpad",
+    href: (id) => `/campaign/${id}/soundpad`,
+    icon: Music,
+    segment: "soundpad",
   },
   {
     label: "Notes",

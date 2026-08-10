@@ -10,6 +10,8 @@ import { CampaignOptionsProvider } from "@/components/campaigns/campaign-options
 import { CommandPalette } from "@/components/search/command-palette";
 import { RulesReference } from "@/components/shared/rules-reference";
 import { DiceRoller } from "@/components/dice/dice-roller";
+import { SoundpadProvider } from "@/components/soundpad/soundpad-context";
+import { SoundpadButton } from "@/components/soundpad/soundpad-button";
 
 export const dynamic = "force-dynamic";
 
@@ -67,18 +69,26 @@ export default async function CampaignLayout({
 
   return (
     <CampaignOptionsProvider value={campaignOptions}>
-      <div className="flex min-h-screen">
-        <DesktopSidebar campaign={campaign} campaigns={allCampaigns} />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <MobileNavBar campaign={campaign} campaigns={allCampaigns} />
-          <main className="flex-1">{children}</main>
+      {/*
+        The soundpad engine lives at the layout level so music keeps playing
+        while the DM moves between pages — a page-level player would stop the
+        moment they opened the combat tracker.
+      */}
+      <SoundpadProvider campaignId={campaign.id}>
+        <div className="flex min-h-screen">
+          <DesktopSidebar campaign={campaign} campaigns={allCampaigns} />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <MobileNavBar campaign={campaign} campaigns={allCampaigns} />
+            <main className="flex-1">{children}</main>
+          </div>
+          <CommandPalette campaignId={campaign.id} />
+          <div className="fixed bottom-4 right-4 z-40 flex items-center gap-1 rounded-lg border border-border bg-card/90 p-0.5 shadow-lg backdrop-blur">
+            <DiceRoller campaignId={campaign.id} />
+            <SoundpadButton campaignId={campaign.id} />
+            <RulesReference />
+          </div>
         </div>
-        <CommandPalette campaignId={campaign.id} />
-        <div className="fixed bottom-4 right-4 z-40 flex items-center gap-1 rounded-lg border border-border bg-card/90 p-0.5 shadow-lg backdrop-blur">
-          <DiceRoller campaignId={campaign.id} />
-          <RulesReference />
-        </div>
-      </div>
+      </SoundpadProvider>
     </CampaignOptionsProvider>
   );
 }

@@ -8,12 +8,23 @@ export const dynamic = "force-dynamic";
 // survive in a writable location when the app is packaged. This handler serves
 // them back at the same /uploads/<filename> URLs the upload route returns.
 
+// Extensions the upload route can produce. Anything else is refused, which
+// doubles as the allowlist for what this handler will read off disk.
+// Audio is served as a whole file rather than in ranges — everything is on
+// localhost, so the browser buffers it immediately and can still seek.
 const CONTENT_TYPES: Record<string, string> = {
   png: "image/png",
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
   gif: "image/gif",
   webp: "image/webp",
+  mp3: "audio/mpeg",
+  ogg: "audio/ogg",
+  wav: "audio/wav",
+  weba: "audio/webm",
+  flac: "audio/flac",
+  m4a: "audio/mp4",
+  pdf: "application/pdf",
 };
 
 // Filenames we generate are `<uuid>.<ext>`. Reject anything else so a crafted

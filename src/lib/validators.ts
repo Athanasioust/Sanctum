@@ -358,6 +358,40 @@ export type BattleMapCreateInput = z.infer<typeof battleMapCreateSchema>;
 export type BattleMapUpdateInput = z.infer<typeof battleMapUpdateSchema>;
 
 /* -------------------------------------------------------------------------- */
+/*  Soundpad                                                                   */
+/* -------------------------------------------------------------------------- */
+
+const soundCategoryEnum = z.enum(["music", "ambience", "sfx"]);
+
+export const soundAssetCreateSchema = z.object({
+  campaignId: z.number().int(),
+  name: z.string().trim().min(1, "Name is required").max(120),
+  category: soundCategoryEnum.optional().default("ambience"),
+  url: z.string().min(1, "A file is required").max(500),
+});
+export const soundAssetUpdateSchema = soundAssetCreateSchema.partial();
+
+export const soundscapeCreateSchema = z.object({
+  campaignId: z.number().int(),
+  name: z.string().trim().min(1, "Name is required").max(120),
+  tracks: z
+    .array(
+      z.object({
+        category: soundCategoryEnum,
+        soundAssetId: z.number().int(),
+        volume: z.number().min(0).max(1),
+      }),
+    )
+    .max(16)
+    .optional()
+    .default([]),
+});
+export const soundscapeUpdateSchema = soundscapeCreateSchema.partial();
+
+export type SoundAssetCreateInput = z.infer<typeof soundAssetCreateSchema>;
+export type SoundscapeCreateInput = z.infer<typeof soundscapeCreateSchema>;
+
+/* -------------------------------------------------------------------------- */
 /*  Story events                                                               */
 /* -------------------------------------------------------------------------- */
 
