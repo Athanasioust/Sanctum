@@ -493,6 +493,57 @@ export const combatLogEntries = sqliteTable("combat_log_entries", {
 });
 
 /* -------------------------------------------------------------------------- */
+/*  Mind Map                                                                   */
+/* -------------------------------------------------------------------------- */
+
+/** Entity kinds a mind-map node can point at, so plotting links back to prep. */
+export const MIND_MAP_LINK_TYPES = [
+  "npc",
+  "location",
+  "quest",
+  "faction",
+  "character",
+] as const;
+export type MindMapLinkType = (typeof MIND_MAP_LINK_TYPES)[number];
+
+export type MindMapNode = {
+  id: string;
+  x: number;
+  y: number;
+  title: string;
+  /** Markdown, rendered with the same safe renderer as notes. */
+  body: string;
+  color: string;
+  linkType?: MindMapLinkType;
+  linkId?: number;
+};
+
+export type MindMapEdge = {
+  id: string;
+  source: string;
+  target: string;
+  label?: string;
+  color?: string;
+};
+
+export const mindMaps = sqliteTable("mind_maps", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  campaignId: integer("campaign_id")
+    .notNull()
+    .references(() => campaigns.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  nodes: text("nodes", { mode: "json" })
+    .notNull()
+    .$type<MindMapNode[]>()
+    .$defaultFn(() => []),
+  edges: text("edges", { mode: "json" })
+    .notNull()
+    .$type<MindMapEdge[]>()
+    .$defaultFn(() => []),
+  ...timestamps,
+});
+
+/* -------------------------------------------------------------------------- */
 /*  Soundpad                                                                   */
 /* -------------------------------------------------------------------------- */
 
@@ -925,6 +976,8 @@ export type CombatLogEntry = typeof combatLogEntries.$inferSelect;
 export type NewCombatLogEntry = typeof combatLogEntries.$inferInsert;
 export type BattleMap = typeof battleMaps.$inferSelect;
 export type NewBattleMap = typeof battleMaps.$inferInsert;
+export type MindMap = typeof mindMaps.$inferSelect;
+export type NewMindMap = typeof mindMaps.$inferInsert;
 export type SoundAsset = typeof soundAssets.$inferSelect;
 export type NewSoundAsset = typeof soundAssets.$inferInsert;
 export type Soundscape = typeof soundscapes.$inferSelect;

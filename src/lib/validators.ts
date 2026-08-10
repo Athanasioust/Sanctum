@@ -358,6 +358,39 @@ export type BattleMapCreateInput = z.infer<typeof battleMapCreateSchema>;
 export type BattleMapUpdateInput = z.infer<typeof battleMapUpdateSchema>;
 
 /* -------------------------------------------------------------------------- */
+/*  Mind maps                                                                  */
+/* -------------------------------------------------------------------------- */
+
+const mindMapNodeSchema = z.object({
+  id: z.string().max(64),
+  x: z.number(),
+  y: z.number(),
+  title: z.string().max(200).default(""),
+  body: z.string().max(20000).default(""),
+  color: z.string().max(32).default("#7c3aed"),
+  linkType: z.enum(["npc", "location", "quest", "faction", "character"]).optional(),
+  linkId: z.number().int().optional(),
+});
+
+const mindMapEdgeSchema = z.object({
+  id: z.string().max(64),
+  source: z.string().max(64),
+  target: z.string().max(64),
+  label: z.string().max(120).optional(),
+  color: z.string().max(32).optional(),
+});
+
+export const mindMapCreateSchema = z.object({
+  campaignId: z.number().int(),
+  name: z.string().trim().min(1, "Name is required").max(120),
+  nodes: z.array(mindMapNodeSchema).max(500).optional().default([]),
+  edges: z.array(mindMapEdgeSchema).max(1000).optional().default([]),
+});
+export const mindMapUpdateSchema = mindMapCreateSchema.partial();
+
+export type MindMapCreateInput = z.infer<typeof mindMapCreateSchema>;
+
+/* -------------------------------------------------------------------------- */
 /*  Soundpad                                                                   */
 /* -------------------------------------------------------------------------- */
 
