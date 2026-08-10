@@ -40,6 +40,56 @@ export type GridData = {
   cellSize: number;
   cells: (GridCell | null)[];
 };
+/**
+ * A battle-map token. `x`/`y` are grid cell coordinates (not pixels) so tokens
+ * keep their place when the grid size changes. `participantId` links the token
+ * to a row in `combat_participants` so HP and conditions stay in sync.
+ */
+export type BattleToken = {
+  id: string;
+  participantId?: number;
+  label: string;
+  x: number;
+  y: number;
+  color: string;
+  /** Token footprint in cells: 1 = Medium, 2 = Large, 3 = Huge. */
+  sizeCells: number;
+  imageUrl?: string;
+  /** Kept off the player view until the DM reveals it. */
+  hidden?: boolean;
+};
+
+/** Area-of-effect templates and freehand marks the DM draws on the map. */
+export type MapAnnotation = {
+  id: string;
+  kind: "cone" | "circle" | "line" | "cube" | "freehand" | "arrow" | "text";
+  color: string;
+  /** Anchor point in cell coordinates (unused by freehand/arrow). */
+  x: number;
+  y: number;
+  /** Degrees clockwise from east, for cones, lines and cubes. */
+  rotation?: number;
+  /** Template size in feet — radius, cone length, line length or cube side. */
+  sizeFt?: number;
+  /** Line width in feet; lines only. */
+  widthFt?: number;
+  /** Flat [x1,y1,x2,y2,…] cell coordinates for freehand strokes and arrows. */
+  points?: number[];
+  /** Text content; text annotations only. */
+  text?: string;
+};
+
+/**
+ * Fog of war as a boolean cell mask. Its dimensions are stored alongside the
+ * mask so a map resize can be detected and the fog rebuilt rather than smeared.
+ */
+export type FogData = {
+  cols: number;
+  rows: number;
+  /** One entry per cell, row-major. True = revealed to players. */
+  revealed: boolean[];
+};
+
 export type RollTableEntry = { weight: number; result: string };
 export type PlotPoint = { text: string; checked: boolean };
 export type StatBlockAction = { name: string; description: string };
@@ -443,6 +493,50 @@ export const combatLogEntries = sqliteTable("combat_log_entries", {
 });
 
 /* -------------------------------------------------------------------------- */
+/*  Battle Maps                                                                */
+/* -------------------------------------------------------------------------- */
+
+export const battleMaps = sqliteTable("battle_maps", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  campaignId: integer("campaign_id")
+    .notNull()
+    .references(() => campaigns.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  imageUrl: text("image_url"),
+  /** Cell size in screen pixels. */
+  gridSize: integer("grid_size").notNull().default(70),
+  gridCols: integer("grid_cols").notNull().default(20),
+  gridRows: integer("grid_rows").notNull().default(15),
+  /** Feet represented by one cell — 5 ft in almost every game. */
+  feetPerCell: integer("feet_per_cell").notNull().default(5),
+  /** "5-10-5" (DMG variant) or "5-5-5" (PHB default) diagonal counting. */
+  diagonalRule: text("diagonal_rule", { enum: ["5-10-5", "5-5-5"] })
+    .notNull()
+    .default("5-10-5"),
+
+  tokens: text("tokens", { mode: "json" })
+    .notNull()
+    .$type<BattleToken[]>()
+    .$defaultFn(() => []),
+  annotations: text("annotations", { mode: "json" })
+    .notNull()
+    .$type<MapAnnotation[]>()
+    .$defaultFn(() => []),
+  fog: text("fog", { mode: "json" }).$type<FogData | null>(),
+  fogEnabled: integer("fog_enabled", { mode: "boolean" }).notNull().default(false),
+
+  /** When set, the player view renders this map with fog applied. */
+  revealToPlayers: integer("reveal_to_players", { mode: "boolean" })
+    .notNull()
+    .default(false),
+  /** The live encounter whose participants become tokens. */
+  encounterId: integer("encounter_id").references(() => encounters.id, {
+    onDelete: "set null",
+  }),
+  ...timestamps,
+});
+
+/* -------------------------------------------------------------------------- */
 /*  Locations (World)                                                          */
 /* -------------------------------------------------------------------------- */
 
@@ -789,6 +883,8 @@ export type CombatParticipant = typeof combatParticipants.$inferSelect;
 export type NewCombatParticipant = typeof combatParticipants.$inferInsert;
 export type CombatLogEntry = typeof combatLogEntries.$inferSelect;
 export type NewCombatLogEntry = typeof combatLogEntries.$inferInsert;
+export type BattleMap = typeof battleMaps.$inferSelect;
+export type NewBattleMap = typeof battleMaps.$inferInsert;
 export type Location = typeof locations.$inferSelect;
 export type NewLocation = typeof locations.$inferInsert;
 export type StoryEvent = typeof storyEvents.$inferSelect;

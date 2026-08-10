@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   Swords,
+  Grid3x3,
   Users,
   Skull,
   BookOpen,
@@ -41,6 +42,12 @@ export const CAMPAIGN_NAV: NavItem[] = [
     href: (id) => `/campaign/${id}/combat`,
     icon: Swords,
     segment: "combat",
+  },
+  {
+    label: "Battle Map",
+    href: (id) => `/campaign/${id}/battle-map`,
+    icon: Grid3x3,
+    segment: "battle-map",
   },
   {
     label: "Characters",

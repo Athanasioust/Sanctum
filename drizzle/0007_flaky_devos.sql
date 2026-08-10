@@ -1,0 +1,21 @@
+CREATE TABLE `battle_maps` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`campaign_id` integer NOT NULL,
+	`name` text NOT NULL,
+	`image_url` text,
+	`grid_size` integer DEFAULT 70 NOT NULL,
+	`grid_cols` integer DEFAULT 20 NOT NULL,
+	`grid_rows` integer DEFAULT 15 NOT NULL,
+	`feet_per_cell` integer DEFAULT 5 NOT NULL,
+	`diagonal_rule` text DEFAULT '5-10-5' NOT NULL,
+	`tokens` text NOT NULL,
+	`annotations` text NOT NULL,
+	`fog` text,
+	`fog_enabled` integer DEFAULT false NOT NULL,
+	`reveal_to_players` integer DEFAULT false NOT NULL,
+	`encounter_id` integer,
+	`created_at` integer NOT NULL,
+	`updated_at` integer NOT NULL,
+	FOREIGN KEY (`campaign_id`) REFERENCES `campaigns`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`encounter_id`) REFERENCES `encounters`(`id`) ON UPDATE no action ON DELETE set null
+);

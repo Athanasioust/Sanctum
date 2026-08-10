@@ -84,6 +84,37 @@ const gridDataSchema = z
     cells: z.array(gridCellSchema),
   })
   .nullable();
+const battleTokenSchema = z.object({
+  id: z.string().max(64),
+  participantId: z.number().int().optional(),
+  label: z.string().max(120).default(""),
+  x: z.number(),
+  y: z.number(),
+  color: z.string().max(32).default("#7c3aed"),
+  sizeCells: z.number().int().min(1).max(6).default(1),
+  imageUrl: z.string().max(500).optional(),
+  hidden: z.boolean().optional(),
+});
+const mapAnnotationSchema = z.object({
+  id: z.string().max(64),
+  kind: z.enum(["cone", "circle", "line", "cube", "freehand", "arrow", "text"]),
+  color: z.string().max(32).default("#7c3aed"),
+  x: z.number(),
+  y: z.number(),
+  rotation: z.number().optional(),
+  sizeFt: z.number().min(0).max(1000).optional(),
+  widthFt: z.number().min(0).max(1000).optional(),
+  points: z.array(z.number()).max(4000).optional(),
+  text: z.string().max(200).optional(),
+});
+const fogDataSchema = z
+  .object({
+    cols: z.number().int().min(1).max(200),
+    rows: z.number().int().min(1).max(200),
+    revealed: z.array(z.boolean()).max(40000),
+  })
+  .nullable();
+
 const rollTableEntrySchema = z.object({
   weight: z.number().min(0),
   result: z.string(),
@@ -300,6 +331,31 @@ export const locationCreateSchema = z.object({
   notes: optionalString(20000),
 });
 export const locationUpdateSchema = locationCreateSchema.partial();
+
+/* -------------------------------------------------------------------------- */
+/*  Battle maps                                                                */
+/* -------------------------------------------------------------------------- */
+
+export const battleMapCreateSchema = z.object({
+  campaignId: z.number().int(),
+  name: z.string().trim().min(1, "Name is required").max(120),
+  imageUrl: z.string().max(500).nullable().optional(),
+  gridSize: z.number().int().min(16).max(200).optional().default(70),
+  gridCols: z.number().int().min(1).max(200).optional().default(20),
+  gridRows: z.number().int().min(1).max(200).optional().default(15),
+  feetPerCell: z.number().int().min(1).max(100).optional().default(5),
+  diagonalRule: z.enum(["5-10-5", "5-5-5"]).optional().default("5-10-5"),
+  tokens: z.array(battleTokenSchema).max(500).optional().default([]),
+  annotations: z.array(mapAnnotationSchema).max(500).optional().default([]),
+  fog: fogDataSchema.optional(),
+  fogEnabled: z.boolean().optional().default(false),
+  revealToPlayers: z.boolean().optional().default(false),
+  encounterId: z.number().int().nullable().optional(),
+});
+export const battleMapUpdateSchema = battleMapCreateSchema.partial();
+
+export type BattleMapCreateInput = z.infer<typeof battleMapCreateSchema>;
+export type BattleMapUpdateInput = z.infer<typeof battleMapUpdateSchema>;
 
 /* -------------------------------------------------------------------------- */
 /*  Story events                                                               */
