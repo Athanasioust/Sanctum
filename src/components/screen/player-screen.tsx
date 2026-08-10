@@ -1,12 +1,24 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Swords, Heart, Shield, Skull, Image } from "lucide-react";
+import dynamic from "next/dynamic";
+import { Swords, Heart, Shield, Skull, Image, Grid3x3 } from "lucide-react";
 import { api } from "@/lib/client";
+import { fogForGrid } from "@/lib/battle-map";
 import { hpBarColor } from "@/lib/ui";
 import { renderMarkdown } from "@/lib/markdown";
 import { cn } from "@/lib/utils";
-import type { Character, CombatParticipant, Encounter, Handout } from "@/db/schema";
+import type {
+  BattleMap,
+  Character,
+  CombatParticipant,
+  Encounter,
+  Handout,
+} from "@/db/schema";
+
+const BattleMapCanvas = dynamic(() => import("@/components/combat/battle-map-canvas"), {
+  ssr: false,
+});
 
 type ScreenState = {
   active: boolean;
@@ -16,6 +28,8 @@ type ScreenState = {
   participants: CombatParticipant[];
   party: Character[];
   handouts: Handout[];
+  /** The battle map the DM is currently showing, if any. */
+  battleMap: BattleMap | null;
 };
 
 const EMPTY: ScreenState = {
@@ -26,6 +40,7 @@ const EMPTY: ScreenState = {
   participants: [],
   party: [],
   handouts: [],
+  battleMap: null,
 };
 
 export function PlayerScreen({
@@ -40,14 +55,18 @@ export function PlayerScreen({
 
   const load = useCallback(async () => {
     try {
-      const [encounters, party, allHandouts] = await Promise.all([
+      const [encounters, party, allHandouts, maps] = await Promise.all([
         api.get<Encounter[]>(`/api/encounters?campaignId=${campaignId}`),
         api.get<Character[]>(`/api/characters?campaignId=${campaignId}`),
         api.get<Handout[]>(`/api/handouts?campaignId=${campaignId}`),
+        api.get<BattleMap[]>(`/api/battle-maps?campaignId=${campaignId}`),
       ]);
       const handouts = allHandouts.filter((h) => h.isRevealed);
+      // Maps come back newest-updated first, so the most recently touched map
+      // wins if the DM left more than one flagged.
+      const battleMap = maps.find((m) => m.revealToPlayers) ?? null;
       const active = encounters.find((e) => e.status === "active") ?? null;
-      let next: ScreenState = { ...EMPTY, party, handouts };
+      let next: ScreenState = { ...EMPTY, party, handouts, battleMap };
       if (active) {
         const full = await api.get<Encounter & { participants: CombatParticipant[] }>(
           `/api/encounters/${active.id}`,
@@ -60,6 +79,7 @@ export function PlayerScreen({
           participants: [...full.participants].sort((a, b) => a.turnOrder - b.turnOrder),
           party,
           handouts,
+          battleMap,
         };
       }
       setState(next);
@@ -108,6 +128,16 @@ export function PlayerScreen({
         <p className="py-20 text-center text-muted-foreground">Loading…</p>
       ) : (
         <>
+          {/* Battle map — only when the DM has flagged one to show */}
+          {state.battleMap && (
+            <section className="mb-8">
+              <h2 className="mb-3 flex items-center gap-2 font-heading text-lg font-semibold text-muted-foreground">
+                <Grid3x3 className="size-4" /> {state.battleMap.name}
+              </h2>
+              <PlayerBattleMap map={state.battleMap} />
+            </section>
+          )}
+
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_1fr]">
             {/* Initiative */}
             <section>
@@ -159,6 +189,36 @@ export function PlayerScreen({
         </>
       )}
     </main>
+  );
+}
+
+/**
+ * The DM's battle map, read-only. Fog renders solid black and tokens the DM
+ * hid — or that stand in unrevealed squares — are never drawn, so nothing
+ * reaches this screen that the players aren't meant to see.
+ */
+function PlayerBattleMap({ map }: { map: BattleMap }) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-border bg-[#0b0b0c]">
+      <BattleMapCanvas
+        map={{
+          imageUrl: map.imageUrl,
+          gridSize: map.gridSize,
+          gridCols: map.gridCols,
+          gridRows: map.gridRows,
+          feetPerCell: map.feetPerCell,
+          diagonalRule: map.diagonalRule,
+          tokens: map.tokens,
+          annotations: map.annotations,
+          fog: fogForGrid(map.fog, map.gridCols, map.gridRows),
+          fogEnabled: map.fogEnabled,
+        }}
+        statuses={{}}
+        readOnly
+        playerView
+        fitWidth
+      />
+    </div>
   );
 }
 

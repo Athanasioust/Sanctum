@@ -18,12 +18,14 @@ import type Konva from "konva";
 import {
   aoePoints,
   aoeRadiusCells,
+  fogRects,
   gridDistanceFeet,
   snapToGrid,
+  tokenVisibleToPlayers,
   type DiagonalRule,
   type Point,
 } from "@/lib/battle-map";
-import type { BattleToken, MapAnnotation } from "@/db/schema";
+import type { BattleToken, FogData, MapAnnotation } from "@/db/schema";
 
 /** Everything the canvas needs to draw, without the database bookkeeping. */
 export type CanvasMap = {
@@ -35,6 +37,8 @@ export type CanvasMap = {
   diagonalRule: DiagonalRule;
   tokens: BattleToken[];
   annotations: MapAnnotation[];
+  fog: FogData | null;
+  fogEnabled: boolean;
 };
 
 /** Live HP and conditions for a token, looked up from the linked participant. */
@@ -54,42 +58,61 @@ export type MapTool =
   | "circle"
   | "cone"
   | "line"
-  | "cube";
+  | "cube"
+  | "fog-reveal"
+  | "fog-hide";
 
 export default function BattleMapCanvas({
   map,
   statuses,
-  tool,
-  templateSizeFt,
-  templateColor,
-  selectedTokenId,
-  selectedAnnotationId,
+  tool = "select",
+  templateSizeFt = 20,
+  templateColor = "#f97316",
+  brushCells = 3,
+  selectedTokenId = null,
+  selectedAnnotationId = null,
   onSelectToken,
   onSelectAnnotation,
   onMoveToken,
   onAddAnnotation,
   onMoveAnnotation,
+  onPaintFog,
   readOnly = false,
+  playerView = false,
+  fitWidth = false,
 }: {
   map: CanvasMap;
   statuses: Record<string, TokenStatus>;
-  tool: MapTool;
+  tool?: MapTool;
   /** Size in feet for the next AoE template placed. */
-  templateSizeFt: number;
-  templateColor: string;
-  selectedTokenId: string | null;
-  selectedAnnotationId: string | null;
-  onSelectToken: (id: string | null) => void;
-  onSelectAnnotation: (id: string | null) => void;
-  onMoveToken: (id: string, x: number, y: number) => void;
-  onAddAnnotation: (annotation: MapAnnotation) => void;
-  onMoveAnnotation: (id: string, x: number, y: number) => void;
+  templateSizeFt?: number;
+  templateColor?: string;
+  /** Fog brush width, in cells. */
+  brushCells?: number;
+  selectedTokenId?: string | null;
+  selectedAnnotationId?: string | null;
+  onSelectToken?: (id: string | null) => void;
+  onSelectAnnotation?: (id: string | null) => void;
+  onMoveToken?: (id: string, x: number, y: number) => void;
+  onAddAnnotation?: (annotation: MapAnnotation) => void;
+  onMoveAnnotation?: (id: string, x: number, y: number) => void;
+  onPaintFog?: (col: number, row: number, reveal: boolean) => void;
   readOnly?: boolean;
+  /**
+   * Render as the players see it: fog is solid black rather than a dim veil,
+   * and tokens the DM has hidden or left in the dark are not drawn at all.
+   */
+  playerView?: boolean;
+  /** Scale the stage to fill its container, for the player screen. */
+  fitWidth?: boolean;
 }) {
   const { gridSize, gridCols, gridRows, feetPerCell, diagonalRule } = map;
   const width = gridCols * gridSize;
   const height = gridRows * gridSize;
   const image = useMapImage(map.imageUrl);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const scale = useFitScale(containerRef, width, fitWidth);
 
   /** Measure tool: the anchor point and the live cursor, in cells. */
   const [measureFrom, setMeasureFrom] = useState<Point | null>(null);
@@ -99,12 +122,16 @@ export default function BattleMapCanvas({
   const [drawing, setDrawing] = useState<number[] | null>(null);
 
   const isTemplateTool = ["circle", "cone", "line", "cube"].includes(tool);
+  const isFogTool = tool === "fog-reveal" || tool === "fog-hide";
+  /** True while the fog brush is held down, so a drag paints continuously. */
+  const painting = useRef(false);
 
   /** Pointer position in (fractional) cell coordinates. */
   function pointerCell(e: Konva.KonvaEventObject<MouseEvent | TouchEvent>): Point | null {
     const pos = e.target.getStage()?.getPointerPosition();
     if (!pos) return null;
-    return { x: pos.x / gridSize, y: pos.y / gridSize };
+    // getPointerPosition is in screen pixels; undo the fit-to-width scale.
+    return { x: pos.x / scale / gridSize, y: pos.y / scale / gridSize };
   }
 
   function handleMouseDown(e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) {
@@ -114,9 +141,15 @@ export default function BattleMapCanvas({
 
     if (tool === "select") {
       if (e.target === e.target.getStage()) {
-        onSelectToken(null);
-        onSelectAnnotation(null);
+        onSelectToken?.(null);
+        onSelectAnnotation?.(null);
       }
+      return;
+    }
+
+    if (isFogTool) {
+      painting.current = true;
+      onPaintFog?.(Math.floor(cell.x), Math.floor(cell.y), tool === "fog-reveal");
       return;
     }
 
@@ -135,7 +168,7 @@ export default function BattleMapCanvas({
     if (tool === "text") {
       const text = window.prompt("Label text");
       if (!text?.trim()) return;
-      onAddAnnotation({
+      onAddAnnotation?.({
         id: crypto.randomUUID(),
         kind: "text",
         color: templateColor,
@@ -147,7 +180,7 @@ export default function BattleMapCanvas({
     }
 
     if (isTemplateTool) {
-      onAddAnnotation({
+      onAddAnnotation?.({
         id: crypto.randomUUID(),
         kind: tool as MapAnnotation["kind"],
         color: templateColor,
@@ -168,6 +201,15 @@ export default function BattleMapCanvas({
       setCursor({ x: Math.floor(cell.x), y: Math.floor(cell.y) });
       return;
     }
+    if (isFogTool) {
+      // Track the hovered cell so the brush outline follows the pointer, and
+      // keep painting while the button is held.
+      setCursor({ x: Math.floor(cell.x), y: Math.floor(cell.y) });
+      if (painting.current) {
+        onPaintFog?.(Math.floor(cell.x), Math.floor(cell.y), tool === "fog-reveal");
+      }
+      return;
+    }
     if (drawing) {
       // Thin the stroke so a long drag doesn't store thousands of points.
       const points = stroke.current;
@@ -180,13 +222,14 @@ export default function BattleMapCanvas({
   }
 
   function handleMouseUp() {
+    painting.current = false;
     if (!drawing) return;
     const points = stroke.current;
     stroke.current = [];
     setDrawing(null);
     if (points.length < 4) return;
 
-    onAddAnnotation({
+    onAddAnnotation?.({
       id: crypto.randomUUID(),
       kind: tool === "arrow" ? "arrow" : "freehand",
       color: templateColor,
@@ -205,11 +248,21 @@ export default function BattleMapCanvas({
       ? gridDistanceFeet(measureFrom, cursor, diagonalRule, feetPerCell)
       : null;
 
+  // Players only see tokens that aren't hidden and aren't standing in fog.
+  const visibleTokens = playerView
+    ? map.tokens.filter((t) => tokenVisibleToPlayers(t, map.fog, map.fogEnabled))
+    : map.tokens;
+
   return (
-    <div className="overflow-auto rounded-lg border border-border bg-[#0b0b0c]">
+    <div
+      ref={containerRef}
+      className={fitWidth ? "w-full" : "overflow-auto rounded-lg border border-border bg-[#0b0b0c]"}
+    >
       <Stage
-        width={width}
-        height={height}
+        width={width * scale}
+        height={height * scale}
+        scaleX={scale}
+        scaleY={scale}
         onMouseDown={handleMouseDown}
         onTouchStart={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -217,7 +270,7 @@ export default function BattleMapCanvas({
         onMouseUp={handleMouseUp}
         onTouchEnd={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        style={{ cursor: tool === "select" ? "default" : "crosshair" }}
+        style={{ cursor: readOnly || tool === "select" ? "default" : "crosshair" }}
       >
         {/* Background image */}
         <Layer listening={false}>
@@ -242,15 +295,15 @@ export default function BattleMapCanvas({
               feetPerCell={feetPerCell}
               selected={annotation.id === selectedAnnotationId}
               draggable={!readOnly && tool === "select"}
-              onSelect={() => onSelectAnnotation(annotation.id)}
-              onMove={(x, y) => onMoveAnnotation(annotation.id, x, y)}
+              onSelect={() => onSelectAnnotation?.(annotation.id)}
+              onMove={(x, y) => onMoveAnnotation?.(annotation.id, x, y)}
             />
           ))}
         </Layer>
 
         {/* Tokens */}
         <Layer>
-          {map.tokens.map((token) => (
+          {visibleTokens.map((token) => (
             <TokenShape
               key={token.id}
               token={token}
@@ -260,11 +313,31 @@ export default function BattleMapCanvas({
               gridRows={gridRows}
               selected={token.id === selectedTokenId}
               draggable={!readOnly && tool === "select"}
-              onSelect={() => onSelectToken(token.id)}
-              onMove={(x, y) => onMoveToken(token.id, x, y)}
+              onSelect={() => onSelectToken?.(token.id)}
+              onMove={(x, y) => onMoveToken?.(token.id, x, y)}
             />
           ))}
         </Layer>
+
+        {/*
+          Fog sits above the tokens so a hidden combatant is covered on the DM's
+          screen too. The DM sees a dim veil they can still read the map
+          through; players get solid black.
+        */}
+        {map.fogEnabled && map.fog && (
+          <Layer listening={false}>
+            {fogRects(map.fog).map((rect, i) => (
+              <Rect
+                key={i}
+                x={rect.x * gridSize}
+                y={rect.y * gridSize}
+                width={rect.w * gridSize}
+                height={rect.h * gridSize}
+                fill={playerView ? "#000000" : "rgba(0,0,0,0.62)"}
+              />
+            ))}
+          </Layer>
+        )}
 
         {/* Live overlays: the stroke being drawn and the measuring tape */}
         <Layer listening={false}>
@@ -278,12 +351,24 @@ export default function BattleMapCanvas({
               tension={tool === "arrow" ? 0 : 0.4}
             />
           )}
-          {measureFrom && cursor && (
+          {measureFrom && cursor && tool === "measure" && (
             <MeasureOverlay
               from={measureFrom}
               to={cursor}
               gridSize={gridSize}
               feet={measureFeet ?? 0}
+            />
+          )}
+          {/* Fog brush footprint, so the DM can see what a click will cover */}
+          {isFogTool && cursor && (
+            <Rect
+              x={(cursor.x - Math.floor(brushCells / 2)) * gridSize}
+              y={(cursor.y - Math.floor(brushCells / 2)) * gridSize}
+              width={brushCells * gridSize}
+              height={brushCells * gridSize}
+              stroke={tool === "fog-reveal" ? "#facc15" : "#60a5fa"}
+              strokeWidth={2}
+              dash={[6, 4]}
             />
           )}
         </Layer>
@@ -309,6 +394,32 @@ function useMapImage(url: string | null) {
     };
   }, [url]);
   return loaded && loaded.url === url ? loaded.image : null;
+}
+
+/**
+ * Scale factor that fits the stage to its container's width, for the player
+ * screen where the map has to fill a TV rather than scroll. Capped at 2x so a
+ * small map on a big display doesn't turn into a handful of giant squares.
+ */
+function useFitScale(
+  ref: React.RefObject<HTMLDivElement | null>,
+  naturalWidth: number,
+  enabled: boolean,
+) {
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!enabled || !el) return;
+    const update = () => setContainerWidth(el.clientWidth);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [ref, enabled]);
+
+  if (!enabled || containerWidth <= 0 || naturalWidth <= 0) return 1;
+  return Math.min(2, containerWidth / naturalWidth);
 }
 
 function GridLines({ cols, rows, size }: { cols: number; rows: number; size: number }) {

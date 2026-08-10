@@ -5,15 +5,18 @@ import dynamic from "next/dynamic";
 import {
   ArrowUpRight,
   Circle as CircleIcon,
+  Cloud,
   Eraser,
   Eye,
   EyeOff,
   Grid3x3,
   ImageIcon,
   Map as MapIcon,
+  Monitor,
   MousePointer2,
   Pencil,
   Plus,
+  RotateCcw,
   Ruler,
   Square,
   Trash2,
@@ -37,6 +40,7 @@ import { Field } from "@/components/shared/form";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { api } from "@/lib/client";
+import { createFog, fogForGrid, paintFog, revealAllFog } from "@/lib/battle-map";
 import { cn } from "@/lib/utils";
 import type { MapTool, TokenStatus } from "@/components/combat/battle-map-canvas";
 import type {
@@ -73,6 +77,8 @@ const TOOLS: { value: MapTool; label: string; icon: typeof MousePointer2; hint: 
   { value: "draw", label: "Draw", icon: Pencil, hint: "Freehand drawing" },
   { value: "arrow", label: "Arrow", icon: ArrowUpRight, hint: "Drag to draw an arrow" },
   { value: "text", label: "Text", icon: Type, hint: "Click to drop a label" },
+  { value: "fog-reveal", label: "Reveal", icon: Eye, hint: "Brush away the fog to show the players" },
+  { value: "fog-hide", label: "Hide", icon: EyeOff, hint: "Brush fog back over the map" },
 ];
 
 /** Common 5e template sizes, in feet. */
@@ -98,6 +104,7 @@ export function BattleMap({
   const [tool, setTool] = useState<MapTool>("select");
   const [templateSizeFt, setTemplateSizeFt] = useState(20);
   const [templateColor, setTemplateColor] = useState(TEMPLATE_COLORS[0]);
+  const [brushCells, setBrushCells] = useState(3);
   const [uploading, setUploading] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [fetched, setFetched] = useState<EncounterWithParts | null>(null);
@@ -347,6 +354,47 @@ export function BattleMap({
     toast.success("Cleared all drawings and templates");
   }
 
+  /* ---------------------------------------------------------------------- */
+  /*  Fog of war                                                             */
+  /* ---------------------------------------------------------------------- */
+
+  // Fog is kept in step with the grid, so resizing the map re-lays the mask
+  // rather than leaving a mask of the wrong shape behind.
+  const fog = useMemo(
+    () => (map ? fogForGrid(map.fog, map.gridCols, map.gridRows) : null),
+    [map],
+  );
+
+  function handlePaintFog(col: number, row: number, reveal: boolean) {
+    if (!map || !fog) return;
+    const next = paintFog(fog, col, row, brushCells, reveal);
+    update({ fog: next });
+  }
+
+  function toggleFog() {
+    if (!map) return;
+    const enabling = !map.fogEnabled;
+    update(
+      {
+        fogEnabled: enabling,
+        // Turning fog on for the first time starts it fully hidden.
+        fog: enabling ? (map.fog ?? createFog(map.gridCols, map.gridRows)) : map.fog,
+      },
+      { immediate: true },
+    );
+  }
+
+  function resetFog(revealEverything: boolean) {
+    if (!map || !fog) return;
+    update(
+      {
+        fog: revealEverything ? revealAllFog(fog) : createFog(map.gridCols, map.gridRows),
+      },
+      { immediate: true },
+    );
+    toast.success(revealEverything ? "Whole map revealed" : "Fog reset");
+  }
+
   const selectedToken = map?.tokens.find((t) => t.id === selectedTokenId) ?? null;
   const selectedAnnotation =
     map?.annotations.find((a) => a.id === selectedAnnotationId) ?? null;
@@ -570,6 +618,61 @@ export function BattleMap({
             </div>
           </div>
 
+          {/* Fog of war + player streaming */}
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-3">
+            <Button
+              variant={map.fogEnabled ? "default" : "outline"}
+              size="sm"
+              onClick={toggleFog}
+            >
+              <Cloud className="size-3.5" /> Fog of war {map.fogEnabled ? "on" : "off"}
+            </Button>
+
+            {map.fogEnabled && (
+              <>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-muted-foreground">Brush</span>
+                  <Select value={String(brushCells)} onValueChange={(v) => setBrushCells(Number(v))}>
+                    <SelectTrigger className="h-8 w-28"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1 square</SelectItem>
+                      <SelectItem value="3">3 squares</SelectItem>
+                      <SelectItem value="5">5 squares</SelectItem>
+                      <SelectItem value="9">9 squares</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => resetFog(true)}>
+                  Reveal all
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => resetFog(false)}>
+                  <RotateCcw className="size-3.5" /> Reset fog
+                </Button>
+              </>
+            )}
+
+            <Button
+              variant={map.revealToPlayers ? "default" : "outline"}
+              size="sm"
+              className="ml-auto"
+              onClick={() =>
+                update({ revealToPlayers: !map.revealToPlayers }, { immediate: true })
+              }
+              title="Show this map on the player view"
+            >
+              <Monitor className="size-3.5" />
+              {map.revealToPlayers ? "Showing to players" : "Show to players"}
+            </Button>
+          </div>
+
+          {map.revealToPlayers && (
+            <p className="text-xs text-muted-foreground">
+              Players see this map within a few seconds. Fogged areas are solid black
+              for them, and tokens marked hidden or standing in fog aren&apos;t drawn at
+              all — but anything you draw on the map is visible, so keep secrets off it.
+            </p>
+          )}
+
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_280px]">
             <BattleMapCanvas
               map={{
@@ -581,11 +684,14 @@ export function BattleMap({
                 diagonalRule: map.diagonalRule,
                 tokens: map.tokens,
                 annotations: map.annotations,
+                fog,
+                fogEnabled: map.fogEnabled,
               }}
               statuses={statuses}
               tool={tool}
               templateSizeFt={templateSizeFt}
               templateColor={templateColor}
+              brushCells={brushCells}
               selectedTokenId={selectedTokenId}
               selectedAnnotationId={selectedAnnotationId}
               onSelectToken={(id) => {
@@ -599,6 +705,7 @@ export function BattleMap({
               onMoveToken={moveToken}
               onAddAnnotation={addAnnotation}
               onMoveAnnotation={moveAnnotation}
+              onPaintFog={handlePaintFog}
             />
 
             {/* Token inspector */}

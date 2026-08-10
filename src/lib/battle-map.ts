@@ -200,6 +200,29 @@ export function revealAllFog(fog: FogData): FogData {
 }
 
 /**
+ * The hidden area as a small set of rectangles (in cells), merging each row's
+ * runs of hidden cells. A 100x100 map is 10,000 cells but usually only a few
+ * dozen rectangles, which is the difference between a smooth canvas and a
+ * stuttering one.
+ */
+export function fogRects(fog: FogData): { x: number; y: number; w: number; h: number }[] {
+  const rects: { x: number; y: number; w: number; h: number }[] = [];
+  for (let row = 0; row < fog.rows; row++) {
+    let runStart = -1;
+    // One extra step past the end closes a run that reaches the edge.
+    for (let col = 0; col <= fog.cols; col++) {
+      const hidden = col < fog.cols && !fog.revealed[row * fog.cols + col];
+      if (hidden && runStart === -1) runStart = col;
+      else if (!hidden && runStart !== -1) {
+        rects.push({ x: runStart, y: row, w: col - runStart, h: 1 });
+        runStart = -1;
+      }
+    }
+  }
+  return rects;
+}
+
+/**
  * Whether a token should be visible to players: not explicitly hidden, and
  * standing on a revealed cell when fog is on.
  */
