@@ -21,6 +21,7 @@ import {
   Network,
   Waypoints,
   FlaskConical,
+  FileText,
   Upload,
   type LucideIcon,
 } from "lucide-react";
@@ -147,6 +148,12 @@ export const CAMPAIGN_NAV: NavItem[] = [
     href: (id) => `/campaign/${id}/relations`,
     icon: Network,
     segment: "relations",
+  },
+  {
+    label: "Documents",
+    href: (id) => `/campaign/${id}/documents`,
+    icon: FileText,
+    segment: "documents",
   },
   {
     label: "Homebrew",

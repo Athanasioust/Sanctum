@@ -516,6 +516,23 @@ export const combatLogEntries = sqliteTable("combat_log_entries", {
 });
 
 /* -------------------------------------------------------------------------- */
+/*  Documents (reference PDFs)                                                 */
+/* -------------------------------------------------------------------------- */
+
+export const documents = sqliteTable("documents", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  campaignId: integer("campaign_id")
+    .notNull()
+    .references(() => campaigns.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  url: text("url").notNull(),
+  /** Size in bytes, shown in the list so a DM can spot the huge ones. */
+  fileSize: integer("file_size").notNull().default(0),
+  notes: text("notes").notNull().default(""),
+  ...timestamps,
+});
+
+/* -------------------------------------------------------------------------- */
 /*  Homebrew libraries                                                         */
 /* -------------------------------------------------------------------------- */
 
@@ -1048,6 +1065,8 @@ export type CombatLogEntry = typeof combatLogEntries.$inferSelect;
 export type NewCombatLogEntry = typeof combatLogEntries.$inferInsert;
 export type BattleMap = typeof battleMaps.$inferSelect;
 export type NewBattleMap = typeof battleMaps.$inferInsert;
+export type Document = typeof documents.$inferSelect;
+export type NewDocument = typeof documents.$inferInsert;
 export type HomebrewSpell = typeof homebrewSpells.$inferSelect;
 export type NewHomebrewSpell = typeof homebrewSpells.$inferInsert;
 export type HomebrewFeat = typeof homebrewFeats.$inferSelect;

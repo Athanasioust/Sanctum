@@ -32,6 +32,7 @@ import {
   mindMaps,
   homebrewSpells,
   homebrewFeats,
+  documents,
 } from "@/db/schema";
 import type { BattleToken, MindMapNode, SoundscapeTrack } from "@/db/schema";
 import { ApiError } from "@/lib/api";
@@ -65,6 +66,7 @@ import {
   mindMapCreateSchema,
   homebrewSpellCreateSchema,
   homebrewFeatCreateSchema,
+  documentCreateSchema,
 } from "@/lib/validators";
 
 export const EXPORT_VERSION = 1;
@@ -110,6 +112,7 @@ export async function exportCampaign(campaignId: number) {
     mindMapRows,
     homebrewSpellRows,
     homebrewFeatRows,
+    documentRows,
   ] = await Promise.all([
     db.select().from(characters).where(eq(characters.campaignId, campaignId)),
     db.select().from(npcs).where(eq(npcs.campaignId, campaignId)),
@@ -133,6 +136,7 @@ export async function exportCampaign(campaignId: number) {
     db.select().from(mindMaps).where(eq(mindMaps.campaignId, campaignId)),
     db.select().from(homebrewSpells).where(eq(homebrewSpells.campaignId, campaignId)),
     db.select().from(homebrewFeats).where(eq(homebrewFeats.campaignId, campaignId)),
+    db.select().from(documents).where(eq(documents.campaignId, campaignId)),
   ]);
 
   const charIds = characterRows.map((c) => c.id);
@@ -187,6 +191,7 @@ export async function exportCampaign(campaignId: number) {
     mindMaps: mindMapRows,
     homebrewSpells: homebrewSpellRows,
     homebrewFeats: homebrewFeatRows,
+    documents: documentRows,
   };
 }
 
@@ -266,6 +271,7 @@ const ImportSchemas = {
   mindMap: mindMapCreateSchema.omit({ campaignId: true }),
   homebrewSpell: homebrewSpellCreateSchema.omit({ campaignId: true }),
   homebrewFeat: homebrewFeatCreateSchema.omit({ campaignId: true }),
+  document: documentCreateSchema.omit({ campaignId: true }),
 };
 
 /** Validate a bundle array, returning {raw, data} pairs for rows that pass. */
@@ -556,6 +562,9 @@ export async function importCampaign(raw: unknown): Promise<number> {
     }
     for (const { data } of validateRows(ImportSchemas.homebrewFeat, bundle.homebrewFeats)) {
       tx.insert(homebrewFeats).values({ ...data, campaignId } as never).run();
+    }
+    for (const { data } of validateRows(ImportSchemas.document, bundle.documents)) {
+      tx.insert(documents).values({ ...data, campaignId } as never).run();
     }
 
     return campaignId;

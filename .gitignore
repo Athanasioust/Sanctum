@@ -55,3 +55,6 @@ next-env.d.ts
 *.db-shm
 *.db-wal
 *.sqlite
+
+# generated from node_modules by scripts/copy-pdf-worker.mjs
+/public/pdf.worker.min.mjs

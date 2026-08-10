@@ -102,6 +102,9 @@ for (const dir of ["dist", path.join(".next", "standalone")]) {
 }
 
 // --- 1. Build the Next.js standalone server -------------------------------
+// `npx next build` skips npm's prebuild hook, so the pdf.js worker has to be
+// staged into public/ explicitly here as well.
+run("node scripts/copy-pdf-worker.mjs");
 run("npx next build");
 
 if (!fs.existsSync(path.join(standalone, "server.js"))) {

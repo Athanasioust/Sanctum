@@ -361,6 +361,19 @@ export type BattleMapCreateInput = z.infer<typeof battleMapCreateSchema>;
 export type BattleMapUpdateInput = z.infer<typeof battleMapUpdateSchema>;
 
 /* -------------------------------------------------------------------------- */
+/*  Documents                                                                  */
+/* -------------------------------------------------------------------------- */
+
+export const documentCreateSchema = z.object({
+  campaignId: z.number().int(),
+  name: z.string().trim().min(1, "Name is required").max(200),
+  url: z.string().min(1, "A file is required").max(500),
+  fileSize: z.number().int().min(0).optional().default(0),
+  notes: optionalString(5000),
+});
+export const documentUpdateSchema = documentCreateSchema.partial();
+
+/* -------------------------------------------------------------------------- */
 /*  Homebrew libraries                                                         */
 /* -------------------------------------------------------------------------- */
 
