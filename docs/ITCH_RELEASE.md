@@ -161,6 +161,37 @@ build and sent a **3.63 MiB patch (96.90% savings)** for a 118 MB file. Expect
 pushes after the first to be quick. A channel's first push has no baseline and
 uploads in full, so the installer's debut cost the whole 118 MB.
 
+### macOS builds
+
+macOS artifacts must be built **on a Mac**, for the same reason as Linux: the
+native `better-sqlite3` binary and the `.app` bundle are both platform-specific,
+and `npm run desktop:build` refuses to cross-build rather than produce something
+subtly broken.
+
+```
+npm ci
+npm run desktop:build:mac
+```
+
+This produces a `.dmg` and a `.zip` for both Intel (x64) and Apple Silicon
+(arm64). The data directory is `~/Library/Application Support/Sanctum`, which
+Electron picks per-platform — nothing in the app needs to change.
+
+- **The icon needs a 512x512 (ideally 1024x1024) `electron/icon.png`.**
+  electron-builder generates the `.icns` from it and rejects anything smaller;
+  the current icon is 256x256, so `desktop:build:mac` stops immediately with
+  that message until it is replaced.
+- **The build is unsigned**, so Gatekeeper blocks the first launch with
+  "Sanctum can't be opened because it is from an unidentified developer". Add
+  this note to the itch page, the same way the SmartScreen note is worded:
+  *right-click the app → Open → Open*. Signing and notarization need a paid
+  Apple Developer account and can be added later without changing the build.
+- Tick **macOS** in the itch page's platform list, or the downloads are offered
+  to Windows users only.
+- Prefer pushing the `.zip` to a `mac` channel and the `.dmg` alongside it —
+  itch's app can install from the zip, and the dmg is the familiar manual
+  download.
+
 ### Linux builds
 
 Linux artifacts must be built **on Linux** — WSL is fine. `npm run desktop:build`

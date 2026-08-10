@@ -58,6 +58,34 @@ portable:
 # contained and bundles its own sandbox handling. The tar.gz is a fallback for
 # people who prefer to unpack it themselves; on some distros an unpacked build
 # needs `--no-sandbox` (or a root-owned setuid chrome-sandbox) to launch.
+# macOS artifacts must be built ON macOS (see scripts/build-desktop.mjs): the
+# native better-sqlite3 binary and the .app bundle are both platform-specific.
+# The build is unsigned, so Gatekeeper will refuse the first launch until the
+# user right-clicks the app and chooses Open — same story as the Windows
+# SmartScreen prompt. Signing and notarization can be added later by supplying
+# an Apple Developer identity; nothing here needs to change for that.
+mac:
+  # electron-builder needs at least a 512x512 source to generate the .icns.
+  # scripts/build-desktop.mjs checks this before starting a macOS build.
+  icon: electron/icon.png
+  category: public.app-category.games
+  # Sanctum spawns its own local server and reads/writes only its own data
+  # directory; the hardened runtime is off since there is nothing to entitle
+  # and the build is not notarized.
+  hardenedRuntime: false
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+    - target: zip
+      arch:
+        - x64
+        - arm64
+
+dmg:
+  artifactName: Sanctum-${version}-${arch}.dmg
+
 linux:
   icon: electron/icon.png
   # Sanctum ships on itch.io alongside games and players look for it in the

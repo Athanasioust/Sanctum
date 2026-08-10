@@ -35,25 +35,47 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SUPPORTED = {
   win32: { flag: "--win", label: "Windows" },
   linux: { flag: "--linux", label: "Linux" },
+  darwin: { flag: "--mac", label: "macOS" },
 };
 
-const requested = process.argv.slice(2).find((a) => a === "--win" || a === "--linux");
+const requested = process.argv
+  .slice(2)
+  .find((a) => a === "--win" || a === "--linux" || a === "--mac");
 const hostTarget = SUPPORTED[process.platform];
 
 if (!hostTarget) {
   throw new Error(
-    `Unsupported build host '${process.platform}'. Sanctum packages on Windows or Linux.`,
+    `Unsupported build host '${process.platform}'. Sanctum packages on Windows, Linux or macOS.`,
   );
 }
 if (requested && requested !== hostTarget.flag) {
   throw new Error(
     `Cannot build ${requested} artifacts on ${hostTarget.label}. Cross-building is not ` +
-      `supported — run this build under the target platform (WSL for Linux).`,
+      `supported — run this build under the target platform (WSL for Linux, a Mac for macOS).`,
   );
 }
 
 const target = hostTarget;
 console.log(`Building Sanctum desktop for ${target.label} (${process.platform}).`);
+
+// electron-builder generates the macOS .icns from electron/icon.png and rejects
+// anything under 512x512. Check it up front rather than letting a build fail at
+// the packaging step, minutes in.
+if (process.platform === "darwin") {
+  const iconPath = path.join(root, "electron", "icon.png");
+  const png = fs.readFileSync(iconPath);
+  // PNG IHDR stores width and height as big-endian uint32s at bytes 16 and 20.
+  const width = png.readUInt32BE(16);
+  const height = png.readUInt32BE(20);
+  if (width < 512 || height < 512) {
+    throw new Error(
+      `electron/icon.png is ${width}x${height}; macOS needs at least 512x512.
+` +
+        `Replace it with a 1024x1024 export (or add electron/icon.icns) before ` +
+        `building for macOS.`,
+    );
+  }
+}
 
 const standalone = path.join(root, ".next", "standalone");
 const bsqDir = path.join(root, "node_modules", "better-sqlite3");

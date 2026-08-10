@@ -20,6 +20,7 @@
     "desktop:build": "node scripts/build-desktop.mjs",
     "desktop:build:win": "node scripts/build-desktop.mjs --win",
     "desktop:build:linux": "node scripts/build-desktop.mjs --linux",
+    "desktop:build:mac": "node scripts/build-desktop.mjs --mac",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/migrate.ts",
     "db:push": "drizzle-kit push",

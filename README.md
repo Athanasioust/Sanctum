@@ -75,6 +75,14 @@ Everything is on your machine and is **never committed to git**:
 | `./backups/`      | Automatic daily snapshots                 |
 | `./public/uploads/` | Map images you upload                   |
 
+In the packaged desktop app these live in a per-user directory instead:
+
+| Platform | Location                                     |
+| -------- | -------------------------------------------- |
+| Windows  | `%APPDATA%\Sanctum`                          |
+| macOS    | `~/Library/Application Support/Sanctum`      |
+| Linux    | `~/.config/Sanctum`                          |
+
 To back up or move your whole setup, copy the `data/` folder. To share a single campaign, use **Settings → Export** in the app.
 
 ## Available scripts
@@ -88,6 +96,14 @@ To back up or move your whole setup, copy the `data/` folder. To share a single 
 | `npm run db:generate` | Generate a new Drizzle migration after schema edits |
 | `npm run db:migrate`  | Apply migrations manually (also runs on app start)  |
 | `npm run db:studio`   | Open Drizzle Studio to browse the database          |
+| `npm run start:lan`   | Run the production build reachable on your local network |
+| `npm run desktop:build` | Package the desktop app for the current platform  |
+
+Desktop builds are per-platform and cannot be cross-built — run
+`desktop:build:win` on Windows, `desktop:build:linux` under Linux/WSL and
+`desktop:build:mac` on a Mac. The macOS and Windows builds are unsigned, so the
+first launch needs a right-click → **Open** (Gatekeeper) or **More info → Run
+anyway** (SmartScreen).
 
 ## Attribution
 
