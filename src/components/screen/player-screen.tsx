@@ -21,7 +21,7 @@ const BattleMapCanvas = dynamic(() => import("@/components/combat/battle-map-can
   ssr: false,
 });
 
-type ScreenState = {
+export type ScreenState = {
   active: boolean;
   encounterName: string;
   round: number;
@@ -33,7 +33,7 @@ type ScreenState = {
   battleMap: BattleMap | null;
 };
 
-const EMPTY: ScreenState = {
+export const EMPTY_SCREEN_STATE: ScreenState = {
   active: false,
   encounterName: "",
   round: 1,
@@ -44,34 +44,52 @@ const EMPTY: ScreenState = {
   battleMap: null,
 };
 
+/** How long a poll may take before it's abandoned and retried on the next tick. */
+const POLL_TIMEOUT_MS = 8000;
+/** Consecutive failed polls before the screen admits it's out of touch. */
+const STALE_AFTER_FAILURES = 3;
+
 export function PlayerScreen({
   campaignId,
   campaignName,
+  initialState,
 }: {
   campaignId: number;
   campaignName: string;
+  /**
+   * Rendered on the server, so the screen is readable the instant the HTML
+   * lands — before, and even without, any client JavaScript.
+   */
+  initialState: ScreenState;
 }) {
-  const [state, setState] = useState<ScreenState>(EMPTY);
-  const [ready, setReady] = useState(false);
+  const [state, setState] = useState<ScreenState>(initialState);
+  const [failures, setFailures] = useState(0);
   const t = useT();
 
   const load = useCallback(async () => {
+    // A poll that never settles used to wedge the screen forever. Abort it and
+    // let the next tick try again.
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), POLL_TIMEOUT_MS);
+    const signal = controller.signal;
+
     try {
       const [encounters, party, allHandouts, maps] = await Promise.all([
-        api.get<Encounter[]>(`/api/encounters?campaignId=${campaignId}`),
-        api.get<Character[]>(`/api/characters?campaignId=${campaignId}`),
-        api.get<Handout[]>(`/api/handouts?campaignId=${campaignId}`),
-        api.get<BattleMap[]>(`/api/battle-maps?campaignId=${campaignId}`),
+        api.get<Encounter[]>(`/api/encounters?campaignId=${campaignId}`, { signal }),
+        api.get<Character[]>(`/api/characters?campaignId=${campaignId}`, { signal }),
+        api.get<Handout[]>(`/api/handouts?campaignId=${campaignId}`, { signal }),
+        api.get<BattleMap[]>(`/api/battle-maps?campaignId=${campaignId}`, { signal }),
       ]);
       const handouts = allHandouts.filter((h) => h.isRevealed);
       // Maps come back newest-updated first, so the most recently touched map
       // wins if the DM left more than one flagged.
       const battleMap = maps.find((m) => m.revealToPlayers) ?? null;
       const active = encounters.find((e) => e.status === "active") ?? null;
-      let next: ScreenState = { ...EMPTY, party, handouts, battleMap };
+      let next: ScreenState = { ...EMPTY_SCREEN_STATE, party, handouts, battleMap };
       if (active) {
         const full = await api.get<Encounter & { participants: CombatParticipant[] }>(
           `/api/encounters/${active.id}`,
+          { signal },
         );
         next = {
           active: true,
@@ -85,26 +103,26 @@ export function PlayerScreen({
         };
       }
       setState(next);
+      setFailures(0);
     } catch {
-      // keep last known state on a transient error
+      // Keep showing the last known state, but start counting — a screen that
+      // has quietly stopped updating is worse than one that says so.
+      setFailures((n) => n + 1);
     } finally {
-      setReady(true);
+      clearTimeout(timeout);
     }
   }, [campaignId]);
 
   useEffect(() => {
-    // Defer the first fetch a tick so the effect body doesn't setState
-    // synchronously; refreshes then run on the interval.
-    const run = () => {
+    // The server already rendered the current state, so the first refresh can
+    // wait for the normal interval rather than firing immediately.
+    const interval = setInterval(() => {
       load();
-    };
-    const initial = setTimeout(run, 0);
-    const interval = setInterval(run, 4000);
-    return () => {
-      clearTimeout(initial);
-      clearInterval(interval);
-    };
+    }, 4000);
+    return () => clearInterval(interval);
   }, [load]);
+
+  const stale = failures >= STALE_AFTER_FAILURES;
 
   return (
     <main className="min-h-screen bg-background px-3 py-4 sm:px-8 sm:py-6">
@@ -126,70 +144,70 @@ export function PlayerScreen({
         ) : null}
       </header>
 
-      {!ready ? (
-        <p className="py-20 text-center text-muted-foreground">{t("common.loading")}</p>
-      ) : (
-        <>
-          {/* Battle map — only when the DM has flagged one to show */}
-          {state.battleMap && (
-            <section className="mb-8">
-              <h2 className="mb-3 flex items-center gap-2 font-heading text-lg font-semibold text-muted-foreground">
-                <Grid3x3 className="size-4" /> {state.battleMap.name}
-              </h2>
-              <PlayerBattleMap map={state.battleMap} />
-            </section>
-          )}
+      {stale ? (
+        <p className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-center text-sm text-amber-200">
+          {t("player.reconnecting")}
+        </p>
+      ) : null}
 
-          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.4fr_1fr] lg:gap-6">
-            {/* Initiative */}
-            <section>
-              <h2 className="mb-3 font-heading text-lg font-semibold text-muted-foreground">
-                {state.active ? state.encounterName || t("player.initiative") : t("player.initiative")}
-              </h2>
-              {state.active && state.participants.length > 0 ? (
-                <div className="space-y-2">
-                  {state.participants.map((p, i) => (
-                    <InitiativeRow key={p.id} p={p} current={i === state.turnIndex} />
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-xl border border-dashed border-border bg-card/40 py-16 text-center">
-                  <p className="text-lg text-muted-foreground">{t("player.noEncounter")}</p>
-                  <p className="text-sm text-muted-foreground">{t("player.resting")}</p>
-                </div>
-              )}
-            </section>
+      {/* Battle map — only when the DM has flagged one to show */}
+        {state.battleMap && (
+          <section className="mb-8">
+            <h2 className="mb-3 flex items-center gap-2 font-heading text-lg font-semibold text-muted-foreground">
+              <Grid3x3 className="size-4" /> {state.battleMap.name}
+            </h2>
+            <PlayerBattleMap map={state.battleMap} />
+          </section>
+        )}
 
-            {/* Party */}
-            <section>
-              <h2 className="mb-3 font-heading text-lg font-semibold text-muted-foreground">{t("player.party")}</h2>
-              {state.party.length === 0 ? (
-                <p className="text-sm text-muted-foreground">{t("player.noCharacters")}</p>
-              ) : (
-                <div className="space-y-2">
-                  {state.party.map((c) => (
-                    <PartyRow key={c.id} c={c} />
-                  ))}
-                </div>
-              )}
-            </section>
-          </div>
-
-          {/* Handouts */}
-          {state.handouts.length > 0 && (
-            <section className="mt-8">
-              <h2 className="mb-4 flex items-center gap-2 font-heading text-lg font-semibold text-muted-foreground">
-                <Image className="size-4" /> {t("player.handouts")}
-              </h2>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
-                {state.handouts.map((h) => (
-                  <HandoutCard key={h.id} handout={h} />
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.4fr_1fr] lg:gap-6">
+          {/* Initiative */}
+          <section>
+            <h2 className="mb-3 font-heading text-lg font-semibold text-muted-foreground">
+              {state.active ? state.encounterName || t("player.initiative") : t("player.initiative")}
+            </h2>
+            {state.active && state.participants.length > 0 ? (
+              <div className="space-y-2">
+                {state.participants.map((p, i) => (
+                  <InitiativeRow key={p.id} p={p} current={i === state.turnIndex} />
                 ))}
               </div>
-            </section>
-          )}
-        </>
-      )}
+            ) : (
+              <div className="rounded-xl border border-dashed border-border bg-card/40 py-16 text-center">
+                <p className="text-lg text-muted-foreground">{t("player.noEncounter")}</p>
+                <p className="text-sm text-muted-foreground">{t("player.resting")}</p>
+              </div>
+            )}
+          </section>
+
+          {/* Party */}
+          <section>
+            <h2 className="mb-3 font-heading text-lg font-semibold text-muted-foreground">{t("player.party")}</h2>
+            {state.party.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{t("player.noCharacters")}</p>
+            ) : (
+              <div className="space-y-2">
+                {state.party.map((c) => (
+                  <PartyRow key={c.id} c={c} />
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+
+        {/* Handouts */}
+        {state.handouts.length > 0 && (
+          <section className="mt-8">
+            <h2 className="mb-4 flex items-center gap-2 font-heading text-lg font-semibold text-muted-foreground">
+              <Image className="size-4" /> {t("player.handouts")}
+            </h2>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+              {state.handouts.map((h) => (
+                <HandoutCard key={h.id} handout={h} />
+              ))}
+            </div>
+          </section>
+        )}
     </main>
   );
 }

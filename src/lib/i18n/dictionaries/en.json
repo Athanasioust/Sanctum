@@ -79,5 +79,6 @@
   "homebrew.create": "Create homebrew",
   "settings.importTitle": "Import",
   "settings.importHint": "Bring in a markdown vault or a filled-in character sheet PDF.",
-  "settings.importAction": "Open the importer"
+  "settings.importAction": "Open the importer",
+  "player.reconnecting": "Lost contact with the table — showing the last update."
 }

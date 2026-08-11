@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useState } from "react";
 import {
   Background,
   BackgroundVariant,
@@ -82,6 +82,40 @@ function MindMapNodeCard({ data, selected }: NodeProps<FlowNode>) {
 
 const NODE_TYPES = { mindMap: MindMapNodeCard };
 
+type ResolveLink = (node: MindMapNode) => { href: string; label: string } | null;
+
+function toFlowNode(node: MindMapNode, resolveLink: ResolveLink): FlowNode {
+  const link = resolveLink(node);
+  return {
+    id: node.id,
+    type: "mindMap",
+    position: { x: node.x, y: node.y },
+    data: {
+      title: node.title,
+      body: node.body,
+      color: node.color,
+      linkHref: link?.href,
+      linkLabel: link?.label,
+    },
+  };
+}
+
+function toFlowEdge(edge: MindMapEdge): Edge {
+  return {
+    id: edge.id,
+    source: edge.source,
+    target: edge.target,
+    label: edge.label,
+    type: "default", // bezier
+    animated: false,
+    style: { stroke: edge.color ?? "#71717a", strokeWidth: 2 },
+    labelStyle: { fill: "#e4e4e7", fontSize: 11 },
+    labelBgStyle: { fill: "#18181b" },
+    labelBgPadding: [4, 2] as [number, number],
+    labelBgBorderRadius: 4,
+  };
+}
+
 export default function MindMapFlow({
   graph,
   onChange,
@@ -93,101 +127,111 @@ export default function MindMapFlow({
   onChange: (next: Graph, options?: { history?: boolean }) => void;
   onSelect: (nodeId: string | null) => void;
   /** Turn a node's entity link into an href and a label. */
-  resolveLink: (node: MindMapNode) => { href: string; label: string } | null;
+  resolveLink: ResolveLink;
 }) {
-  const nodes = useMemo<FlowNode[]>(
-    () =>
-      graph.nodes.map((node) => {
-        const link = resolveLink(node);
-        return {
-          id: node.id,
-          type: "mindMap" as const,
-          position: { x: node.x, y: node.y },
-          data: {
-            title: node.title,
-            body: node.body,
-            color: node.color,
-            linkHref: link?.href,
-            linkLabel: link?.label,
-          },
-        };
-      }),
-    [graph.nodes, resolveLink],
+  /*
+   * React Flow keeps its own copy of the nodes, and the parent keeps the
+   * semantic graph. That split is deliberate rather than tidy-minded.
+   *
+   * React Flow measures every node it hasn't seen before and writes the result
+   * onto the node as `measured`. Rebuilding the node objects from `graph` on
+   * every render drops that field, so `adoptUserNodes` resets the measurement
+   * and re-measures, which emits a `dimensions` change. Feeding those changes
+   * back into the parent's state produced fresh objects again — an infinite
+   * measure/update loop that killed the canvas the moment the first node
+   * existed. Keeping React Flow's array here preserves `measured`, and only
+   * changes that actually alter the saved graph are pushed outward.
+   */
+  const [nodes, setNodes] = useState<FlowNode[]>(() =>
+    graph.nodes.map((node) => toFlowNode(node, resolveLink)),
   );
+  const [edges, setEdges] = useState<Edge[]>(() => graph.edges.map(toFlowEdge));
 
-  const edges = useMemo<Edge[]>(
-    () =>
-      graph.edges.map((edge) => ({
-        id: edge.id,
-        source: edge.source,
-        target: edge.target,
-        label: edge.label,
-        type: "default", // bezier
-        animated: false,
-        style: { stroke: edge.color ?? "#71717a", strokeWidth: 2 },
-        labelStyle: { fill: "#e4e4e7", fontSize: 11 },
-        labelBgStyle: { fill: "#18181b" },
-        labelBgPadding: [4, 2] as [number, number],
-        labelBgBorderRadius: 4,
-      })),
-    [graph.edges],
+  // Re-derive when the parent's graph actually changes — a node added from the
+  // toolbar, an inspector edit, an undo — keeping the measurements of nodes
+  // that were already on screen. This is React's documented "adjust state while
+  // rendering" pattern, which avoids an effect (and the extra paint one costs).
+  const signature = JSON.stringify(graph);
+  const [lastSignature, setLastSignature] = useState(signature);
+  if (signature !== lastSignature) {
+    setLastSignature(signature);
+    setNodes((previous) => {
+      const measurements = new Map(previous.map((n) => [n.id, n]));
+      return graph.nodes.map((node) => {
+        const existing = measurements.get(node.id);
+        const fresh = toFlowNode(node, resolveLink);
+        return existing ? { ...existing, ...fresh, measured: existing.measured } : fresh;
+      });
+    });
+    setEdges(graph.edges.map(toFlowEdge));
+  }
+
+  /** Turn React Flow's node array back into the shape the campaign stores. */
+  const toGraph = useCallback(
+    (flowNodes: FlowNode[], flowEdges: Edge[]): Graph => ({
+      nodes: flowNodes
+        .map((n) => {
+          const original = graph.nodes.find((o) => o.id === n.id);
+          return original ? { ...original, x: n.position.x, y: n.position.y } : null;
+        })
+        .filter((n): n is MindMapNode => n !== null),
+      edges: flowEdges
+        .map((e) => graph.edges.find((o) => o.id === e.id))
+        .filter((e): e is MindMapEdge => e !== undefined),
+    }),
+    [graph],
   );
 
   const handleNodesChange = useCallback(
     (changes: NodeChange<FlowNode>[]) => {
       const next = applyNodeChanges(changes, nodes);
-      // Only a finished drag or a removal is worth an undo entry; the
-      // intermediate positions of a drag would flood the history.
-      const structural = changes.some(
+      setNodes(next);
+
+      // Measuring and selecting are React Flow's business; they don't belong in
+      // the saved graph and must not trigger a write, or the loop described
+      // above starts again. Only a finished drag or a removal is worth saving —
+      // the intermediate frames of a drag would also flood the undo history.
+      const semantic = changes.some(
         (c) => c.type === "remove" || (c.type === "position" && c.dragging === false),
       );
-      onChange(
-        {
-          nodes: next.map((n) => {
-            const original = graph.nodes.find((o) => o.id === n.id);
-            return { ...original!, x: n.position.x, y: n.position.y };
-          }),
-          edges: graph.edges.filter((e) =>
-            next.some((n) => n.id === e.source) && next.some((n) => n.id === e.target),
-          ),
-        },
-        { history: structural },
+      if (!semantic) return;
+
+      const survivingEdges = edges.filter(
+        (e) => next.some((n) => n.id === e.source) && next.some((n) => n.id === e.target),
       );
+      if (survivingEdges.length !== edges.length) setEdges(survivingEdges);
+      onChange(toGraph(next, survivingEdges), { history: true });
     },
-    [nodes, graph, onChange],
+    [nodes, edges, onChange, toGraph],
   );
 
   const handleEdgesChange = useCallback(
     (changes: EdgeChange<Edge>[]) => {
       const next = applyEdgeChanges(changes, edges);
-      onChange(
-        {
-          nodes: graph.nodes,
-          edges: next.map((e) => graph.edges.find((o) => o.id === e.id)!).filter(Boolean),
-        },
-        { history: changes.some((c) => c.type === "remove") },
-      );
+      setEdges(next);
+      if (changes.some((c) => c.type === "remove")) {
+        onChange(toGraph(nodes, next), { history: true });
+      }
     },
-    [edges, graph, onChange],
+    [nodes, edges, onChange, toGraph],
   );
 
   const handleConnect = useCallback(
     (connection: Connection) => {
-      const next = addEdge({ ...connection, id: crypto.randomUUID() }, edges);
-      const added = next.find((e) => !graph.edges.some((o) => o.id === e.id));
-      if (!added) return;
+      const id = crypto.randomUUID();
+      setEdges((previous) => addEdge({ ...connection, id }, previous));
       onChange(
         {
           nodes: graph.nodes,
           edges: [
             ...graph.edges,
-            { id: added.id, source: added.source, target: added.target, label: "" },
+            { id, source: connection.source, target: connection.target, label: "" },
           ],
         },
         { history: true },
       );
     },
-    [edges, graph, onChange],
+    [graph, onChange],
   );
 
   return (

@@ -58,7 +58,8 @@ async function request<T>(
 }
 
 export const api = {
-  get: <T>(url: string) => request<T>(url),
+  /** `signal` lets long-lived pollers abandon a request that never settles. */
+  get: <T>(url: string, options?: { signal?: AbortSignal }) => request<T>(url, options),
   post: <T>(url: string, body?: unknown) =>
     request<T>(url, { method: "POST", json: body ?? {} }),
   patch: <T>(url: string, body?: unknown) =>

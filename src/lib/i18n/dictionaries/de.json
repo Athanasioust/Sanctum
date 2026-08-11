@@ -79,5 +79,6 @@
   "homebrew.create": "Eigene Inhalte erstellen",
   "settings.importTitle": "Import",
   "settings.importHint": "Ein Markdown-Vault oder ein ausgefülltes Charakterbogen-PDF einlesen.",
-  "settings.importAction": "Import öffnen"
+  "settings.importAction": "Import öffnen",
+  "player.reconnecting": "Keine Verbindung zum Tisch — zeigt den letzten Stand."
 }

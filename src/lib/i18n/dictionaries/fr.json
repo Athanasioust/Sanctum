@@ -79,5 +79,6 @@
   "homebrew.create": "Créer du contenu maison",
   "settings.importTitle": "Importer",
   "settings.importHint": "Importer un dossier markdown ou une fiche de personnage PDF remplie.",
-  "settings.importAction": "Ouvrir l'importateur"
+  "settings.importAction": "Ouvrir l'importateur",
+  "player.reconnecting": "Contact perdu avec la table — dernier état affiché."
 }
