@@ -1,0 +1,145 @@
+<!doctype html>
+<!--
+  The window shown while the bundled server starts. It is loaded from disk by
+  the main process, so everything here must be self-contained: no fonts, no
+  images, no scripts fetched from anywhere. The lantern is drawn as inline SVG
+  rather than pulled from icon.png so this file stays a couple of kilobytes.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'" />
+    <title>Starting Sanctum…</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        /* The warm pool of candlelight from the app icon, over Sanctum's near-black. */
+        background:
+          radial-gradient(circle at 50% 42%, #2a1d0c 0%, #140f08 38%, #0a0a0a 72%),
+          #0a0a0a;
+        color: #e8e8ec;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        cursor: default;
+        user-select: none;
+        overflow: hidden;
+      }
+
+      .lantern {
+        width: 96px;
+        height: 96px;
+        filter: drop-shadow(0 0 22px rgba(230, 168, 62, 0.35));
+      }
+
+      .flame {
+        transform-origin: 64px 78px;
+        animation: flicker 2.6s ease-in-out infinite;
+      }
+
+      .status {
+        font-size: 14px;
+        letter-spacing: 0.02em;
+        color: #d8cdb6;
+      }
+
+      /* Indeterminate sliver of gold — a progress bar would be a lie, since
+         nothing here knows how far along the server is. */
+      .track {
+        position: relative;
+        width: 160px;
+        height: 2px;
+        border-radius: 999px;
+        background: #241d12;
+        overflow: hidden;
+      }
+
+      .track::after {
+        content: "";
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 38%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, transparent, #e6a83e, transparent);
+        animation: sweep 1.4s ease-in-out infinite;
+      }
+
+      @keyframes sweep {
+        0% {
+          transform: translateX(-100%);
+        }
+        100% {
+          transform: translateX(320%);
+        }
+      }
+
+      @keyframes flicker {
+        0%,
+        100% {
+          transform: scaleY(1) scaleX(1);
+          opacity: 1;
+        }
+        45% {
+          transform: scaleY(1.06) scaleX(0.97);
+          opacity: 0.92;
+        }
+        70% {
+          transform: scaleY(0.97) scaleX(1.02);
+          opacity: 1;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .flame {
+          animation: none;
+        }
+
+        .track::after {
+          position: static;
+          display: block;
+          width: 100%;
+          height: 100%;
+          background: #e6a83e;
+          opacity: 0.55;
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <svg class="lantern" viewBox="0 0 128 128" aria-hidden="true">
+      <!-- Lantern frame -->
+      <path
+        d="M34 96V62a30 30 0 0 1 60 0v34"
+        fill="none"
+        stroke="#e8c274"
+        stroke-width="6"
+        stroke-linecap="round"
+      />
+      <path d="M46 96V64a18 18 0 0 1 36 0v32" fill="none" stroke="#9c7c3c" stroke-width="3" />
+      <rect x="30" y="94" width="68" height="7" rx="3.5" fill="#8f7434" />
+      <!-- Candle -->
+      <rect x="56" y="76" width="16" height="20" rx="3" fill="#f1e6cc" />
+      <!-- Flame -->
+      <g class="flame">
+        <path d="M64 46c9 11 13 17 13 23a13 13 0 0 1-26 0c0-6 4-12 13-23z" fill="#f0a92c" />
+        <path d="M64 58c4.5 6 6.5 9.5 6.5 12.5a6.5 6.5 0 0 1-13 0c0-3 2-6.5 6.5-12.5z" fill="#fff6de" />
+      </g>
+    </svg>
+
+    <div class="status">Starting Sanctum…</div>
+    <div class="track"></div>
+  </body>
+</html>

@@ -44,7 +44,15 @@ function lanSharingEnabled() {
 /** @type {import('node:child_process').ChildProcess | null} */
 let serverProcess = null;
 let mainWindow = null;
+// Shown from the first tick of boot so the launch never looks frozen while the
+// server starts; replaced by the real window once it is ready to show.
+let splashWindow = null;
 let logStream = null;
+// Set once the log stream has been ended (on quit). Writing to an ended stream
+// raises an *asynchronous* 'error' event that no try/catch around write() can
+// see, which used to surface as a bogus "A JavaScript error occurred in the
+// main process" dialog on top of whatever really went wrong.
+let loggingClosed = false;
 // The URL the window loads, remembered so macOS can reopen a closed window
 // against the server that is already running instead of starting a second one.
 let serverUrl = null;
@@ -53,10 +61,12 @@ function log(...args) {
   const line = `[${new Date().toISOString()}] ${args.join(" ")}`;
   // eslint-disable-next-line no-console
   console.log(line);
-  try {
-    logStream?.write(line + "\n");
-  } catch {
-    /* logging must never crash the app */
+  if (logStream && !loggingClosed) {
+    try {
+      logStream.write(line + "\n");
+    } catch {
+      /* logging must never crash the app */
+    }
   }
 }
 
@@ -73,14 +83,70 @@ function getFreePort() {
   });
 }
 
-/** Resolve once the server answers an HTTP request, or reject after timeout. */
-function waitForServer(port, timeoutMs = 30000) {
+/* -------------------------------------------------------------------------- */
+/* Server                                                                      */
+
+// Tail of the server child's stderr. When the server fails to start this is the
+// only place the real reason appears, so it is carried into the failure dialog
+// instead of the useless "did not start in time".
+const SERVER_ERROR_CHARS = 4000;
+const SERVER_ERROR_LINES = 20;
+let lastServerError = "";
+
+function rememberServerError(text) {
+  lastServerError = (lastServerError + text)
+    .slice(-SERVER_ERROR_CHARS)
+    .split("\n")
+    .slice(-SERVER_ERROR_LINES)
+    .join("\n")
+    .trim();
+}
+
+/** Append the captured stderr to a message, when there is any. */
+function withServerError(message) {
+  return lastServerError ? `${message}\n\n${lastServerError}` : message;
+}
+
+// Set while boot is waiting for the server to answer, so the child's exit
+// handler can fail that wait at once rather than leaving the user watching a
+// splash screen until the timeout expires.
+/** @type {((code: number | null, signal: string | null) => void) | null} */
+let failBootOnServerExit = null;
+
+/**
+ * Resolve once the server answers, or reject on timeout — or, sooner, as soon
+ * as the child process dies without ever having answered.
+ *
+ * Polls `/api/health`, a route that does no work, so the window opens the
+ * moment the server is listening instead of waiting for the (much heavier)
+ * homepage to compile and render.
+ */
+function waitForServer(port, timeoutMs = 60000) {
   const deadline = Date.now() + timeoutMs;
   return new Promise((resolve, reject) => {
+    let settled = false;
+    const settle = (fn) => (value) => {
+      if (settled) return;
+      settled = true;
+      failBootOnServerExit = null;
+      fn(value);
+    };
+    const succeed = settle(resolve);
+    const fail = settle(reject);
+
+    failBootOnServerExit = (code, signal) =>
+      fail(
+        new Error(
+          withServerError(
+            `The Sanctum server stopped before it was ready (code=${code}, signal=${signal}).`,
+          ),
+        ),
+      );
+
     const attempt = () => {
-      const req = http.get({ host: HOST, port, path: "/", timeout: 2000 }, (res) => {
+      const req = http.get({ host: HOST, port, path: "/api/health", timeout: 2000 }, (res) => {
         res.resume();
-        resolve();
+        succeed();
       });
       req.on("error", retry);
       req.on("timeout", () => {
@@ -89,8 +155,9 @@ function waitForServer(port, timeoutMs = 30000) {
       });
     };
     const retry = () => {
+      if (settled) return;
       if (Date.now() > deadline) {
-        reject(new Error(`Server did not start within ${timeoutMs}ms`));
+        fail(new Error(withServerError(`Server did not start within ${timeoutMs}ms.`)));
       } else {
         setTimeout(attempt, 300);
       }
@@ -130,11 +197,28 @@ function startServer(port) {
     stdio: ["ignore", "pipe", "pipe"],
   });
 
-  child.stdout.on("data", (d) => log(`[server] ${d.toString().trimEnd()}`));
-  child.stderr.on("data", (d) => log(`[server:err] ${d.toString().trimEnd()}`));
+  const onStdout = (d) => log(`[server] ${d.toString().trimEnd()}`);
+  const onStderr = (d) => {
+    const text = d.toString();
+    rememberServerError(text);
+    log(`[server:err] ${text.trimEnd()}`);
+  };
+  child.stdout.on("data", onStdout);
+  child.stderr.on("data", onStderr);
+
   child.on("exit", (code, signal) => {
+    // Stop funnelling the child's output into the log: a dying server flushes
+    // its buffers as the app is quitting, and by then the log stream is gone.
+    child.stdout.off("data", onStdout);
+    child.stderr.off("data", onStderr);
     log(`Server exited (code=${code}, signal=${signal})`);
     serverProcess = null;
+    // Still booting: let boot() report it — with the captured stderr, and as the
+    // single dialog the user sees.
+    if (failBootOnServerExit) {
+      failBootOnServerExit(code, signal);
+      return;
+    }
     // If the server dies unexpectedly while the app is running, there is nothing
     // to show — shut down rather than leave a blank window.
     if (!app.isQuitting) {
@@ -159,6 +243,11 @@ function openLogStream() {
     const dir = path.join(app.getPath("userData"), "logs");
     fs.mkdirSync(dir, { recursive: true });
     logStream = fs.createWriteStream(path.join(dir, "desktop.log"), { flags: "a" });
+    // Stream errors arrive asynchronously; without a listener they are thrown
+    // as uncaught exceptions in the main process.
+    logStream.on("error", () => {
+      /* diagnostics are best-effort */
+    });
   } catch {
     /* diagnostics are best-effort */
   }
@@ -355,6 +444,46 @@ function buildMenu() {
   ]);
 }
 
+/**
+ * A tiny frameless window shown while the server starts.
+ *
+ * The main window cannot appear until the server answers, which on a slow disk
+ * (or a portable build extracting itself) is several seconds of nothing at all
+ * — indistinguishable from a hung launch. The splash needs no server, so it is
+ * on screen immediately.
+ */
+function createSplash() {
+  if (splashWindow && !splashWindow.isDestroyed()) return;
+
+  splashWindow = new BrowserWindow({
+    width: 420,
+    height: 300,
+    frame: false,
+    resizable: false,
+    movable: false,
+    center: true,
+    show: true,
+    backgroundColor: "#0a0a0a",
+    title: "Sanctum",
+    icon: path.join(__dirname, process.platform === "win32" ? "icon.ico" : "icon.png"),
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  splashWindow.on("closed", () => {
+    splashWindow = null;
+  });
+
+  splashWindow.loadFile(path.join(__dirname, "splash.html"));
+}
+
+function closeSplash() {
+  if (splashWindow && !splashWindow.isDestroyed()) splashWindow.destroy();
+  splashWindow = null;
+}
+
 function createWindow(url) {
   const fitted = fitToWorkArea(windowState);
 
@@ -383,12 +512,21 @@ function createWindow(url) {
 
   if (windowState.maximized || fitted.clamped) mainWindow.maximize();
 
-  mainWindow.once("ready-to-show", () => mainWindow.show());
+  mainWindow.once("ready-to-show", () => {
+    closeSplash();
+    mainWindow.show();
+  });
 
   // Restore the remembered zoom level once a document exists to apply it to.
   mainWindow.webContents.on("did-finish-load", () => {
     mainWindow?.webContents.setZoomFactor(windowState.zoomFactor);
+    // Belt and braces: a load that finishes without ever firing ready-to-show
+    // must not leave the splash on screen forever.
+    closeSplash();
   });
+
+  // A page that fails to load never becomes ready to show either.
+  mainWindow.webContents.on("did-fail-load", () => closeSplash());
 
   // Ctrl+wheel zooming bypasses the menu — keep the saved level in step.
   mainWindow.webContents.on("zoom-changed", (_event, direction) => {
@@ -411,12 +549,14 @@ function createWindow(url) {
 
   mainWindow.on("closed", () => {
     mainWindow = null;
+    closeSplash();
   });
 
   mainWindow.loadURL(url);
 }
 
 async function boot() {
+  createSplash();
   openLogStream();
   loadWindowState();
 
@@ -435,9 +575,14 @@ async function boot() {
     serverUrl = url;
   } catch (err) {
     log(`Boot failed: ${err?.stack || err}`);
+    const message = String(err?.message || err);
+    // The captured stderr is usually already in the message (see
+    // `withServerError`); only append it for failures raised elsewhere.
+    const detail = lastServerError && !message.includes(lastServerError) ? lastServerError : "";
+    closeSplash();
     dialog.showErrorBox(
       "Sanctum failed to start",
-      `${err?.message || err}\n\nDiagnostic log: ${logFilePath()}`,
+      `${message}${detail ? `\n\n${detail}` : ""}\n\nDiagnostic log: ${logFilePath()}`,
     );
     app.quit();
     return;
@@ -495,8 +640,14 @@ if (!gotLock) {
       log("Stopping server");
       serverProcess.kill();
     }
+    // Close the log last, and mark it closed first: the server child flushes
+    // whatever it had buffered as it dies, and a write landing after end() is
+    // an unhandled stream error, not something write()'s try/catch can absorb.
+    const stream = logStream;
+    loggingClosed = true;
+    logStream = null;
     try {
-      logStream?.end();
+      stream?.end();
     } catch {
       /* noop */
     }

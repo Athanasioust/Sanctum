@@ -52,6 +52,14 @@ nsis:
 
 portable:
   artifactName: Sanctum-${version}-portable.exe
+  # Extract to a predictable %TEMP%\Sanctum instead of a per-build random id.
+  # Note this does NOT make later launches faster: electron-builder's portable
+  # stub deletes and re-extracts the ~118 MB payload on every launch, and wipes
+  # it again on exit (see portable.nsi in app-builder-lib), so there is nothing
+  # to reuse. Measured cold vs. warm launches are within noise of each other.
+  # The installer is the fast way to run Sanctum; the portable exe pays ~40s of
+  # extraction every time.
+  unpackDirName: Sanctum
 
 # Linux artifacts must be built ON Linux (WSL is fine) — see the note in
 # scripts/build-desktop.mjs. AppImage is the primary download: it is self
