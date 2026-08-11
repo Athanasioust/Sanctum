@@ -6,32 +6,55 @@ A **local-first Dungeon Master's campaign manager** for Dungeons & Dragons 5e. E
 
 ## Features
 
-- **Characters** — full 5e character sheets with ability scores, skills, saves, HP, initiative, spells, inventory, features and feats, plus a **currency tracker** (pp/gp/ep/sp/cp) and **hit dice & rest** management (spend hit dice on a short rest, restore on a long rest).
+- **Characters** — full 5e character sheets with ability scores, skills, saves, HP, initiative, spells, inventory, features and feats, plus a **currency tracker** (pp/gp/ep/sp/cp) and **hit dice & rest** management (spend hit dice on a short rest, restore on a long rest). A guided **character wizard** builds one from scratch, and **one-click level-up** walks the whole level in a single pass — hit points, proficiency, new features, spell slots and ASIs.
 - **Bestiary & NPCs** — reusable stat-block templates, plus **one-click import of 140+ SRD monsters** from goblins to the tarrasque.
 - **Combat tracker** — initiative order, drag-to-reorder turns, conditions, death saves, quick **+/- HP buttons** (tap for 1, hold to fly through 5 at a time), **concentration tracking** with automatic save-DC prompts on damage, and a per-round **combat log**.
+- **Battle map** — a grid map with drag-and-drop tokens wired straight to the initiative order, so HP and conditions show on the token. Includes a **measuring tape and AoE templates** (circle, cone, line, cube) that respect your diagonal rule, freehand drawing, arrows and labels, and **fog of war** you paint by hand. Reveal a map to the player view and the players see only what the fog allows — hidden tokens and anything standing in the dark are never drawn on their screen.
+- **Dice roller** — roll from anywhere, with contextual rolls off a character's own modifiers (attacks, saves, skills, hit dice), advantage/disadvantage, and results dropped into the combat log.
 - **Quests** — track active/on-hold/completed/failed quests with checkable sub-objectives and rewards.
 - **Magic items** — catalogue items by rarity and type, track attunement, charges (with recharge conditions) and cursed status, and assign them to characters.
 - **Handouts** — write player-facing handouts in Markdown (with images) and reveal them to the live player view.
 - **Rumors** — jot down rumors and gossip with their source, and mark them followed-up once investigated.
 - **NPC relationships** — map the web of allies, enemies, family and informants as an interactive relationship graph.
 - **World** — nested locations with image maps, pins and a tactical grid builder.
+- **Mind map** — a free-form canvas for plotting threads: drag out nodes, link them up, colour-code them and tie them back to the campaign records they're about.
+- **Homebrew** — author your own spells, items, monsters and feats alongside the SRD content, including **2024 weapon mastery** properties.
+- **Soundpad** — an ambient audio desk with layered channels and saveable soundscapes, so a tavern, a storm or a dungeon is one click away. Your own audio files, played locally.
 - **Story & sessions** — a timeline of events/plot threads/milestones, plus per-session prep with plot points and planned encounters.
 - **Calendar** — real-world calendar (driven by your system clock) or a fully custom in-world calendar with its own months and weekdays.
 - **Factions, shops & loot, roll tables and sticky notes** — with Markdown support in notes.
 - **Global search** — a **⌘K / Ctrl+K command palette** searches across characters, NPCs, locations, quests, magic items, handouts and rumors.
 - **Rules reference** — a built-in D&D 5e quick-reference panel (conditions, combat actions, exhaustion, rests, proficiency) always a click away.
-- **Player view** — a live, auto-refreshing second screen showing initiative, party status and any revealed handouts.
+- **Player view** — a live, auto-refreshing second screen showing initiative, party status, revealed handouts and the battle map you're currently showing. Put it on a TV, or turn on **local-network sharing** and your players open it on their own phones over the same Wi-Fi — scan the QR code in Settings and they're in. It's read-only, and nothing leaves your network.
+- **Languages** — the interface is available in **English, German and French**.
+- **Built-in PDF viewer** — open rulebooks, adventures and any other PDF you keep with the campaign without leaving the app.
 - **Import** — bring existing material in instead of retyping it:
   - **Markdown / Obsidian** — drop in individual `.md` files or point Sanctum at a whole vault folder. It reads YAML frontmatter, folder names and stat-block layouts to work out whether each note is an NPC, monster, spell, magic item, location, quest, faction or plain note; you review and correct every guess before anything is written. Structured notes are mapped field-by-field (AC, HP, ability scores, saves, skills, traits and actions for stat blocks; level/school/casting time for spells; and so on) and the original markdown is always kept on the record, so nothing is lost. One-way only — your vault is never touched, and re-running an import skips what's already there.
   - **Character sheet PDF** — upload a filled-in 5e sheet and Sanctum reads its form fields directly: abilities, proficiencies (inferred from the printed bonuses), HP, hit dice, currency, equipment, features, spells and slots. Spell details are filled in from the bundled SRD data where the names match. The sheet must be **fillable** — one you can click into and type in, like the official Wizards PDF. Printed, scanned or builder-exported sheets are flattened and carry no form data; the importer says so plainly instead of failing. Run `node scripts/inspect-sheet.mjs "<sheet.pdf>"` to see exactly what a given file contains. Only files **you** upload are read — no rules content beyond the SRD ships with the app.
 - **Character sheet export** — **Export PDF** on any character produces a printable sheet: abilities, saves and skills with proficiency marks, HP and hit dice, defences, currency, personality, features and feats, equipment, magic items, spell slots and spell lists. The sheet is drawn by Sanctum itself with the standard PDF fonts — no template, artwork or font file is bundled or downloaded. Its values sit in form fields named the way the official sheet names them, so the exported PDF is still fillable in any reader **and** can be read straight back in by the character sheet importer.
-- **Backups & portability** — automatic daily backups, plus per-campaign export/import as JSON.
+- **Backups & portability** — automatic daily backups, plus per-campaign export/import as JSON. The export carries the whole campaign: battle maps and their fog, soundscapes, mind maps and homebrew included.
+
+## Download
+
+Sanctum runs as a **desktop app on Windows, Linux and macOS** — no Node install, no terminal. Grab the latest build from [itch.io](https://athanasioust.itch.io/sanctum):
+
+| Platform | Downloads |
+| -------- | --------- |
+| Windows  | Installer (`.exe`) or portable `.exe` |
+| Linux    | `AppImage` or `.tar.gz` |
+| macOS    | `.dmg` or `.zip` (Intel and Apple Silicon) |
+
+The desktop app bundles its own server and database — the first launch creates everything it needs. The builds are not signed with a paid developer certificate, so the first launch needs **More info → Run anyway** on Windows (SmartScreen) or a right-click → **Open** on macOS (Gatekeeper).
+
+Prefer to run it from source? See [Getting started](#getting-started).
 
 ## Tech stack
 
 - [Next.js 16](https://nextjs.org) (App Router) + React 19
 - TypeScript + Tailwind CSS v4 + shadcn/ui
 - [better-sqlite3](https://github.com/WiseLibs/better-sqlite3) + [Drizzle ORM](https://orm.drizzle.team)
+- [Konva](https://konvajs.org) for the battle map, [React Flow](https://reactflow.dev) for the mind map, [pdf.js](https://mozilla.github.io/pdf.js/) + [pdf-lib](https://pdf-lib.js.org) for reading and writing PDFs
+- [Electron](https://www.electronjs.org) + electron-builder for the desktop builds
 
 ## Prerequisites
 
@@ -69,11 +92,11 @@ npm start       # serve it (defaults to http://localhost:3000)
 
 Everything is on your machine and is **never committed to git**:
 
-| Path              | Contents                                  |
-| ----------------- | ----------------------------------------- |
-| `./data/`         | The SQLite database (`sanctum.db`)        |
-| `./backups/`      | Automatic daily snapshots                 |
-| `./public/uploads/` | Map images you upload                   |
+| Path         | Contents                                        |
+| ------------ | ----------------------------------------------- |
+| `./data/`    | The SQLite database (`sanctum.db`)              |
+| `./backups/` | Automatic daily snapshots                       |
+| `./uploads/` | Images, audio and PDFs you upload               |
 
 In the packaged desktop app these live in a per-user directory instead:
 
@@ -101,9 +124,10 @@ To back up or move your whole setup, copy the `data/` folder. To share a single 
 
 Desktop builds are per-platform and cannot be cross-built — run
 `desktop:build:win` on Windows, `desktop:build:linux` under Linux/WSL and
-`desktop:build:mac` on a Mac. The macOS and Windows builds are unsigned, so the
-first launch needs a right-click → **Open** (Gatekeeper) or **More info → Run
-anyway** (SmartScreen).
+`desktop:build:mac` on a Mac. A single macOS run produces both Intel and Apple
+Silicon builds. Neither the macOS nor the Windows build carries a developer
+certificate, so the first launch needs a right-click → **Open** (Gatekeeper) or
+**More info → Run anyway** (SmartScreen).
 
 ## Attribution
 

@@ -1,10 +1,10 @@
 {
   "name": "sanctum",
-  "version": "0.4.4",
+  "version": "0.5.0",
   "private": true,
   "license": "AGPL-3.0-only",
   "author": "athanasioust",
-  "description": "Sanctum \u2014 a local-first D&D 5e campaign manager for Dungeon Masters.",
+  "description": "Sanctum — a local-first D&D 5e campaign manager for Dungeon Masters.",
   "main": "electron/main.js",
   "desktopName": "sanctum.desktop",
   "scripts": {
