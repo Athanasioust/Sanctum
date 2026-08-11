@@ -23,11 +23,9 @@
   "nav.mindMap": "Carte mentale",
   "nav.import": "Importer",
   "nav.settings": "Paramètres",
-
   "nav.search": "Rechercher…",
   "nav.allCampaigns": "Toutes les campagnes",
   "nav.menu": "Menu",
-
   "action.save": "Enregistrer",
   "action.cancel": "Annuler",
   "action.delete": "Supprimer",
@@ -41,7 +39,6 @@
   "action.upload": "Téléverser",
   "action.copy": "Copier",
   "action.copied": "Copié",
-
   "common.loading": "Chargement…",
   "common.saving": "Enregistrement…",
   "common.none": "Aucun",
@@ -51,11 +48,9 @@
   "common.level": "Niveau",
   "common.round": "Round",
   "common.turn": "Tour",
-
   "settings.language": "Langue",
   "settings.languageHint": "Traduit l'interface. Les textes de règles restent en anglais.",
   "settings.languageSaved": "Langue modifiée",
-
   "player.title": "Vue joueur",
   "player.live": "Vue joueur · mise à jour en direct",
   "player.initiative": "Initiative",
@@ -66,5 +61,23 @@
   "player.healthy": "En forme",
   "player.bloodied": "Ensanglanté",
   "player.down": "À terre",
-  "player.noCharacters": "Aucun personnage pour l'instant."
+  "player.noCharacters": "Aucun personnage pour l'instant.",
+  "navGroup.run": "En jeu",
+  "navGroup.cast": "Personnages",
+  "navGroup.world": "Monde",
+  "navGroup.story": "Intrigue",
+  "navGroup.resources": "Ressources",
+  "nav.collapseSidebar": "Réduire la barre latérale",
+  "nav.expandSidebar": "Développer la barre latérale",
+  "nav.pages": "Pages",
+  "nav.jumpTo": "Aller à une page ou rechercher dans la campagne…",
+  "tab.cast": "Distribution",
+  "tab.bestiary": "Bestiaire",
+  "tab.relations": "Relations",
+  "tab.items": "Objets magiques",
+  "tab.shops": "Boutiques & butin",
+  "homebrew.create": "Créer du contenu maison",
+  "settings.importTitle": "Importer",
+  "settings.importHint": "Importer un dossier markdown ou une fiche de personnage PDF remplie.",
+  "settings.importAction": "Ouvrir l'importateur"
 }

@@ -1,12 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Search, User, Skull, MapPin, ListTodo, Sparkles, Image, MessageCircleQuestion, X, Dices } from "lucide-react";
 import { rollDice } from "@/components/dice/dice-roller";
+import { useT } from "@/components/i18n/i18n-provider";
+import type { TranslationKey } from "@/lib/i18n";
 import { formulaError } from "@/lib/dice";
+import { ALL_DESTINATIONS } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import type { SearchResult } from "@/app/api/search/route";
+
+/** Pages shown as a jump-to list before anything has been typed. */
+const PAGE_PREVIEW_COUNT = 8;
 
 /** Dispatched by visible triggers (sidebar, mobile nav) to open the palette. */
 export const OPEN_SEARCH_EVENT = "sanctum:open-search";
@@ -44,6 +50,7 @@ export function CommandPalette({ campaignId }: { campaignId: number }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const t = useT();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const close = useCallback(() => {
@@ -112,10 +119,32 @@ export function CommandPalette({ campaignId }: { campaignId: number }) {
       ? trimmedQuery
       : null;
   const diceOffset = diceFormula ? 1 : 0;
-  const optionCount = diceOffset + results.length;
+
+  // Every page in the app, including the ones that are no longer sidebar
+  // entries (Bestiary, Relations, Shops, Homebrew, Import) — this is what keeps
+  // them reachable now that they live behind tabs or in Settings. Matched on
+  // both the English name and the translated one so it works in any language.
+  const pages = useMemo(() => {
+    if (!trimmedQuery) return ALL_DESTINATIONS.slice(0, PAGE_PREVIEW_COUNT);
+    const needle = trimmedQuery.toLowerCase();
+    return ALL_DESTINATIONS.filter(
+      (page) =>
+        page.label.toLowerCase().includes(needle) ||
+        t(page.labelKey as TranslationKey).toLowerCase().includes(needle),
+    );
+  }, [trimmedQuery, t]);
+
+  const pageOffset = diceOffset;
+  const resultOffset = diceOffset + pages.length;
+  const optionCount = resultOffset + results.length;
 
   function navigate(result: SearchResult) {
     router.push(result.href);
+    close();
+  }
+
+  function navigateTo(href: string) {
+    router.push(href);
     close();
   }
 
@@ -133,8 +162,15 @@ export function CommandPalette({ campaignId }: { campaignId: number }) {
       e.preventDefault();
       setActiveIndex((i) => Math.max(i - 1, 0));
     } else if (e.key === "Enter") {
-      if (diceFormula && activeIndex === 0) roll(diceFormula);
-      else if (results[activeIndex - diceOffset]) navigate(results[activeIndex - diceOffset]);
+      if (diceFormula && activeIndex === 0) {
+        roll(diceFormula);
+      } else if (activeIndex >= resultOffset) {
+        const result = results[activeIndex - resultOffset];
+        if (result) navigate(result);
+      } else {
+        const page = pages[activeIndex - pageOffset];
+        if (page) navigateTo(page.href(campaignId));
+      }
     }
   }
 
@@ -160,7 +196,7 @@ export function CommandPalette({ campaignId }: { campaignId: number }) {
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search characters, NPCs, locations, quests…"
+            placeholder="Jump to a page, or search your campaign…"
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
           {query ? (
@@ -193,10 +229,42 @@ export function CommandPalette({ campaignId }: { campaignId: number }) {
               <span className="shrink-0 text-xs text-muted-foreground">Dice</span>
             </button>
           )}
+          {pages.length > 0 && (
+            <>
+              <p className="px-3 pb-1 pt-2 text-xs font-medium uppercase text-muted-foreground">
+                Pages
+              </p>
+              <ul>
+                {pages.map((page, i) => {
+                  const index = i + pageOffset;
+                  const Icon = page.icon;
+                  return (
+                    <li key={page.labelKey}>
+                      <button
+                        onClick={() => navigateTo(page.href(campaignId))}
+                        onMouseEnter={() => setActiveIndex(index)}
+                        className={cn(
+                          "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
+                          index === activeIndex ? "bg-primary/10 text-primary" : "hover:bg-muted",
+                        )}
+                      >
+                        <Icon className="size-4 shrink-0 text-muted-foreground" />
+                        <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                          {t(page.labelKey as TranslationKey)}
+                        </span>
+                        <span className="shrink-0 text-xs text-muted-foreground">Page</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
+
           {loading && (
             <p className="py-6 text-center text-sm text-muted-foreground">Searching…</p>
           )}
-          {!loading && !diceFormula && query.length >= 2 && results.length === 0 && (
+          {!loading && !diceFormula && pages.length === 0 && query.length >= 2 && results.length === 0 && (
             <p className="py-6 text-center text-sm text-muted-foreground">
               No results for &ldquo;{query}&rdquo;
             </p>
@@ -205,7 +273,7 @@ export function CommandPalette({ campaignId }: { campaignId: number }) {
             <ul>
               {results.map((result, i) => {
                 const Icon = TYPE_ICONS[result.type];
-                const index = i + diceOffset;
+                const index = i + resultOffset;
                 return (
                   <li key={`${result.type}-${result.id}`}>
                     <button
@@ -233,8 +301,8 @@ export function CommandPalette({ campaignId }: { campaignId: number }) {
             </ul>
           )}
           {!query && (
-            <p className="py-6 text-center text-sm text-muted-foreground">
-              Type at least 2 characters to search across your campaign.
+            <p className="px-3 py-2 text-xs text-muted-foreground">
+              Keep typing to search characters, NPCs, locations and quests.
             </p>
           )}
         </div>

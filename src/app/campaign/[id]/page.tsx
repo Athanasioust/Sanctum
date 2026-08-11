@@ -27,7 +27,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PageContainer } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
-import { CAMPAIGN_NAV } from "@/lib/nav";
+import { ALL_DESTINATIONS, NAV_GROUPS } from "@/lib/nav";
 import { STORY_EVENT_TYPES } from "@/lib/constants";
 import { noteColorClasses } from "@/lib/ui";
 
@@ -96,8 +96,17 @@ export default async function DashboardPage({
     { label: "Open Plot Threads", value: plotCount, icon: Network, href: `/campaign/${id}/story` },
   ];
 
-  const quickLinks = CAMPAIGN_NAV.filter(
+  // Built from every destination, not just the sidebar, so the pages that moved
+  // into tabs (Bestiary, Relations, Shops) or out of the nav (Homebrew, Import)
+  // still have a tile here — pointing at their new URLs. Ordered by sidebar
+  // group so the moved ones sit next to their siblings rather than at the end.
+  const groupOrder = new Map(NAV_GROUPS.map((g, index) => [g.id, index]));
+  const quickLinks = ALL_DESTINATIONS.filter(
     (n) => n.segment !== null && n.segment !== "settings",
+  ).sort(
+    (a, b) =>
+      (a.group ? (groupOrder.get(a.group) ?? 99) : 99) -
+      (b.group ? (groupOrder.get(b.group) ?? 99) : 99),
   );
 
   // For real-world calendars the current date comes straight from the system
@@ -286,7 +295,7 @@ export default async function DashboardPage({
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {quickLinks.map((item) => (
             <Link
-              key={item.label}
+              key={item.labelKey}
               href={item.href(id)}
               className="group flex items-center gap-3 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/50"
             >

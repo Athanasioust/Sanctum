@@ -1,6 +1,7 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { desc, eq } from "drizzle-orm";
-import { Settings, Download } from "lucide-react";
+import { Settings, Download, Upload } from "lucide-react";
 import { db } from "@/db";
 import { campaigns, backups } from "@/db/schema";
 import { PageContainer, PageHeader } from "@/components/shared/page-header";
@@ -41,6 +42,22 @@ export default async function SettingsPage({
 
         <section>
           <LanguageSwitcher current={locale} />
+        </section>
+
+        {/* Import lives here rather than in the sidebar — it's a one-off setup
+            step, not somewhere you navigate to mid-session. */}
+        <section className="rounded-xl border border-border bg-card p-5">
+          <h2 className="flex items-center gap-2 font-heading text-lg font-semibold">
+            <Upload className="size-4 text-primary" /> Import
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Bring in a markdown vault or a filled-in character sheet PDF.
+          </p>
+          <Button asChild className="mt-4" variant="outline">
+            <Link href={`/campaign/${campaignId}/import`}>
+              <Upload className="size-4" /> Open the importer
+            </Link>
+          </Button>
         </section>
 
         <section className="rounded-xl border border-border bg-card p-5">

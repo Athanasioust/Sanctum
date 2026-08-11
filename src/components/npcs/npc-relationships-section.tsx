@@ -171,7 +171,7 @@ export function NpcRelationshipsSection({
             onSaved={(r) => setRelationships((prev) => [...prev, r])}
           />
           <Button size="sm" variant="ghost" asChild>
-            <Link href={`/campaign/${campaignId}/relations`}>View all →</Link>
+            <Link href={`/campaign/${campaignId}/npcs?tab=relations`}>View all →</Link>
           </Button>
         </div>
       </div>

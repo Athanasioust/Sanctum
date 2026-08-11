@@ -26,6 +26,7 @@ import {
 import { Field } from "@/components/shared/form";
 import { EmptyState } from "@/components/shared/empty-state";
 import { DeleteIconButton } from "@/components/shared/delete-icon-button";
+import { CreateHomebrewButton } from "@/components/homebrew/create-homebrew-button";
 import { api } from "@/lib/client";
 import { SPELL_SCHOOLS } from "@/lib/constants";
 import { SRD_SPELLS, type SeedSpell } from "@/lib/srd-spells";
@@ -469,9 +470,19 @@ function SpellCompendium({
             </SelectContent>
           </Select>
         </div>
-        <p className="-mt-1 text-xs text-muted-foreground">
-          Tap a spell to add an editable copy — add as many as you need.
-        </p>
+        <div className="-mt-1 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-muted-foreground">
+            Tap a spell to add an editable copy — add as many as you need.
+          </p>
+          {campaignId ? (
+            <CreateHomebrewButton
+              campaignId={campaignId}
+              label="Write your own"
+              variant="ghost"
+              size="sm"
+            />
+          ) : null}
+        </div>
         <div className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-border">
           {filtered.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted-foreground">No spells match.</p>

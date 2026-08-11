@@ -23,11 +23,9 @@
   "nav.mindMap": "Mindmap",
   "nav.import": "Import",
   "nav.settings": "Einstellungen",
-
   "nav.search": "Suchen…",
   "nav.allCampaigns": "Alle Kampagnen",
   "nav.menu": "Menü",
-
   "action.save": "Speichern",
   "action.cancel": "Abbrechen",
   "action.delete": "Löschen",
@@ -41,7 +39,6 @@
   "action.upload": "Hochladen",
   "action.copy": "Kopieren",
   "action.copied": "Kopiert",
-
   "common.loading": "Lädt…",
   "common.saving": "Speichert…",
   "common.none": "Keine",
@@ -51,11 +48,9 @@
   "common.level": "Stufe",
   "common.round": "Runde",
   "common.turn": "Zug",
-
   "settings.language": "Sprache",
   "settings.languageHint": "Übersetzt die Oberfläche. Regeltexte bleiben auf Englisch.",
   "settings.languageSaved": "Sprache geändert",
-
   "player.title": "Spieleransicht",
   "player.live": "Spieleransicht · aktualisiert live",
   "player.initiative": "Initiative",
@@ -66,5 +61,23 @@
   "player.healthy": "Wohlauf",
   "player.bloodied": "Angeschlagen",
   "player.down": "Kampfunfähig",
-  "player.noCharacters": "Noch keine Charaktere."
+  "player.noCharacters": "Noch keine Charaktere.",
+  "navGroup.run": "Am Tisch",
+  "navGroup.cast": "Figuren",
+  "navGroup.world": "Welt",
+  "navGroup.story": "Handlung",
+  "navGroup.resources": "Material",
+  "nav.collapseSidebar": "Seitenleiste einklappen",
+  "nav.expandSidebar": "Seitenleiste ausklappen",
+  "nav.pages": "Seiten",
+  "nav.jumpTo": "Zu einer Seite springen oder Kampagne durchsuchen…",
+  "tab.cast": "Figuren",
+  "tab.bestiary": "Bestiarium",
+  "tab.relations": "Beziehungen",
+  "tab.items": "Magische Gegenstände",
+  "tab.shops": "Läden & Beute",
+  "homebrew.create": "Eigene Inhalte erstellen",
+  "settings.importTitle": "Import",
+  "settings.importHint": "Ein Markdown-Vault oder ein ausgefülltes Charakterbogen-PDF einlesen.",
+  "settings.importAction": "Import öffnen"
 }

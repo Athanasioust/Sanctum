@@ -230,7 +230,7 @@ export function HomebrewManager({
             count={monsterCount}
             description="Stat-block templates in your bestiary, ready to drop into an encounter."
             href={`/campaign/${campaignId}/bestiary/new`}
-            browseHref={`/campaign/${campaignId}/bestiary`}
+            browseHref={`/campaign/${campaignId}/npcs?tab=bestiary`}
           />
           <ElsewhereCard
             icon={Sparkles}

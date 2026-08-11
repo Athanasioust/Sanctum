@@ -33,7 +33,7 @@ export default async function ShopDetailPage({
   return (
     <PageContainer>
       <Link
-        href={`/campaign/${campaignId}/shops`}
+        href={`/campaign/${campaignId}/magic-items?tab=shops`}
         className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="size-4" /> Back to Shops
@@ -59,7 +59,7 @@ export default async function ShopDetailPage({
         <EntityActions
           deleteEndpoint={`/api/shops/${shop.id}`}
           entityLabel="Shop"
-          redirectTo={`/campaign/${campaignId}/shops`}
+          redirectTo={`/campaign/${campaignId}/magic-items?tab=shops`}
         />
       </div>
 

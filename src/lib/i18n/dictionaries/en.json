@@ -23,11 +23,9 @@
   "nav.mindMap": "Mind Map",
   "nav.import": "Import",
   "nav.settings": "Settings",
-
   "nav.search": "Search…",
   "nav.allCampaigns": "All campaigns",
   "nav.menu": "Menu",
-
   "action.save": "Save",
   "action.cancel": "Cancel",
   "action.delete": "Delete",
@@ -41,7 +39,6 @@
   "action.upload": "Upload",
   "action.copy": "Copy",
   "action.copied": "Copied",
-
   "common.loading": "Loading…",
   "common.saving": "Saving…",
   "common.none": "None",
@@ -51,11 +48,9 @@
   "common.level": "Level",
   "common.round": "Round",
   "common.turn": "Turn",
-
   "settings.language": "Language",
   "settings.languageHint": "Translates the app's own text. Game rules stay in English.",
   "settings.languageSaved": "Language changed",
-
   "player.title": "Player view",
   "player.live": "Player view · updates live",
   "player.initiative": "Initiative",
@@ -66,5 +61,23 @@
   "player.healthy": "Healthy",
   "player.bloodied": "Bloodied",
   "player.down": "Down",
-  "player.noCharacters": "No characters yet."
+  "player.noCharacters": "No characters yet.",
+  "navGroup.run": "Run",
+  "navGroup.cast": "Cast",
+  "navGroup.world": "World",
+  "navGroup.story": "Story",
+  "navGroup.resources": "Resources",
+  "nav.collapseSidebar": "Collapse sidebar",
+  "nav.expandSidebar": "Expand sidebar",
+  "nav.pages": "Pages",
+  "nav.jumpTo": "Jump to a page, or search your campaign…",
+  "tab.cast": "Cast",
+  "tab.bestiary": "Bestiary",
+  "tab.relations": "Relations",
+  "tab.items": "Magic Items",
+  "tab.shops": "Shops & Loot",
+  "homebrew.create": "Create homebrew",
+  "settings.importTitle": "Import",
+  "settings.importHint": "Bring in a markdown vault or a filled-in character sheet PDF.",
+  "settings.importAction": "Open the importer"
 }

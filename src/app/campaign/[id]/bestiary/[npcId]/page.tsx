@@ -29,7 +29,7 @@ export default async function BestiaryDetailPage({
   return (
     <PageContainer>
       <Link
-        href={`/campaign/${campaignId}/bestiary`}
+        href={`/campaign/${campaignId}/npcs?tab=bestiary`}
         className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="size-4" /> Back to Bestiary
@@ -51,7 +51,7 @@ export default async function BestiaryDetailPage({
           <EntityActions
             deleteEndpoint={`/api/npcs/${npc.id}`}
             entityLabel="Template"
-            redirectTo={`/campaign/${campaignId}/bestiary`}
+            redirectTo={`/campaign/${campaignId}/npcs?tab=bestiary`}
           />
         </div>
       </div>
