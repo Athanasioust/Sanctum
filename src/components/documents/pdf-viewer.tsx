@@ -10,6 +10,11 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
+import type {
+  PDFDocumentLoadingTask,
+  PDFDocumentProxy,
+  RenderTask,
+} from "pdfjs-dist";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -28,25 +33,13 @@ const ZOOM_STEPS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
 /** A page of extracted text, used by the in-document search. */
 type PageText = { page: number; text: string };
 
-type PdfDocument = {
-  numPages: number;
-  getPage: (n: number) => Promise<PdfPage>;
-  destroy: () => Promise<void>;
-};
-
-type PdfPage = {
-  getViewport: (opts: { scale: number }) => { width: number; height: number };
-  render: (opts: {
-    canvasContext: CanvasRenderingContext2D;
-    viewport: { width: number; height: number };
-  }) => { promise: Promise<void>; cancel: () => void };
-  getTextContent: () => Promise<{ items: { str?: string }[] }>;
-};
-
 export function PdfViewer({ url, name }: { url: string; name: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const docRef = useRef<PdfDocument | null>(null);
-  const renderTask = useRef<{ cancel: () => void } | null>(null);
+  const docRef = useRef<PDFDocumentProxy | null>(null);
+  // `destroy()` lives on the loading task, not on the document proxy, so the
+  // task is what has to be kept around to tear the worker down on unmount.
+  const taskRef = useRef<PDFDocumentLoadingTask | null>(null);
+  const renderTask = useRef<RenderTask | null>(null);
 
   const [numPages, setNumPages] = useState(0);
   const [page, setPage] = useState(1);
@@ -71,9 +64,10 @@ export function PdfViewer({ url, name }: { url: string; name: string }) {
         const pdfjs = await import("pdfjs-dist");
         pdfjs.GlobalWorkerOptions.workerSrc = WORKER_SRC;
         const task = pdfjs.getDocument({ url });
-        const doc = (await task.promise) as unknown as PdfDocument;
+        taskRef.current = task;
+        const doc = await task.promise;
         if (cancelled) {
-          void doc.destroy();
+          void task.destroy();
           return;
         }
         docRef.current = doc;
@@ -89,7 +83,13 @@ export function PdfViewer({ url, name }: { url: string; name: string }) {
     return () => {
       cancelled = true;
       renderTask.current?.cancel();
-      void docRef.current?.destroy();
+      renderTask.current = null;
+      // Destroying the task aborts any in-flight request and shuts the worker
+      // down; the document proxy has no destroy of its own.
+      void taskRef.current?.destroy().catch(() => {
+        // A task torn down mid-load rejects its promise — nothing to do.
+      });
+      taskRef.current = null;
       docRef.current = null;
     };
   }, [url]);
@@ -115,15 +115,15 @@ export function PdfViewer({ url, name }: { url: string; name: string }) {
         // Render at device pixel ratio so text stays sharp on high-DPI screens.
         const ratio = window.devicePixelRatio || 1;
         const viewport = pdfPage.getViewport({ scale: zoom * ratio });
-        const context = canvas.getContext("2d");
-        if (!context) return;
 
         canvas.width = viewport.width;
         canvas.height = viewport.height;
         canvas.style.width = `${viewport.width / ratio}px`;
         canvas.style.height = `${viewport.height / ratio}px`;
 
-        const task = pdfPage.render({ canvasContext: context, viewport });
+        // pdf.js 6 takes the canvas itself; `canvasContext` is the deprecated
+        // backwards-compatible path.
+        const task = pdfPage.render({ canvas, viewport });
         renderTask.current = task;
         await task.promise;
         renderTask.current = null;
@@ -175,7 +175,12 @@ export function PdfViewer({ url, name }: { url: string; name: string }) {
           const content = await pdfPage.getTextContent();
           texts.push({
             page: n,
-            text: content.items.map((i) => i.str ?? "").join(" ").toLowerCase(),
+            // `items` mixes text runs with marked-content markers; only the
+            // former carry a string.
+            text: content.items
+              .map((item) => ("str" in item ? item.str : ""))
+              .join(" ")
+              .toLowerCase(),
           });
         }
         setPageTexts(texts);
