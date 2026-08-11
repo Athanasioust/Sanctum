@@ -17,6 +17,7 @@ const http = require("node:http");
 const { spawn } = require("node:child_process");
 
 const isDev = !app.isPackaged;
+const isMac = process.platform === "darwin";
 // The window always talks to the server over loopback. What changes with
 // local-network sharing is what the server *binds* to, not how we reach it.
 const HOST = "127.0.0.1";
@@ -44,6 +45,9 @@ function lanSharingEnabled() {
 let serverProcess = null;
 let mainWindow = null;
 let logStream = null;
+// The URL the window loads, remembered so macOS can reopen a closed window
+// against the server that is already running instead of starting a second one.
+let serverUrl = null;
 
 function log(...args) {
   const line = `[${new Date().toISOString()}] ${args.join(" ")}`;
@@ -276,6 +280,11 @@ function setZoom(factor) {
 /**
  * Minimal menu. Zoom lives here (rather than on Electron's stock View role) so
  * the chosen level is remembered between launches.
+ *
+ * macOS gets the two menus the platform expects. Without an explicit `appMenu`
+ * the first submenu in the template is drawn in the application-menu slot, so
+ * "File" would end up carrying the app's name and About/Services/Hide would be
+ * missing entirely; without `windowMenu` there is no Minimize or Zoom.
  */
 function buildMenu() {
   const zoomBy = (step) => () => {
@@ -284,6 +293,7 @@ function buildMenu() {
   };
 
   return Menu.buildFromTemplate([
+    ...(isMac ? [{ role: "appMenu" }] : []),
     {
       label: "File",
       submenu: [
@@ -293,7 +303,9 @@ function buildMenu() {
           click: () => mainWindow?.webContents.reload(),
         },
         { type: "separator" },
-        { role: "quit" },
+        // Quit already lives in the application menu on macOS; File offers
+        // Close instead, which leaves the app running in the dock.
+        isMac ? { role: "close" } : { role: "quit" },
       ],
     },
     { role: "editMenu" },
@@ -326,6 +338,7 @@ function buildMenu() {
         { role: "toggleDevTools" },
       ],
     },
+    ...(isMac ? [{ role: "windowMenu" }] : []),
     {
       label: "Help",
       submenu: [
@@ -419,6 +432,7 @@ async function boot() {
       url = `http://${HOST}:${port}`;
       log(`Server ready at ${url}`);
     }
+    serverUrl = url;
   } catch (err) {
     log(`Boot failed: ${err?.stack || err}`);
     dialog.showErrorBox(
@@ -441,17 +455,31 @@ if (!gotLock) {
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.focus();
+    } else if (serverUrl) {
+      // On macOS the app outlives its window, so a second launch may find
+      // nothing to focus. Reopen rather than doing nothing.
+      createWindow(serverUrl);
     }
   });
 
   app.whenReady().then(boot);
 
+  // Clicking the dock icon with no window open. The server is still running at
+  // this point, so reopen against it — calling boot() again would spawn a second
+  // one on a second port. Only fall back to a full boot if there is no URL yet
+  // (the very first activate can arrive before boot resolves).
   app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0 && !isDev) boot();
+    if (BrowserWindow.getAllWindows().length > 0) return;
+    if (serverUrl) createWindow(serverUrl);
+    else if (!isDev) boot();
   });
 
   app.on("window-all-closed", () => {
-    app.quit();
+    // macOS apps stay in the dock after their last window closes, and Sanctum
+    // has a server child process to keep alive with them; Cmd+Q (or Quit in the
+    // app menu) is what shuts it down. Everywhere else, closing the window means
+    // quitting.
+    if (!isMac) app.quit();
   });
 
   app.on("before-quit", () => {

@@ -177,20 +177,33 @@ This produces a `.dmg` and a `.zip` for both Intel (x64) and Apple Silicon
 (arm64). The data directory is `~/Library/Application Support/Sanctum`, which
 Electron picks per-platform — nothing in the app needs to change.
 
-- **The icon needs a 512x512 (ideally 1024x1024) `electron/icon.png`.**
-  electron-builder generates the `.icns` from it and rejects anything smaller;
-  the current icon is 256x256, so `desktop:build:mac` stops immediately with
-  that message until it is replaced.
-- **The build is unsigned**, so Gatekeeper blocks the first launch with
-  "Sanctum can't be opened because it is from an unidentified developer". Add
-  this note to the itch page, the same way the SmartScreen note is worded:
-  *right-click the app → Open → Open*. Signing and notarization need a paid
-  Apple Developer account and can be added later without changing the build.
+Both architectures come out of one run on either kind of Mac: the build stages a
+prebuilt `better-sqlite3` binary per architecture under `.next/native/`, and
+`electron/after-pack.js` drops the matching one into each `.app`. If you ever add
+an architecture to `electron-builder.yml`, add it to `archs` in
+`scripts/build-desktop.mjs` too — the hook fails the build rather than shipping a
+bundle whose native module cannot load.
+
+- **The app is ad-hoc signed, not Apple-signed** (`mac.identity: "-"`). This is
+  not cosmetic: packaging rewrites the bundle, which invalidates the signature
+  Electron ships with, and Apple Silicon refuses to launch a binary whose
+  signature is broken — *"Sanctum is damaged and can't be opened"*, which
+  right-click → Open does **not** clear. Ad-hoc signing keeps the app launchable
+  and reduces it to the ordinary Gatekeeper prompt.
+- **There is still no Apple Developer identity**, so Gatekeeper blocks the first
+  launch with "Sanctum can't be opened because it is from an unidentified
+  developer". Add this note to the itch page, the same way the SmartScreen note
+  is worded: *right-click the app → Open → Open*. Real signing and notarization
+  need a paid Apple Developer account; only `mac.identity` changes for that.
+- The bundle icon comes from `electron/icon.icns`. If that file is ever removed,
+  electron-builder falls back to generating one from `electron/icon.png` and
+  rejects anything under 512x512 — `desktop:build:mac` checks this up front.
 - Tick **macOS** in the itch page's platform list, or the downloads are offered
   to Windows users only.
 - Prefer pushing the `.zip` to a `mac` channel and the `.dmg` alongside it —
   itch's app can install from the zip, and the dmg is the familiar manual
-  download.
+  download. Push the two architectures to separate channels (`osx-arm64` and
+  `osx-x64`) so the itch app hands each Mac the right one.
 
 ### Linux builds
 

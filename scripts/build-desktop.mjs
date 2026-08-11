@@ -4,16 +4,19 @@
 //   1. `next build` — produces the standalone server (with the Node-ABI native
 //      better-sqlite3 binary).
 //   2. Assemble the standalone bundle: copy in .next/static, public, drizzle.
-//   3. Fetch the prebuilt better-sqlite3 binary for Electron's ABI and swap it
-//      into the standalone bundle (the child process runs on Electron's Node
-//      runtime), then restore the Node-ABI binary so `next dev`/`next build`
-//      keep working. We download prebuilt binaries rather than compiling, so no
-//      C++ toolchain is required — but Electron must be pinned to a version for
-//      which better-sqlite3 publishes a prebuilt binary (currently v42.x).
+//   3. Fetch the prebuilt better-sqlite3 binary for Electron's ABI — one per
+//      architecture we package — and stage them under .next/native, then
+//      restore the Node-ABI binary so `next dev`/`next build` keep working.
+//      The child process runs on Electron's Node runtime, so it needs the
+//      Electron-ABI build. We download prebuilt binaries rather than compiling,
+//      so no C++ toolchain is required — but Electron must be pinned to a
+//      version for which better-sqlite3 publishes a prebuilt binary (v42.x).
 //   4. `electron-builder` — package the installers for the target platform.
+//      electron/after-pack.js picks the staged binary matching each arch.
 //
 // Run with: npm run desktop:build          (targets the host platform)
 //           npm run desktop:build:linux    (explicit; must be run under Linux/WSL)
+//           npm run desktop:build:mac      (explicit; must be run on a Mac)
 //
 // Cross-building is deliberately refused. The native better-sqlite3 binary could
 // be fetched for another platform, but the rest cannot: electron-builder needs
@@ -32,10 +35,13 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // --- Target platform ------------------------------------------------------
 // Default to the host. An explicit --win/--linux must match the host, because
 // the packaging step cannot cross-build (see the note at the top of this file).
+// `archs` must stay in sync with the target list in electron-builder.yml: one
+// native better-sqlite3 binary is staged per entry, and after-pack.js throws if
+// electron-builder packages an arch that was never staged.
 const SUPPORTED = {
-  win32: { flag: "--win", label: "Windows" },
-  linux: { flag: "--linux", label: "Linux" },
-  darwin: { flag: "--mac", label: "macOS" },
+  win32: { flag: "--win", label: "Windows", archs: ["x64"] },
+  linux: { flag: "--linux", label: "Linux", archs: ["x64"] },
+  darwin: { flag: "--mac", label: "macOS", archs: ["x64", "arm64"] },
 };
 
 const requested = process.argv
@@ -58,22 +64,26 @@ if (requested && requested !== hostTarget.flag) {
 const target = hostTarget;
 console.log(`Building Sanctum desktop for ${target.label} (${process.platform}).`);
 
-// electron-builder generates the macOS .icns from electron/icon.png and rejects
-// anything under 512x512. Check it up front rather than letting a build fail at
-// the packaging step, minutes in.
+// The macOS bundle icon. electron/icon.icns is used as-is when present;
+// otherwise electron-builder generates one from electron/icon.png and rejects
+// anything under 512x512. Check up front rather than failing at the packaging
+// step, minutes in.
 if (process.platform === "darwin") {
-  const iconPath = path.join(root, "electron", "icon.png");
-  const png = fs.readFileSync(iconPath);
-  // PNG IHDR stores width and height as big-endian uint32s at bytes 16 and 20.
-  const width = png.readUInt32BE(16);
-  const height = png.readUInt32BE(20);
-  if (width < 512 || height < 512) {
-    throw new Error(
-      `electron/icon.png is ${width}x${height}; macOS needs at least 512x512.
-` +
-        `Replace it with a 1024x1024 export (or add electron/icon.icns) before ` +
-        `building for macOS.`,
-    );
+  const icnsPath = path.join(root, "electron", "icon.icns");
+  if (fs.existsSync(icnsPath)) {
+    console.log("Using electron/icon.icns for the macOS bundle icon.");
+  } else {
+    const png = fs.readFileSync(path.join(root, "electron", "icon.png"));
+    // PNG IHDR stores width and height as big-endian uint32s at bytes 16 and 20.
+    const width = png.readUInt32BE(16);
+    const height = png.readUInt32BE(20);
+    if (width < 512 || height < 512) {
+      throw new Error(
+        `electron/icon.png is ${width}x${height}; macOS needs at least 512x512.\n` +
+          `Replace it with a 1024x1024 export (or add electron/icon.icns) before ` +
+          `building for macOS.`,
+      );
+    }
   }
 }
 
@@ -105,12 +115,14 @@ function copyDir(from, to) {
 
 // Download a prebuilt better-sqlite3 binary into node_modules/better-sqlite3,
 // replacing whatever is there. With no runtime given, prebuild-install fetches
-// the binary for the current Node.
-function fetchPrebuilt(runtime, version) {
+// the binary for the current Node on the current arch. prebuild-install always
+// downloads (it has no "already present, skip" path), so calling this in a loop
+// really does yield a different binary per arch.
+function fetchPrebuilt(runtime, version, arch = process.arch) {
   const flags =
     runtime && version
       ? ` --runtime=${runtime} --target=${version}` +
-        ` --arch=${process.arch} --platform=${process.platform}`
+        ` --arch=${arch} --platform=${process.platform}`
       : "";
   run(`node "${prebuildBin}"${flags}`, bsqDir);
 }
@@ -149,14 +161,19 @@ copyDir(
   path.join(standalone, "node_modules", "next", "dist", "compiled", "next-server"),
 );
 
-// --- 3. Swap in the Electron-ABI native binary ----------------------------
-// Fetching the Electron binary overwrites the Node-ABI one that npm installed,
+// --- 3. Stage the Electron-ABI native binaries ----------------------------
+// One binary per architecture we package. macOS ships both Intel and Apple
+// Silicon from a single run, and a build carrying the wrong-arch .node fails at
+// require() time on the user's machine — after the installer looked fine here.
+//
+// Fetching an Electron binary overwrites the Node-ABI one that npm installed,
 // so stash a copy first. Restoring from that copy — rather than re-downloading
 // the Node build — keeps `next dev` working even where no Node-ABI prebuild is
 // published for the running Node version (the case on Linux/Node 20, which
 // compiles better-sqlite3 from source at install time instead).
 const electronBinary = path.join(root, nativeRel);
 const nodeBinaryBackup = `${electronBinary}.node-abi.bak`;
+const nativeStageRoot = path.join(root, ".next", "native");
 
 if (fs.existsSync(electronBinary)) {
   fs.copyFileSync(electronBinary, nodeBinaryBackup);
@@ -166,40 +183,64 @@ if (fs.existsSync(electronBinary)) {
 const electronVersion = JSON.parse(
   fs.readFileSync(path.join(root, "node_modules", "electron", "package.json"), "utf8"),
 ).version;
-console.log(`\nFetching prebuilt better-sqlite3 for Electron ${electronVersion}...`);
-fetchPrebuilt("electron", electronVersion);
 
-const bundledBinary = path.join(standalone, nativeRel);
-if (!fs.existsSync(electronBinary)) {
-  throw new Error(
-    `Prebuilt Electron binary not found. better-sqlite3 may not publish a build ` +
-      `for Electron ${electronVersion} on ${process.platform}-${process.arch} — ` +
-      `pin Electron to a supported version.`,
-  );
-}
-fs.mkdirSync(path.dirname(bundledBinary), { recursive: true });
-fs.copyFileSync(electronBinary, bundledBinary);
-console.log("  swapped Electron-ABI binary into standalone bundle");
+fs.rmSync(nativeStageRoot, { recursive: true, force: true });
 
-// Restore the Node-ABI binary immediately, so `next dev`/`next build` still work
-// regardless of whether packaging below succeeds. Never fatal: the artifacts do
-// not depend on it, and failing here would throw away a finished build.
-console.log("\nRestoring Node-ABI better-sqlite3 (so `next dev` still works)...");
 try {
-  if (fs.existsSync(nodeBinaryBackup)) {
-    fs.copyFileSync(nodeBinaryBackup, electronBinary);
-    fs.rmSync(nodeBinaryBackup, { force: true });
-    console.log("  restored from the stashed copy");
-  } else {
-    fetchPrebuilt();
+  for (const arch of target.archs) {
+    console.log(
+      `\nFetching prebuilt better-sqlite3 for Electron ${electronVersion} ` +
+        `(${process.platform}-${arch})...`,
+    );
+    fetchPrebuilt("electron", electronVersion, arch);
+
+    if (!fs.existsSync(electronBinary)) {
+      throw new Error(
+        `Prebuilt Electron binary not found. better-sqlite3 may not publish a ` +
+          `build for Electron ${electronVersion} on ${process.platform}-${arch} — ` +
+          `pin Electron to a supported version.`,
+      );
+    }
+
+    const stageDir = path.join(nativeStageRoot, `${process.platform}-${arch}`);
+    fs.mkdirSync(stageDir, { recursive: true });
+    fs.copyFileSync(electronBinary, path.join(stageDir, "better_sqlite3.node"));
+    console.log(`  staged ${path.relative(root, stageDir)}`);
   }
-} catch (err) {
-  console.warn(
-    `  WARNING: could not restore the Node-ABI binary (${err.message}).\n` +
-      `  node_modules/better-sqlite3 now holds the Electron build, so \`next dev\`\n` +
-      `  will report an ABI mismatch until you run: npm rebuild better-sqlite3`,
-  );
+} finally {
+  // Always restore the Node-ABI binary, even if a fetch above failed partway —
+  // otherwise a failed build leaves the working tree unable to run `next dev`.
+  // Never fatal: the artifacts do not depend on it, and throwing here would
+  // discard an otherwise finished build.
+  console.log("\nRestoring Node-ABI better-sqlite3 (so `next dev` still works)...");
+  try {
+    if (fs.existsSync(nodeBinaryBackup)) {
+      fs.copyFileSync(nodeBinaryBackup, electronBinary);
+      fs.rmSync(nodeBinaryBackup, { force: true });
+      console.log("  restored from the stashed copy");
+    } else {
+      fetchPrebuilt();
+    }
+  } catch (err) {
+    console.warn(
+      `  WARNING: could not restore the Node-ABI binary (${err.message}).\n` +
+        `  node_modules/better-sqlite3 now holds the Electron build, so \`next dev\`\n` +
+        `  will report an ABI mismatch until you run: npm rebuild better-sqlite3`,
+    );
+  }
 }
+
+// Seed the standalone bundle with one of the staged binaries so it is coherent
+// on its own (the host's, where that is a target). after-pack.js overwrites this
+// per architecture, so which one lands here does not affect the artifacts.
+const seedArch = target.archs.includes(process.arch) ? process.arch : target.archs[0];
+const bundledBinary = path.join(standalone, nativeRel);
+fs.mkdirSync(path.dirname(bundledBinary), { recursive: true });
+fs.copyFileSync(
+  path.join(nativeStageRoot, `${process.platform}-${seedArch}`, "better_sqlite3.node"),
+  bundledBinary,
+);
+console.log(`\nSeeded the standalone bundle with the ${seedArch} Electron-ABI binary.`);
 
 // --- 4. Package with electron-builder -------------------------------------
 run(`npx electron-builder ${target.flag}`);

@@ -60,19 +60,37 @@ portable:
 # needs `--no-sandbox` (or a root-owned setuid chrome-sandbox) to launch.
 # macOS artifacts must be built ON macOS (see scripts/build-desktop.mjs): the
 # native better-sqlite3 binary and the .app bundle are both platform-specific.
-# The build is unsigned, so Gatekeeper will refuse the first launch until the
-# user right-clicks the app and chooses Open — same story as the Windows
-# SmartScreen prompt. Signing and notarization can be added later by supplying
-# an Apple Developer identity; nothing here needs to change for that.
+# The build carries no Apple Developer identity, so Gatekeeper will refuse the
+# first launch until the user right-clicks the app and chooses Open — same story
+# as the Windows SmartScreen prompt. Real signing and notarization can be added
+# later by supplying an identity; only the `identity` line below changes.
+#
+# The arch list here must stay in sync with `archs` in scripts/build-desktop.mjs,
+# which stages one native better-sqlite3 binary per architecture.
 mac:
-  # electron-builder needs at least a 512x512 source to generate the .icns.
-  # scripts/build-desktop.mjs checks this before starting a macOS build.
-  icon: electron/icon.png
+  icon: electron/icon.icns
   category: public.app-category.games
   # Sanctum spawns its own local server and reads/writes only its own data
   # directory; the hardened runtime is off since there is nothing to entitle
   # and the build is not notarized.
   hardenedRuntime: false
+  # Ad-hoc signing. Packaging rewrites the bundle (see electron/after-pack.js),
+  # which invalidates the signature Electron ships with — and macOS on Apple
+  # Silicon refuses to launch a binary with a broken signature outright ("Sanctum
+  # is damaged"), which right-click → Open does NOT get past. electron-builder
+  # only ad-hoc signs when the identity is explicitly "-"; leaving this unset
+  # makes it skip signing altogether. Signing runs after afterPack, so the files
+  # that hook copies in are covered.
+  identity: "-"
+  extendInfo:
+    # Turning on local-network sharing makes the bundled server listen on every
+    # interface so players can open the read-only view on their phones. macOS 15
+    # gates local network access behind a privacy prompt, and without a purpose
+    # string that prompt has no explanation for the user. Sharing is off by
+    # default, so this is only reached if the DM enables it in Settings.
+    NSLocalNetworkUsageDescription: >-
+      Sanctum uses your local network only when you turn on sharing in Settings,
+      so players on the same Wi-Fi can open the read-only player view.
   target:
     - target: dmg
       arch:
