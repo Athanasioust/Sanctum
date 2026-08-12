@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { apiRoute, json, parseBody, readJson } from "@/lib/api";
-import { lanAddresses, readLanConfig, writeLanConfig } from "@/lib/lan";
+import {
+  firewallState,
+  lanAddresses,
+  readLanConfig,
+  servingOnNetwork,
+  writeLanConfig,
+} from "@/lib/lan";
 
 const lanUpdateSchema = z.object({ enabled: z.boolean() });
 
@@ -17,9 +23,12 @@ export const GET = apiRoute(async (req) => {
     enabled: config.enabled,
     addresses: lanAddresses(),
     port: Number(url.port) || (url.protocol === "https:" ? 443 : 80),
-    // Whether the running server is actually reachable from the network, which
-    // only becomes true after a restart with sharing enabled.
-    active: process.env.HOSTNAME === "0.0.0.0",
+    // Whether the running server is actually reachable from the network. In the
+    // packaged app that only becomes true after a restart with sharing enabled;
+    // a dev server binds every interface from the start.
+    active: servingOnNetwork(),
+    // Binding to the network is not enough on Windows — see lib/lan.ts.
+    firewall: firewallState(),
   });
 });
 
