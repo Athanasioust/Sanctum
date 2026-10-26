@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Plus, Minus, Users, Skull, Swords } from "lucide-react";
+import { Search, Plus, Minus, Users, Skull, Swords, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/shared/empty-state";
 import { api } from "@/lib/client";
-import { rateEncounter, DIFFICULTY_STYLES } from "@/lib/encounter";
+import { rateEncounter, difficultyKey, DIFFICULTY_STYLES } from "@/lib/encounter";
+import { useT } from "@/components/i18n/i18n-provider";
 import { cn } from "@/lib/utils";
 
 export type BuilderChar = {
@@ -42,6 +43,7 @@ export function EncounterBuilder({
   monsters: BuilderMonster[];
 }) {
   const router = useRouter();
+  const t = useT();
   const [included, setIncluded] = useState<Set<number>>(
     () => new Set(party.map((c) => c.id)),
   );
@@ -229,6 +231,15 @@ export function EncounterBuilder({
               <div className="max-h-80 space-y-1 overflow-y-auto pr-1">
                 {filtered.map((m) => {
                   const n = counts[m.id] ?? 0;
+                  // What one more of these would do to the fight, and whether a
+                  // single one on its own is a sensible challenge for this party.
+                  const withOne = partyLevels.length > 0 && m.xp > 0
+                    ? rateEncounter([...monsterXps, m.xp], partyLevels).difficulty
+                    : null;
+                  const solo = partyLevels.length > 0 && m.xp > 0
+                    ? rateEncounter([m.xp], partyLevels).difficulty
+                    : null;
+                  const fits = solo === "Medium" || solo === "Hard";
                   return (
                     <div
                       key={m.id}
@@ -240,8 +251,24 @@ export function EncounterBuilder({
                       <div className="flex items-center justify-between gap-2">
                         <span className="min-w-0">
                           <span className="font-medium">{m.name}</span>
-                          <span className="block text-xs text-muted-foreground">
-                            {m.cr ? `CR ${m.cr} · ` : ""}{m.xp.toLocaleString()} XP
+                          <span className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                            <span>{m.cr ? `CR ${m.cr} · ` : ""}{m.xp.toLocaleString()} XP</span>
+                            {withOne ? (
+                              <span
+                                className={DIFFICULTY_STYLES[withOne]}
+                                title={t("encounter.addOneHint")}
+                              >
+                                +1 → {t(difficultyKey(withOne))}
+                              </span>
+                            ) : null}
+                            {fits ? (
+                              <span
+                                className="inline-flex items-center gap-0.5 text-primary"
+                                title={t("encounter.fitsHint")}
+                              >
+                                <Check className="size-3" /> {t("encounter.fits")}
+                              </span>
+                            ) : null}
                           </span>
                         </span>
                         <span className="flex shrink-0 items-center gap-1">
@@ -301,6 +328,7 @@ function DifficultyMeter({
   monsterTotal: number;
   partySize: number;
 }) {
+  const t = useT();
   const tiers = [
     { key: "Easy", value: rating.thresholds.easy },
     { key: "Medium", value: rating.thresholds.medium },
@@ -312,13 +340,17 @@ function DifficultyMeter({
     <div className="rounded-xl border border-border bg-card p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <p className="text-xs uppercase text-muted-foreground">Difficulty</p>
+          <p className="text-xs uppercase text-muted-foreground">{t("encounter.difficulty")}</p>
           <p className={cn("font-heading text-3xl font-semibold", DIFFICULTY_STYLES[rating.difficulty])}>
-            {partySize === 0 ? "Add party" : monsterTotal === 0 ? "—" : rating.difficulty}
+            {partySize === 0
+              ? t("encounter.addParty")
+              : monsterTotal === 0
+                ? "—"
+                : t(difficultyKey(rating.difficulty))}
           </p>
         </div>
         <p className="text-sm text-muted-foreground">
-          Adjusted XP:{" "}
+          {t("encounter.adjustedXp")}:{" "}
           <span className="font-medium text-foreground tabular-nums">
             {rating.adjustedXp.toLocaleString()}
           </span>{" "}
@@ -326,28 +358,25 @@ function DifficultyMeter({
         </p>
       </div>
       <div className="mt-3 grid grid-cols-4 gap-2">
-        {tiers.map((t) => {
-          const active = rating.difficulty === t.key;
+        {tiers.map((tier) => {
+          const active = rating.difficulty === tier.key;
           return (
             <div
-              key={t.key}
+              key={tier.key}
               className={cn(
                 "rounded-lg border px-2 py-1.5 text-center",
                 active ? "border-primary bg-primary/10" : "border-border bg-muted/30",
               )}
             >
-              <p className={cn("text-xs font-medium", active ? DIFFICULTY_STYLES[t.key] : "text-muted-foreground")}>
-                {t.key}
+              <p className={cn("text-xs font-medium", active ? DIFFICULTY_STYLES[tier.key] : "text-muted-foreground")}>
+                {t(difficultyKey(tier.key))}
               </p>
-              <p className="text-sm tabular-nums">{t.value.toLocaleString()}</p>
+              <p className="text-sm tabular-nums">{tier.value.toLocaleString()}</p>
             </div>
           );
         })}
       </div>
-      <p className="mt-2 text-xs text-muted-foreground">
-        Thresholds are the party&apos;s total XP budget for each difficulty. The fight&apos;s adjusted XP is
-        compared against them.
-      </p>
+      <p className="mt-2 text-xs text-muted-foreground">{t("encounter.thresholdsHint")}</p>
     </div>
   );
 }

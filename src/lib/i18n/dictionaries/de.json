@@ -80,5 +80,18 @@
   "settings.importTitle": "Import",
   "settings.importHint": "Ein Markdown-Vault oder ein ausgefülltes Charakterbogen-PDF einlesen.",
   "settings.importAction": "Import öffnen",
-  "player.reconnecting": "Keine Verbindung zum Tisch — zeigt den letzten Stand."
+  "player.reconnecting": "Keine Verbindung zum Tisch — zeigt den letzten Stand.",
+  "difficulty.trivial": "Trivial",
+  "difficulty.easy": "Leicht",
+  "difficulty.medium": "Mittel",
+  "difficulty.hard": "Schwer",
+  "difficulty.deadly": "Tödlich",
+  "encounter.difficulty": "Schwierigkeit",
+  "encounter.addParty": "Gruppe hinzufügen",
+  "encounter.adjustedXp": "Angepasste EP",
+  "encounter.thresholdsHint": "Die Schwellen sind das gesamte EP-Budget der Gruppe je Schwierigkeit. Die angepassten EP des Kampfes (Monster-EP × Gruppenmultiplikator) werden damit verglichen.",
+  "encounter.addOneHint": "Schwierigkeit des Kampfes, wenn du noch eines davon hinzufügst",
+  "encounter.fits": "passt zur Gruppe",
+  "encounter.fitsHint": "Allein ist diese Kreatur ein mittlerer oder schwerer Kampf für die gewählte Gruppe",
+  "encounter.liveHint": "Bewertet anhand der Spielercharaktere und Bestiarium-Kreaturen in diesem Kampf. Schnell hinzugefügte Kreaturen haben keine EP und zählen nicht."
 }

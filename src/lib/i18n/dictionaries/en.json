@@ -80,5 +80,18 @@
   "settings.importTitle": "Import",
   "settings.importHint": "Bring in a markdown vault or a filled-in character sheet PDF.",
   "settings.importAction": "Open the importer",
-  "player.reconnecting": "Lost contact with the table — showing the last update."
+  "player.reconnecting": "Lost contact with the table — showing the last update.",
+  "difficulty.trivial": "Trivial",
+  "difficulty.easy": "Easy",
+  "difficulty.medium": "Medium",
+  "difficulty.hard": "Hard",
+  "difficulty.deadly": "Deadly",
+  "encounter.difficulty": "Difficulty",
+  "encounter.addParty": "Add party",
+  "encounter.adjustedXp": "Adjusted XP",
+  "encounter.thresholdsHint": "Thresholds are the party's total XP budget for each difficulty. The fight's adjusted XP (monster XP × the group multiplier) is compared against them.",
+  "encounter.addOneHint": "The fight's difficulty if you add one more of these",
+  "encounter.fits": "fits your party",
+  "encounter.fitsHint": "On its own this creature is a Medium or Hard fight for the selected party",
+  "encounter.liveHint": "Rated from the player characters and bestiary creatures in this fight. Quick-added creatures have no XP and aren't counted."
 }

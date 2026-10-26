@@ -18,6 +18,7 @@ import {
   PastEncounters,
 } from "@/components/combat/encounter-controls";
 import { abilityModifier } from "@/lib/dnd";
+import { crToXp } from "@/lib/encounter";
 
 export const dynamic = "force-dynamic";
 
@@ -80,6 +81,18 @@ export default async function CombatPage({
     cr: n.challengeRating || undefined,
   }));
 
+  // What the live difficulty badge needs: each PC's level and each creature's
+  // XP, keyed by the entity ids participants point back at.
+  const partyLevels: Record<number, number> = Object.fromEntries(
+    chars.map((c) => [c.id, c.level]),
+  );
+  const npcXp: Record<number, number> = Object.fromEntries(
+    [...monsters, ...templates].map((n) => [
+      n.id,
+      n.experiencePoints || crToXp(n.challengeRating),
+    ]),
+  );
+
   let participants: CombatParticipant[] = [];
   if (active) {
     participants = await db
@@ -118,6 +131,8 @@ export default async function CombatPage({
           addableCharacters={addableCharacters}
           addableNpcs={addableNpcs}
           addableBestiary={addableBestiary}
+          partyLevels={partyLevels}
+          npcXp={npcXp}
         />
       ) : (
         <EmptyState

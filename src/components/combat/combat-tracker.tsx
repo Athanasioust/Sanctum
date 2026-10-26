@@ -79,6 +79,8 @@ import { api } from "@/lib/client";
 import { CONDITIONS, EXHAUSTION_EFFECTS } from "@/lib/constants";
 import { rollDie } from "@/lib/dnd";
 import { cn } from "@/lib/utils";
+import { rateEncounter, difficultyKey, DIFFICULTY_STYLES } from "@/lib/encounter";
+import { useT } from "@/components/i18n/i18n-provider";
 import type { CombatParticipant, CombatLogEntry, Encounter } from "@/db/schema";
 
 export type Addable = {
@@ -126,11 +128,17 @@ export function CombatTracker({
   addableCharacters,
   addableNpcs,
   addableBestiary,
+  partyLevels = {},
+  npcXp = {},
 }: {
   encounter: EncounterWithParts;
   addableCharacters: Addable[];
   addableNpcs: Addable[];
   addableBestiary: Addable[];
+  /** Character id → level, for rating the fight. */
+  partyLevels?: Record<number, number>;
+  /** NPC/monster id → XP, for rating the fight. */
+  npcXp?: Record<number, number>;
 }) {
   const router = useRouter();
   const [parts, setParts] = useState<CombatParticipant[]>(
@@ -496,6 +504,7 @@ export function CombatTracker({
               Next turn <ChevronRight className="size-4" />
             </Button>
           </div>
+          <LiveDifficulty parts={parts} partyLevels={partyLevels} npcXp={npcXp} />
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button
@@ -604,6 +613,50 @@ export function CombatTracker({
 }
 
 /* -------------------------------------------------------------------------- */
+
+/**
+ * The running fight rated the same way the Encounter Builder rates a planned
+ * one, so the DM can see at a glance whether reinforcements tipped it over.
+ */
+function LiveDifficulty({
+  parts,
+  partyLevels,
+  npcXp,
+}: {
+  parts: CombatParticipant[];
+  partyLevels: Record<number, number>;
+  npcXp: Record<number, number>;
+}) {
+  const t = useT();
+  const levels: number[] = [];
+  const xps: number[] = [];
+  for (const p of parts) {
+    if (p.entityId == null) continue;
+    if (p.entityType === "character" && partyLevels[p.entityId]) {
+      levels.push(partyLevels[p.entityId]);
+    } else if (p.entityType === "npc" && npcXp[p.entityId]) {
+      xps.push(npcXp[p.entityId]);
+    }
+  }
+  if (levels.length === 0 || xps.length === 0) return null;
+  const rating = rateEncounter(xps, levels);
+  const th = rating.thresholds;
+  return (
+    <div
+      className="hidden text-center sm:block"
+      title={`${t("encounter.liveHint")}
+${t("difficulty.easy")} ${th.easy} · ${t("difficulty.medium")} ${th.medium} · ${t("difficulty.hard")} ${th.hard} · ${t("difficulty.deadly")} ${th.deadly}`}
+    >
+      <p className="text-xs uppercase text-muted-foreground">{t("encounter.difficulty")}</p>
+      <p className={cn("text-sm font-semibold", DIFFICULTY_STYLES[rating.difficulty])}>
+        {t(difficultyKey(rating.difficulty))}
+        <span className="ml-1 font-normal text-muted-foreground tabular-nums">
+          {rating.adjustedXp.toLocaleString()} XP
+        </span>
+      </p>
+    </div>
+  );
+}
 
 function ParticipantRow({
   participant: p,

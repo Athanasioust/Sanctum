@@ -80,5 +80,18 @@
   "settings.importTitle": "Importer",
   "settings.importHint": "Importer un dossier markdown ou une fiche de personnage PDF remplie.",
   "settings.importAction": "Ouvrir l'importateur",
-  "player.reconnecting": "Contact perdu avec la table — dernier état affiché."
+  "player.reconnecting": "Contact perdu avec la table — dernier état affiché.",
+  "difficulty.trivial": "Triviale",
+  "difficulty.easy": "Facile",
+  "difficulty.medium": "Moyenne",
+  "difficulty.hard": "Difficile",
+  "difficulty.deadly": "Mortelle",
+  "encounter.difficulty": "Difficulté",
+  "encounter.addParty": "Ajoutez le groupe",
+  "encounter.adjustedXp": "PX ajustés",
+  "encounter.thresholdsHint": "Les seuils sont le budget total de PX du groupe pour chaque difficulté. Les PX ajustés du combat (PX des monstres × multiplicateur de groupe) y sont comparés.",
+  "encounter.addOneHint": "Difficulté du combat si vous en ajoutez un de plus",
+  "encounter.fits": "adapté au groupe",
+  "encounter.fitsHint": "Seule, cette créature représente un combat moyen ou difficile pour le groupe choisi",
+  "encounter.liveHint": "Évalué d'après les personnages joueurs et les créatures du bestiaire de ce combat. Les créatures ajoutées rapidement n'ont pas de PX et ne comptent pas."
 }
