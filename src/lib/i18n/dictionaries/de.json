@@ -210,5 +210,7 @@
   "log.exportShort": "Exportieren",
   "log.plainText": "Nur Text",
   "log.copied": "Kampfprotokoll kopiert",
-  "log.failed": "Protokoll konnte nicht exportiert werden"
+  "log.failed": "Protokoll konnte nicht exportiert werden",
+  "support.kofi": "Auf Ko-fi unterstützen",
+  "support.hint": "Sanctum ist kostenlos und werbefrei – ein Trinkgeld auf Ko-fi hilft, es weiterzuentwickeln"
 }

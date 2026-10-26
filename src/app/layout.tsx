@@ -40,8 +40,8 @@ export default async function RootLayout({
       className={`dark ${geistSans.variable} ${geistMono.variable} ${cinzel.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-background text-foreground">
-        {children}
         <I18nProvider locale={locale}>
+          {children}
           <WhatsNewOnLaunch />
         </I18nProvider>
         <Toaster richColors position="bottom-right" />

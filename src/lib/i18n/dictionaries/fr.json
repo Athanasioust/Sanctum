@@ -210,5 +210,7 @@
   "log.exportShort": "Exporter",
   "log.plainText": "Texte brut",
   "log.copied": "Journal de combat copié",
-  "log.failed": "Impossible d'exporter le journal"
+  "log.failed": "Impossible d'exporter le journal",
+  "support.kofi": "Soutenir sur Ko-fi",
+  "support.hint": "Sanctum est gratuit et sans publicité — un pourboire sur Ko-fi aide à le faire vivre"
 }

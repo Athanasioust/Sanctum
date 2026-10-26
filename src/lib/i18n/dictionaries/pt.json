@@ -210,5 +210,7 @@
   "log.exportShort": "Exportar",
   "log.plainText": "Texto simples",
   "log.copied": "Registo de combate copiado",
-  "log.failed": "Não foi possível exportar o registo"
+  "log.failed": "Não foi possível exportar o registo",
+  "support.kofi": "Apoiar no Ko-fi",
+  "support.hint": "O Sanctum é gratuito e sem anúncios — uma gorjeta no Ko-fi ajuda a mantê-lo"
 }

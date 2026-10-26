@@ -187,6 +187,25 @@
   }
 }
 
+/*
+ * The Ko-fi link's first-launch glow: a slow, soft gold halo. Skipped for
+ * anyone who has asked their system for reduced motion.
+ */
+@keyframes support-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(212 160 23 / 0);
+  }
+  50% {
+    box-shadow: 0 0 10px 1px rgb(212 160 23 / 0.45);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .support-glow {
+    animation: support-glow 2.8s ease-in-out infinite;
+  }
+}
+
 /* Thin, dark scrollbars to match the UI. */
 @layer base {
   * {
