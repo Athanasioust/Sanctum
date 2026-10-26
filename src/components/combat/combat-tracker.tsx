@@ -45,6 +45,7 @@ import {
   Castle,
   Undo2,
   Ungroup,
+  Keyboard,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -78,7 +79,8 @@ import { CheckboxGroup } from "@/components/shared/checkbox-group";
 import { Field } from "@/components/shared/form";
 import { HpBar } from "@/components/shared/hp-bar";
 import { Slider } from "@/components/ui/slider";
-import { COMBAT_LOG_ADDED_EVENT, rollDice } from "@/components/dice/dice-roller";
+import { COMBAT_LOG_ADDED_EVENT, OPEN_DICE_EVENT, rollDice } from "@/components/dice/dice-roller";
+import { COMBAT_SHORTCUTS, keyBelongsToFocus } from "@/lib/combat-shortcuts";
 import { SaveEncounterButton } from "@/components/combat/encounter-controls";
 import { api } from "@/lib/client";
 import { CONDITIONS, EXHAUSTION_EFFECTS } from "@/lib/constants";
@@ -201,6 +203,10 @@ export function CombatTracker({
   const [lairActive, setLairActive] = useState(encounter.lairTurnActive);
   const t = useT();
   const [endOpen, setEndOpen] = useState(false);
+  // Keyboard selection: the combatant +/- act on. Null means "whoever's turn
+  // it is".
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [logEntries, setLogEntries] = useState<CombatLogEntry[]>([]);
   const [logOpen, setLogOpen] = useState(false);
 
@@ -244,6 +250,27 @@ export function CombatTracker({
     if (!hpBaseline.current.has(id)) {
       const p = partsRef.current.find((x) => x.id === id);
       if (p) hpBaseline.current.set(id, p.hpCurrent + p.hpTemp);
+    }
+  }
+
+  /** Let other windows (a popped-out tracker, the battle map) catch up. */
+  function changed() {
+    announceCombatChange(encounter.id);
+  }
+
+  async function addLogEntry(actorName: string, action: string, details: string) {
+    try {
+      const entry = await api.post<CombatLogEntry>("/api/combat-log", {
+        encounterId: encounter.id,
+        round,
+        actorName,
+        action,
+        details,
+      });
+      setLogEntries((prev) => [...prev, entry]);
+      changed();
+    } catch {
+      toast.error("Failed to log action");
     }
   }
 
@@ -340,10 +367,7 @@ export function CombatTracker({
     }
   }
 
-  /** Let other windows (a popped-out tracker, the battle map) catch up. */
-  function changed() {
-    announceCombatChange(encounter.id);
-  }
+
 
   // …and catch up when another window changes this fight. Combatants with an
   // HP edit still waiting to save keep their local value, so a refresh landing
@@ -652,6 +676,85 @@ export function CombatTracker({
     if (!reactionAvailable) addLogEntry(p.name, "Reaction", "");
   }
 
+  /* ---------------------------------------------------------------------- */
+  /*  Keyboard                                                               */
+  /* ---------------------------------------------------------------------- */
+
+  // The combatant +/- would hit: the selection, else the creature whose turn it is.
+  const turnSlot = slots[currentSlot];
+  const turnId = turnSlot?.kind === "creatures" ? turnSlot.ids[0] : null;
+  const focusId = selectedId !== null && parts.some((p) => p.id === selectedId) ? selectedId : turnId;
+
+  function select(id: number) {
+    setSelectedId(id);
+    document
+      .querySelector(`[data-participant-id="${id}"]`)
+      ?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
+
+  function onKey(event: KeyboardEvent) {
+    if (event.defaultPrevented || keyBelongsToFocus(event)) return;
+    const index = focusId === null ? -1 : parts.findIndex((p) => p.id === focusId);
+    switch (event.key) {
+      case " ":
+      case "ArrowRight":
+        if (event.repeat) break;
+        nextTurn();
+        setSelectedId(null);
+        break;
+      case "ArrowLeft":
+        if (event.repeat) break;
+        prevTurn();
+        setSelectedId(null);
+        break;
+      case "ArrowUp":
+      case "k":
+        if (parts.length === 0) return;
+        select(parts[index <= 0 ? parts.length - 1 : index - 1].id);
+        break;
+      case "ArrowDown":
+      case "j":
+        if (parts.length === 0) return;
+        select(parts[index < 0 || index >= parts.length - 1 ? 0 : index + 1].id);
+        break;
+      case "+":
+      case "=":
+        // Holding the key auto-repeats, which steps by 5 — the same as holding
+        // the on-screen button.
+        if (focusId !== null) adjustHp(focusId, event.repeat ? 5 : 1);
+        break;
+      case "-":
+      case "_":
+        if (focusId !== null) adjustHp(focusId, event.repeat ? -5 : -1);
+        break;
+      case "Escape":
+        if (selectedId === null) return;
+        setSelectedId(null);
+        break;
+      case "d":
+        window.dispatchEvent(new Event(OPEN_DICE_EVENT));
+        break;
+      case "?":
+        setShortcutsOpen(true);
+        break;
+      default:
+        return;
+    }
+    event.preventDefault();
+  }
+
+  // The listener is registered once and always calls the latest handler, so
+  // it sees current state without re-subscribing every render.
+  const keyHandler = useRef(onKey);
+  useEffect(() => {
+    keyHandler.current = onKey;
+  });
+  useEffect(() => {
+    const listener = (event: KeyboardEvent) => keyHandler.current(event);
+    window.addEventListener("keydown", listener);
+    return () => window.removeEventListener("keydown", listener);
+  }, []);
+
   const rowHandlers: RowHandlers = {
     onSave: savePart,
     onAdjustHp: adjustHp,
@@ -671,21 +774,7 @@ export function CombatTracker({
     router.refresh();
   }
 
-  async function addLogEntry(actorName: string, action: string, details: string) {
-    try {
-      const entry = await api.post<CombatLogEntry>("/api/combat-log", {
-        encounterId: encounter.id,
-        round,
-        actorName,
-        action,
-        details,
-      });
-      setLogEntries((prev) => [...prev, entry]);
-      changed();
-    } catch {
-      toast.error("Failed to log action");
-    }
-  }
+
 
   return (
     <PortraitsContext.Provider value={portraits}>
@@ -730,6 +819,15 @@ export function CombatTracker({
             bestiary={addableBestiary}
             onAdd={addParticipant}
           />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShortcutsOpen(true)}
+            aria-label={t("shortcuts.title")}
+            title={`${t("shortcuts.title")} (?)`}
+          >
+            <Keyboard className="size-4" />
+          </Button>
           <SaveEncounterButton encounterId={encounter.id} name={encounter.name} />
           <Button variant="destructive" onClick={() => setEndOpen(true)}>
             <Flag className="size-4" /> End
@@ -781,6 +879,7 @@ export function CombatTracker({
                       }
                       onUngroup={() => ungroup(p.groupId!)}
                       rowHandlers={rowHandlers}
+                      selectedId={selectedId !== null ? focusId : null}
                     />
                   );
                 }
@@ -789,6 +888,7 @@ export function CombatTracker({
                     key={p.id}
                     participant={p}
                     isCurrent={si === currentSlot}
+                    isSelected={selectedId !== null && focusId === p.id}
                     {...rowHandlers}
                   />
                 );
@@ -797,6 +897,34 @@ export function CombatTracker({
           </SortableContext>
         </DndContext>
       )}
+
+      <Dialog open={shortcutsOpen} onOpenChange={setShortcutsOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Keyboard className="size-4 text-primary" /> {t("shortcuts.title")}
+            </DialogTitle>
+          </DialogHeader>
+          <dl className="space-y-2 text-sm">
+            {COMBAT_SHORTCUTS.map((s) => (
+              <div key={s.action} className="flex items-center justify-between gap-4">
+                <dt className="flex shrink-0 gap-1">
+                  {s.keys.map((k) => (
+                    <kbd
+                      key={k}
+                      className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-xs"
+                    >
+                      {k}
+                    </kbd>
+                  ))}
+                </dt>
+                <dd className="text-right text-muted-foreground">{s.action}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="text-xs text-muted-foreground">{t("shortcuts.hint")}</p>
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         open={endOpen}
@@ -912,6 +1040,7 @@ function GroupRow({
   onSetInitiativeMod,
   onUngroup,
   rowHandlers,
+  selectedId,
 }: {
   sortId: string;
   members: CombatParticipant[];
@@ -920,6 +1049,8 @@ function GroupRow({
   onSetInitiativeMod: (mod: number) => void;
   onUngroup: () => void;
   rowHandlers: RowHandlers;
+  /** The keyboard-selected combatant, which may be one of these members. */
+  selectedId: number | null;
 }) {
   const t = useT();
   const [expanded, setExpanded] = useState(false);
@@ -931,14 +1062,17 @@ function GroupRow({
   const hpNow = members.reduce((n, m) => n + m.hpCurrent, 0);
   const hpMax = members.reduce((n, m) => n + m.hpMax, 0);
   const label = lead.groupLabel || lead.name;
+  const memberSelected = members.some((m) => m.id === selectedId);
 
   return (
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
+      data-participant-id={members.find((m) => m.id === selectedId)?.id ?? lead.id}
       className={cn(
         "rounded-xl border bg-card p-3 transition-colors",
         isCurrent ? "border-primary ring-1 ring-primary/40" : "border-border",
+        memberSelected && !expanded && "outline-2 outline-offset-2 outline-sky-400",
         isDragging && "opacity-60",
         up === 0 && "opacity-70",
       )}
@@ -1018,7 +1152,14 @@ function GroupRow({
       {expanded ? (
         <div className="mt-3 space-y-2 border-l-2 border-primary/30 pl-3">
           {members.map((m) => (
-            <ParticipantRow key={m.id} participant={m} isCurrent={false} nested {...rowHandlers} />
+            <ParticipantRow
+              key={m.id}
+              participant={m}
+              isCurrent={false}
+              isSelected={m.id === selectedId && !isCurrent}
+              nested
+              {...rowHandlers}
+            />
           ))}
         </div>
       ) : null}
@@ -1029,6 +1170,7 @@ function GroupRow({
 function ParticipantRow({
   participant: p,
   isCurrent,
+  isSelected = false,
   nested = false,
   onSave,
   onAdjustHp,
@@ -1053,6 +1195,8 @@ function ParticipantRow({
   onToggleReaction: (id: number) => void;
   /** A member shown inside an expanded group: no drag handle or initiative. */
   nested?: boolean;
+  /** Picked with the keyboard (↑/↓) as the target of +/-. */
+  isSelected?: boolean;
 }) {
   // Players type their own initiative; NPCs/monsters get a modifier the DM can
   // set, which "Roll NPCs" uses.
@@ -1068,9 +1212,11 @@ function ParticipantRow({
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
+      data-participant-id={p.id}
       className={cn(
         "rounded-xl border bg-card p-3 transition-colors",
         isCurrent ? "border-primary ring-1 ring-primary/40" : "border-border",
+        isSelected && "outline-2 outline-offset-2 outline-sky-400",
         isDragging && "opacity-60",
         isDown && "opacity-90",
       )}

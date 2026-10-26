@@ -190,5 +190,7 @@
   "randomEnc.failed": "Etwas ist schiefgelaufen – versuche es erneut",
   "popout.button": "Abdocken",
   "popout.hint": "In einem eigenen Fenster öffnen, z. B. auf einem zweiten Bildschirm",
-  "popout.soundHandoff": "Die Wiedergabe läuft jetzt im abgedockten Fenster"
+  "popout.soundHandoff": "Die Wiedergabe läuft jetzt im abgedockten Fenster",
+  "shortcuts.title": "Tastenkürzel",
+  "shortcuts.hint": "Tastenkürzel greifen nie, während du in ein Feld tippst oder eine Schaltfläche fokussiert ist. Sie stehen auch in der Regelreferenz."
 }

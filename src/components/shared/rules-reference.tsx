@@ -11,6 +11,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { COMBAT_SHORTCUTS } from "@/lib/combat-shortcuts";
 
 type RuleSection = {
   title: string;
@@ -88,7 +89,19 @@ const PROFICIENCY_BONUS: RuleSection = {
   ],
 };
 
-const SECTIONS = [COMBAT_RULES, CONDITION_RULES, EXHAUSTION_RULES, RESTS_RULES, PROFICIENCY_BONUS];
+const SHORTCUTS: RuleSection = {
+  title: "Combat Keyboard Shortcuts",
+  entries: COMBAT_SHORTCUTS.map((s) => ({ term: s.keys.join(" / "), detail: s.action })),
+};
+
+const SECTIONS = [
+  COMBAT_RULES,
+  CONDITION_RULES,
+  EXHAUSTION_RULES,
+  RESTS_RULES,
+  PROFICIENCY_BONUS,
+  SHORTCUTS,
+];
 
 function CollapsibleSection({ section }: { section: RuleSection }) {
   const [expanded, setExpanded] = useState(false);

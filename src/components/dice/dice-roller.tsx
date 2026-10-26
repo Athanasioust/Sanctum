@@ -28,6 +28,8 @@ import type { Encounter } from "@/db/schema";
 
 /** Dispatched to roll from anywhere (character sheets, stat blocks, palette). */
 export const ROLL_DICE_EVENT = "sanctum:roll-dice";
+/** Dispatched to open the dice panel without rolling (the combat "d" shortcut). */
+export const OPEN_DICE_EVENT = "sanctum:open-dice";
 /** Dispatched after a roll is written to the combat log, so the tracker reloads. */
 export const COMBAT_LOG_ADDED_EVENT = "sanctum:combat-log-added";
 
@@ -153,6 +155,12 @@ export function DiceRoller({ campaignId }: { campaignId: number }) {
     window.addEventListener(ROLL_DICE_EVENT, onRollRequest);
     return () => window.removeEventListener(ROLL_DICE_EVENT, onRollRequest);
   }, [performRoll]);
+
+  useEffect(() => {
+    const openPanel = () => setOpen(true);
+    window.addEventListener(OPEN_DICE_EVENT, openPanel);
+    return () => window.removeEventListener(OPEN_DICE_EVENT, openPanel);
+  }, []);
 
   const inputError = formulaError(formula);
   const latest = history[0];

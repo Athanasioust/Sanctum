@@ -190,5 +190,7 @@
   "randomEnc.failed": "Something went wrong — try again",
   "popout.button": "Pop out",
   "popout.hint": "Open in its own window, e.g. on a second monitor",
-  "popout.soundHandoff": "Playback moved to the pop-out window"
+  "popout.soundHandoff": "Playback moved to the pop-out window",
+  "shortcuts.title": "Keyboard shortcuts",
+  "shortcuts.hint": "Shortcuts never fire while you're typing in a field or have a button focused, and they're also listed in the rules reference."
 }
