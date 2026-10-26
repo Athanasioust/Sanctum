@@ -1109,6 +1109,24 @@ export const clocks = sqliteTable("clocks", {
 });
 
 /* -------------------------------------------------------------------------- */
+/*  App settings                                                               */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * App-wide key/value settings that must survive restarts. Browser storage is
+ * no good for these in the desktop app: the bundled server gets a new port on
+ * every launch, so the page's origin — and its localStorage — changes too.
+ */
+export const appSettings = sqliteTable("app_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date())
+    .$onUpdate(() => new Date()),
+});
+
+/* -------------------------------------------------------------------------- */
 /*  Backups                                                                    */
 /* -------------------------------------------------------------------------- */
 

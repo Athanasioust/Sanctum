@@ -171,5 +171,9 @@
   "clocks.namePlaceholder": "Das Ritual vollendet sich",
   "clocks.segments": "Segmente",
   "clocks.color": "Farbe",
-  "clocks.saveFailed": "Uhr konnte nicht gespeichert werden"
+  "clocks.saveFailed": "Uhr konnte nicht gespeichert werden",
+  "whatsNew.title": "Neu in Sanctum {version}",
+  "whatsNew.description": "Die wichtigsten Neuerungen dieses Updates.",
+  "whatsNew.dismiss": "Verstanden",
+  "whatsNew.button": "Was ist neu"
 }

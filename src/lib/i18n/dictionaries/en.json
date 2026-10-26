@@ -171,5 +171,9 @@
   "clocks.namePlaceholder": "The ritual completes",
   "clocks.segments": "Segments",
   "clocks.color": "Colour",
-  "clocks.saveFailed": "Couldn't save the clock"
+  "clocks.saveFailed": "Couldn't save the clock",
+  "whatsNew.title": "What's new in Sanctum {version}",
+  "whatsNew.description": "Highlights from this update.",
+  "whatsNew.dismiss": "Got it",
+  "whatsNew.button": "What's new"
 }

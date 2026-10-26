@@ -171,5 +171,9 @@
   "clocks.namePlaceholder": "Le rituel s'achève",
   "clocks.segments": "Segments",
   "clocks.color": "Couleur",
-  "clocks.saveFailed": "Impossible d'enregistrer l'horloge"
+  "clocks.saveFailed": "Impossible d'enregistrer l'horloge",
+  "whatsNew.title": "Nouveautés de Sanctum {version}",
+  "whatsNew.description": "Les points forts de cette mise à jour.",
+  "whatsNew.dismiss": "Compris",
+  "whatsNew.button": "Nouveautés"
 }

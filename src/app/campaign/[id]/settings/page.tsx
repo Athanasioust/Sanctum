@@ -10,6 +10,8 @@ import { BackupsManager } from "@/components/settings/backups-manager";
 import { DangerZone } from "@/components/settings/danger-zone";
 import { PlayerViewSharing } from "@/components/settings/player-view-sharing";
 import { LanguageSwitcher } from "@/components/settings/language-switcher";
+import { WhatsNewButton } from "@/components/shared/whats-new";
+import { APP_VERSION } from "@/lib/changelog";
 import { getLocale } from "@/lib/i18n/server";
 import { Button } from "@/components/ui/button";
 
@@ -42,6 +44,16 @@ export default async function SettingsPage({
 
         <section>
           <LanguageSwitcher current={locale} />
+        </section>
+
+        <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-5">
+          <div>
+            <h2 className="font-heading text-lg font-semibold">Sanctum {APP_VERSION}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              See what changed in this release and the ones before it.
+            </p>
+          </div>
+          <WhatsNewButton />
         </section>
 
         {/* Import lives here rather than in the sidebar — it's a one-off setup

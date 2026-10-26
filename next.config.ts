@@ -1,9 +1,18 @@
+import fs from "node:fs";
+import path from "node:path";
 import type { NextConfig } from "next";
+
+// Baked into the build so the app knows which version it is (the "What's new"
+// dialog compares it with the last version the DM saw).
+const { version } = JSON.parse(
+  fs.readFileSync(path.join(process.cwd(), "package.json"), "utf8"),
+) as { version: string };
 
 const nextConfig: NextConfig = {
   // Produce a self-contained server bundle (.next/standalone) so the desktop
   // (Electron) build can launch the app without the full project tree.
   output: "standalone",
+  env: { NEXT_PUBLIC_SANCTUM_VERSION: version },
   // The player view is meant to be opened from phones on the same Wi-Fi, which
   // means the dev server gets requests from http://<lan-ip>:<port> rather than
   // localhost. Next blocks cross-origin access to dev-only resources by
