@@ -41,6 +41,9 @@ import {
   Users,
   Pencil,
   Tag,
+  Crown,
+  Castle,
+  Undo2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -80,6 +83,7 @@ import { CONDITIONS, EXHAUSTION_EFFECTS } from "@/lib/constants";
 import { rollDie } from "@/lib/dnd";
 import { cn } from "@/lib/utils";
 import { rateEncounter, difficultyKey, DIFFICULTY_STYLES } from "@/lib/encounter";
+import { currentSlotIndex, pointerForSlot, turnSlots } from "@/lib/combat-turns";
 import { useT } from "@/components/i18n/i18n-provider";
 import type { CombatParticipant, CombatLogEntry, Encounter } from "@/db/schema";
 
@@ -146,6 +150,8 @@ export function CombatTracker({
   );
   const [round, setRound] = useState(encounter.roundNumber);
   const [turnIndex, setTurnIndex] = useState(encounter.currentTurnIndex);
+  const [lairActive, setLairActive] = useState(encounter.lairTurnActive);
+  const t = useT();
   const [endOpen, setEndOpen] = useState(false);
   const [logEntries, setLogEntries] = useState<CombatLogEntry[]>([]);
   const [logOpen, setLogOpen] = useState(false);
@@ -405,7 +411,11 @@ export function CombatTracker({
       .sort((a, b) => b.initiativeTotal - a.initiativeTotal)
       .map((p, i) => ({ ...p, turnOrder: i }));
     setParts(rolled);
-    setTurnIndex(0);
+    // Round one starts at the top of the new order — which is the lair row
+    // when every creature rolled under 20.
+    const start = pointerForSlot(turnSlots(rolled), 0);
+    setTurnIndex(start.currentTurnIndex);
+    setLairActive(start.lairTurnActive);
     setRound(1);
     Promise.all(
       rolled.map((p) =>
@@ -416,7 +426,7 @@ export function CombatTracker({
         }),
       ),
     ).catch(() => toast.error("Failed to save initiative"));
-    saveEncounter({ currentTurnIndex: 0, roundNumber: 1 });
+    saveEncounter({ ...start, roundNumber: 1 });
     toast.success("Rolled initiative for NPCs & monsters");
   }
 
@@ -436,34 +446,81 @@ export function CombatTracker({
     persistOrder(sorted);
   }
 
-  function nextTurn() {
-    if (parts.length === 0) return;
-    let idx = turnIndex + 1;
-    let r = round;
-    if (idx >= parts.length) {
-      idx = 0;
-      r = round + 1;
-      setRound(r);
+  const slots = turnSlots(parts);
+  const currentSlot = currentSlotIndex(slots, turnIndex, lairActive);
+
+  /**
+   * Start-of-turn bookkeeping for the creatures whose turn just began: spent
+   * legendary actions come back, and so does the reaction.
+   */
+  function startTurnFor(ids: number[]) {
+    for (const id of ids) {
+      const p = partsRef.current.find((x) => x.id === id);
+      if (!p) continue;
+      const patch: Partial<CombatParticipant> = {};
+      if (p.legendaryActionsUsed > 0) patch.legendaryActionsUsed = 0;
+      if (!p.reactionAvailable) patch.reactionAvailable = true;
+      if (Object.keys(patch).length > 0) savePart(id, patch);
     }
-    setTurnIndex(idx);
-    saveEncounter({ currentTurnIndex: idx, roundNumber: r });
   }
 
-  function prevTurn() {
-    if (parts.length === 0) return;
-    let idx = turnIndex - 1;
+  function goToSlot(slotIndex: number, r: number) {
+    const pointer = pointerForSlot(slots, slotIndex);
+    setTurnIndex(pointer.currentTurnIndex);
+    setLairActive(pointer.lairTurnActive);
+    if (r !== round) setRound(r);
+    saveEncounter({ ...pointer, roundNumber: r });
+  }
+
+  function nextTurn() {
+    if (slots.length === 0) return;
+    let next = currentSlot + 1;
     let r = round;
-    if (idx < 0) {
+    if (next >= slots.length) {
+      next = 0;
+      r = round + 1;
+    }
+    const slot = slots[next];
+    if (slot.kind === "creatures") startTurnFor(slot.ids);
+    goToSlot(next, r);
+  }
+
+  /** Steps the pointer back only — nothing that a turn start reset is undone. */
+  function prevTurn() {
+    if (slots.length === 0) return;
+    let prev = currentSlot - 1;
+    let r = round;
+    if (prev < 0) {
       if (round > 1) {
-        idx = parts.length - 1;
+        prev = slots.length - 1;
         r = round - 1;
-        setRound(r);
       } else {
-        idx = 0;
+        prev = 0;
       }
     }
-    setTurnIndex(idx);
-    saveEncounter({ currentTurnIndex: idx, roundNumber: r });
+    goToSlot(prev, r);
+  }
+
+  function spendLegendary(id: number) {
+    const p = partsRef.current.find((x) => x.id === id);
+    if (!p || p.legendaryActionsUsed >= p.legendaryActionsMax) return;
+    const used = p.legendaryActionsUsed + 1;
+    savePart(id, { legendaryActionsUsed: used });
+    addLogEntry(p.name, "Legendary action", `${p.legendaryActionsMax - used}/${p.legendaryActionsMax} left`);
+  }
+
+  function refundLegendary(id: number) {
+    const p = partsRef.current.find((x) => x.id === id);
+    if (!p || p.legendaryActionsUsed <= 0) return;
+    savePart(id, { legendaryActionsUsed: p.legendaryActionsUsed - 1 });
+  }
+
+  function toggleReaction(id: number) {
+    const p = partsRef.current.find((x) => x.id === id);
+    if (!p) return;
+    const reactionAvailable = !p.reactionAvailable;
+    savePart(id, { reactionAvailable });
+    if (!reactionAvailable) addLogEntry(p.name, "Reaction", "");
   }
 
   async function endEncounter() {
@@ -552,19 +609,34 @@ export function CombatTracker({
         >
           <SortableContext items={parts.map((p) => p.id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-2">
-              {parts.map((p, i) => (
-                <ParticipantRow
-                  key={p.id}
-                  participant={p}
-                  isCurrent={i === turnIndex}
-                  onSave={savePart}
-                  onAdjustHp={adjustHp}
-                  onSetHpCurrent={setHpCurrent}
-                  onRemove={removeParticipant}
-                  onSetInitiative={setInitiative}
-                  onSetInitiativeMod={setInitiativeMod}
-                />
-              ))}
+              {slots.map((slot, si) => {
+                if (slot.kind === "lair") {
+                  return (
+                    <LairRow
+                      key="lair"
+                      isCurrent={si === currentSlot}
+                      onUse={() => addLogEntry(t("combat.lair"), t("combat.lairUsed"), "")}
+                    />
+                  );
+                }
+                const p = parts[slot.start];
+                return (
+                  <ParticipantRow
+                    key={p.id}
+                    participant={p}
+                    isCurrent={si === currentSlot}
+                    onSave={savePart}
+                    onAdjustHp={adjustHp}
+                    onSetHpCurrent={setHpCurrent}
+                    onRemove={removeParticipant}
+                    onSetInitiative={setInitiative}
+                    onSetInitiativeMod={setInitiativeMod}
+                    onSpendLegendary={spendLegendary}
+                    onRefundLegendary={refundLegendary}
+                    onToggleReaction={toggleReaction}
+                  />
+                );
+              })}
             </div>
           </SortableContext>
         </DndContext>
@@ -667,6 +739,9 @@ function ParticipantRow({
   onRemove,
   onSetInitiative,
   onSetInitiativeMod,
+  onSpendLegendary,
+  onRefundLegendary,
+  onToggleReaction,
 }: {
   participant: CombatParticipant;
   isCurrent: boolean;
@@ -676,6 +751,9 @@ function ParticipantRow({
   onRemove: (id: number) => void;
   onSetInitiative: (id: number, total: number) => void;
   onSetInitiativeMod: (id: number, mod: number) => void;
+  onSpendLegendary: (id: number) => void;
+  onRefundLegendary: (id: number) => void;
+  onToggleReaction: (id: number) => void;
 }) {
   // Players type their own initiative; NPCs/monsters get a modifier the DM can
   // set, which "Roll NPCs" uses.
@@ -760,6 +838,17 @@ function ParticipantRow({
               </Badge>
             ) : null}
           </div>
+          <div className="mt-1 flex flex-wrap items-center gap-3">
+            <ReactionToggle participant={p} onToggle={onToggleReaction} />
+            {p.legendaryActionsMax > 0 ? (
+              <LegendaryPips
+                participant={p}
+                onSpend={onSpendLegendary}
+                onRefund={onRefundLegendary}
+              />
+            ) : null}
+            {p.hasLairAction ? <LairBadge /> : null}
+          </div>
         </div>
 
         {/* HP + AC */}
@@ -787,6 +876,7 @@ function ParticipantRow({
           <HpDialog participant={p} onSave={onSave} onAdjustHp={onAdjustHp} />
           <ConditionsDialog participant={p} onSave={onSave} />
           <ConcentrationDialog participant={p} onSave={onSave} />
+          <BossDialog participant={p} onSave={onSave} />
           <Button
             size="icon"
             variant="ghost"
@@ -839,6 +929,212 @@ function ParticipantRow({
         onConfirm={() => onRemove(p.id)}
       />
     </div>
+  );
+}
+
+/**
+ * The "Lair Actions" prompt at initiative 20. It isn't a creature — landing on
+ * it is just the reminder to use one, and the button logs that you did.
+ */
+function LairRow({ isCurrent, onUse }: { isCurrent: boolean; onUse: () => void }) {
+  const t = useT();
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-3 rounded-xl border border-dashed bg-card/60 px-3 py-2.5",
+        isCurrent ? "border-primary ring-1 ring-primary/40" : "border-border",
+      )}
+    >
+      <div className="flex w-12 flex-col items-center">
+        <span className="text-[10px] uppercase text-muted-foreground">Init</span>
+        <span className="text-sm tabular-nums">20</span>
+      </div>
+      <Castle className="size-4 text-primary" />
+      <div className="min-w-0 flex-1">
+        <p className="font-medium">{t("combat.lairRow")}</p>
+        <p className="text-xs text-muted-foreground">{t("combat.lairHint")}</p>
+      </div>
+      {isCurrent ? <Badge className="bg-primary text-primary-foreground">Turn</Badge> : null}
+      <Button size="sm" variant="outline" onClick={onUse}>
+        {t("combat.lairUse")}
+      </Button>
+    </div>
+  );
+}
+
+function LairBadge() {
+  const t = useT();
+  return (
+    <span className="flex items-center gap-1 text-xs text-muted-foreground" title={t("combat.hasLairHint")}>
+      <Castle className="size-3" /> {t("combat.lair")}
+    </span>
+  );
+}
+
+/**
+ * Legendary-action pips. Clicking spends one (they come back at the start of
+ * the creature's own turn); the undo button gives one back after a misclick.
+ */
+function LegendaryPips({
+  participant: p,
+  onSpend,
+  onRefund,
+}: {
+  participant: CombatParticipant;
+  onSpend: (id: number) => void;
+  onRefund: (id: number) => void;
+}) {
+  const t = useT();
+  const left = p.legendaryActionsMax - p.legendaryActionsUsed;
+  return (
+    <div className="flex items-center gap-1" title={t("combat.legendaryHint")}>
+      <Crown className="size-3 text-amber-400" />
+      <span className="text-xs text-muted-foreground">{t("combat.legendary")}</span>
+      {Array.from({ length: p.legendaryActionsMax }, (_, i) => {
+        const available = i < left;
+        return (
+          <button
+            key={i}
+            type="button"
+            disabled={!available}
+            onClick={() => onSpend(p.id)}
+            className={cn(
+              "size-3.5 rounded-full border transition-colors",
+              available
+                ? "border-amber-400 bg-amber-400/80 hover:bg-amber-300"
+                : "border-border bg-transparent",
+            )}
+            aria-label={`${t("combat.legendarySpend")} (${left}/${p.legendaryActionsMax})`}
+          />
+        );
+      })}
+      {p.legendaryActionsUsed > 0 ? (
+        <button
+          type="button"
+          onClick={() => onRefund(p.id)}
+          className="ml-0.5 text-muted-foreground hover:text-foreground"
+          aria-label={t("combat.legendaryRefund")}
+          title={t("combat.legendaryRefund")}
+        >
+          <Undo2 className="size-3" />
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+/** Reaction available / used. Resets at the start of the creature's turn. */
+function ReactionToggle({
+  participant: p,
+  onToggle,
+}: {
+  participant: CombatParticipant;
+  onToggle: (id: number) => void;
+}) {
+  const t = useT();
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(p.id)}
+      aria-pressed={!p.reactionAvailable}
+      title={t("combat.reactionHint")}
+      className={cn(
+        "flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[11px] leading-none transition-colors",
+        p.reactionAvailable
+          ? "border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10"
+          : "border-border text-muted-foreground line-through",
+      )}
+    >
+      <span
+        className={cn(
+          "size-1.5 rounded-full",
+          p.reactionAvailable ? "bg-emerald-400" : "bg-muted-foreground",
+        )}
+      />
+      {t("combat.reaction")}
+    </button>
+  );
+}
+
+/** Legendary-action count and lair flag, for boss fights. */
+function BossDialog({
+  participant: p,
+  onSave,
+}: {
+  participant: CombatParticipant;
+  onSave: (id: number, patch: Partial<CombatParticipant>) => void;
+}) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const [max, setMax] = useState(String(p.legendaryActionsMax));
+  const [lair, setLair] = useState(p.hasLairAction);
+
+  function save() {
+    const legendaryActionsMax = Math.max(0, Math.min(10, Math.round(Number(max) || 0)));
+    onSave(p.id, {
+      legendaryActionsMax,
+      legendaryActionsUsed: Math.min(p.legendaryActionsUsed, legendaryActionsMax),
+      hasLairAction: lair,
+    });
+    setOpen(false);
+  }
+
+  const isBoss = p.legendaryActionsMax > 0 || p.hasLairAction;
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (o) {
+          setMax(String(p.legendaryActionsMax));
+          setLair(p.hasLairAction);
+        }
+      }}
+    >
+      <DialogTrigger asChild>
+        <Button
+          size="icon"
+          variant="ghost"
+          className={cn("size-8", isBoss ? "text-amber-400" : "text-muted-foreground")}
+          aria-label={t("combat.bossSettings")}
+          title={t("combat.bossSettings")}
+        >
+          <Crown className="size-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{p.name} — {t("combat.bossSettings")}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <Field label={t("combat.legendaryPerRound")} hint={t("combat.legendaryPerRoundHint")}>
+            <Input
+              type="number"
+              min={0}
+              max={10}
+              value={max}
+              onChange={(e) => setMax(e.target.value)}
+            />
+          </Field>
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={lair}
+              onChange={(e) => setLair(e.target.checked)}
+              className="mt-0.5 accent-primary"
+            />
+            <span>
+              {t("combat.hasLair")}
+              <span className="block text-xs text-muted-foreground">{t("combat.hasLairHint")}</span>
+            </span>
+          </label>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button onClick={save}>Save</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

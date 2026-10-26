@@ -93,5 +93,21 @@
   "encounter.addOneHint": "The fight's difficulty if you add one more of these",
   "encounter.fits": "fits your party",
   "encounter.fitsHint": "On its own this creature is a Medium or Hard fight for the selected party",
-  "encounter.liveHint": "Rated from the player characters and bestiary creatures in this fight. Quick-added creatures have no XP and aren't counted."
+  "encounter.liveHint": "Rated from the player characters and bestiary creatures in this fight. Quick-added creatures have no XP and aren't counted.",
+  "combat.lair": "Lair",
+  "combat.lairUsed": "Lair action",
+  "combat.lairRow": "Lair Actions",
+  "combat.lairHint": "Initiative 20, losing ties — the lair acts once this round.",
+  "combat.lairUse": "Log lair action",
+  "combat.hasLair": "Fights in its lair",
+  "combat.hasLairHint": "Adds a \"Lair Actions\" row at initiative 20 every round.",
+  "combat.legendary": "Legendary",
+  "combat.legendaryHint": "Click a pip to spend a legendary action at the end of another creature's turn. They refresh at the start of this creature's turn.",
+  "combat.legendarySpend": "Spend a legendary action",
+  "combat.legendaryRefund": "Give one back",
+  "combat.legendaryPerRound": "Legendary actions per round",
+  "combat.legendaryPerRoundHint": "0 for none. Most legendary creatures have 3.",
+  "combat.bossSettings": "Legendary & lair",
+  "combat.reaction": "Reaction",
+  "combat.reactionHint": "Click when the reaction is used. It comes back at the start of this creature's turn."
 }

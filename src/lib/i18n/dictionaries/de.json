@@ -93,5 +93,21 @@
   "encounter.addOneHint": "Schwierigkeit des Kampfes, wenn du noch eines davon hinzufügst",
   "encounter.fits": "passt zur Gruppe",
   "encounter.fitsHint": "Allein ist diese Kreatur ein mittlerer oder schwerer Kampf für die gewählte Gruppe",
-  "encounter.liveHint": "Bewertet anhand der Spielercharaktere und Bestiarium-Kreaturen in diesem Kampf. Schnell hinzugefügte Kreaturen haben keine EP und zählen nicht."
+  "encounter.liveHint": "Bewertet anhand der Spielercharaktere und Bestiarium-Kreaturen in diesem Kampf. Schnell hinzugefügte Kreaturen haben keine EP und zählen nicht.",
+  "combat.lair": "Hort",
+  "combat.lairUsed": "Hortaktion",
+  "combat.lairRow": "Hortaktionen",
+  "combat.lairHint": "Initiative 20, verliert Gleichstände – der Hort handelt einmal in dieser Runde.",
+  "combat.lairUse": "Hortaktion notieren",
+  "combat.hasLair": "Kämpft in seinem Hort",
+  "combat.hasLairHint": "Fügt jede Runde eine Zeile „Hortaktionen“ bei Initiative 20 hinzu.",
+  "combat.legendary": "Legendär",
+  "combat.legendaryHint": "Klicke einen Punkt, um am Ende des Zugs einer anderen Kreatur eine legendäre Aktion auszugeben. Sie erneuern sich zu Beginn des Zugs dieser Kreatur.",
+  "combat.legendarySpend": "Legendäre Aktion ausgeben",
+  "combat.legendaryRefund": "Eine zurückgeben",
+  "combat.legendaryPerRound": "Legendäre Aktionen pro Runde",
+  "combat.legendaryPerRoundHint": "0 für keine. Die meisten legendären Kreaturen haben 3.",
+  "combat.bossSettings": "Legendär & Hort",
+  "combat.reaction": "Reaktion",
+  "combat.reactionHint": "Klicke, wenn die Reaktion genutzt wird. Sie kehrt zu Beginn des Zugs dieser Kreatur zurück."
 }

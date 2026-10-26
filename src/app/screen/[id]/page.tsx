@@ -71,6 +71,7 @@ async function loadScreenState(campaignId: number): Promise<ScreenState> {
     encounterName: encounter?.name ?? "",
     round: encounter?.roundNumber ?? 1,
     turnIndex: encounter?.currentTurnIndex ?? 0,
+    lairActive: encounter?.lairTurnActive ?? false,
     participants,
     party,
     handouts: revealedHandouts,

@@ -93,5 +93,21 @@
   "encounter.addOneHint": "Difficulté du combat si vous en ajoutez un de plus",
   "encounter.fits": "adapté au groupe",
   "encounter.fitsHint": "Seule, cette créature représente un combat moyen ou difficile pour le groupe choisi",
-  "encounter.liveHint": "Évalué d'après les personnages joueurs et les créatures du bestiaire de ce combat. Les créatures ajoutées rapidement n'ont pas de PX et ne comptent pas."
+  "encounter.liveHint": "Évalué d'après les personnages joueurs et les créatures du bestiaire de ce combat. Les créatures ajoutées rapidement n'ont pas de PX et ne comptent pas.",
+  "combat.lair": "Antre",
+  "combat.lairUsed": "Action d'antre",
+  "combat.lairRow": "Actions d'antre",
+  "combat.lairHint": "Initiative 20, perd les égalités — l'antre agit une fois ce round.",
+  "combat.lairUse": "Noter l'action d'antre",
+  "combat.hasLair": "Combat dans son antre",
+  "combat.hasLairHint": "Ajoute une ligne « Actions d'antre » à l'initiative 20 à chaque round.",
+  "combat.legendary": "Légendaire",
+  "combat.legendaryHint": "Cliquez sur une pastille pour dépenser une action légendaire à la fin du tour d'une autre créature. Elles se rechargent au début du tour de cette créature.",
+  "combat.legendarySpend": "Dépenser une action légendaire",
+  "combat.legendaryRefund": "En rendre une",
+  "combat.legendaryPerRound": "Actions légendaires par round",
+  "combat.legendaryPerRoundHint": "0 pour aucune. La plupart des créatures légendaires en ont 3.",
+  "combat.bossSettings": "Légendaire et antre",
+  "combat.reaction": "Réaction",
+  "combat.reactionHint": "Cliquez quand la réaction est utilisée. Elle revient au début du tour de cette créature."
 }

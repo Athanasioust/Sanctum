@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { Swords, Heart, Shield, Skull, Image, Grid3x3 } from "lucide-react";
+import { Swords, Heart, Shield, Skull, Image, Grid3x3, Castle } from "lucide-react";
 import { api } from "@/lib/client";
 import { fogForGrid } from "@/lib/battle-map";
+import { currentSlotIndex, turnSlots } from "@/lib/combat-turns";
 import { hpBarColor } from "@/lib/ui";
 import { renderMarkdown } from "@/lib/markdown";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,8 @@ export type ScreenState = {
   encounterName: string;
   round: number;
   turnIndex: number;
+  /** Initiative is on the lair's count-20 row rather than a creature. */
+  lairActive: boolean;
   participants: CombatParticipant[];
   party: Character[];
   handouts: Handout[];
@@ -38,6 +41,7 @@ export const EMPTY_SCREEN_STATE: ScreenState = {
   encounterName: "",
   round: 1,
   turnIndex: 0,
+  lairActive: false,
   participants: [],
   party: [],
   handouts: [],
@@ -96,6 +100,7 @@ export function PlayerScreen({
           encounterName: full.name,
           round: full.roundNumber,
           turnIndex: full.currentTurnIndex,
+          lairActive: full.lairTurnActive,
           participants: [...full.participants].sort((a, b) => a.turnOrder - b.turnOrder),
           party,
           handouts,
@@ -167,11 +172,7 @@ export function PlayerScreen({
               {state.active ? state.encounterName || t("player.initiative") : t("player.initiative")}
             </h2>
             {state.active && state.participants.length > 0 ? (
-              <div className="space-y-2">
-                {state.participants.map((p, i) => (
-                  <InitiativeRow key={p.id} p={p} current={i === state.turnIndex} />
-                ))}
-              </div>
+              <InitiativeList state={state} />
             ) : (
               <div className="rounded-xl border border-dashed border-border bg-card/40 py-16 text-center">
                 <p className="text-lg text-muted-foreground">{t("player.noEncounter")}</p>
@@ -238,6 +239,46 @@ function PlayerBattleMap({ map }: { map: BattleMap }) {
         playerView
         fitWidth
       />
+    </div>
+  );
+}
+
+/** Initiative in turn order, with the lair's count-20 row when there is one. */
+function InitiativeList({ state }: { state: ScreenState }) {
+  const t = useT();
+  const slots = turnSlots(state.participants);
+  const current = currentSlotIndex(slots, state.turnIndex, state.lairActive);
+  return (
+    <div className="space-y-2">
+      {slots.map((slot, si) =>
+        slot.kind === "lair" ? (
+          <div
+            key="lair"
+            className={cn(
+              "flex items-center gap-3 rounded-xl border border-dashed bg-card/60 p-3 sm:gap-4",
+              si === current ? "border-primary ring-2 ring-primary/40" : "border-border",
+            )}
+          >
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-muted text-lg font-semibold tabular-nums sm:size-10">
+              20
+            </div>
+            <p className="flex flex-1 items-center gap-2 text-base font-medium sm:text-lg">
+              <Castle className="size-4 text-primary" /> {t("combat.lairRow")}
+            </p>
+            {si === current ? (
+              <span className="shrink-0 rounded-full bg-primary px-3 py-1 text-sm font-medium text-primary-foreground">
+                {t("common.turn")}
+              </span>
+            ) : null}
+          </div>
+        ) : (
+          <InitiativeRow
+            key={slot.ids[0]}
+            p={state.participants[slot.start]}
+            current={si === current}
+          />
+        ),
+      )}
     </div>
   );
 }

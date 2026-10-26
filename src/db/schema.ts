@@ -457,6 +457,13 @@ export const encounters = sqliteTable("encounters", {
     .default("active"),
   roundNumber: integer("round_number").notNull().default(1),
   currentTurnIndex: integer("current_turn_index").notNull().default(0),
+  /**
+   * True while initiative sits on the "Lair Actions (20)" row. That row isn't a
+   * participant, so `currentTurnIndex` keeps pointing at whoever acts next.
+   */
+  lairTurnActive: integer("lair_turn_active", { mode: "boolean" })
+    .notNull()
+    .default(false),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()
     .$defaultFn(() => new Date()),
@@ -495,6 +502,15 @@ export const combatParticipants = sqliteTable("combat_participants", {
   turnOrder: integer("turn_order").notNull().default(0),
   // Feature 11: Concentration tracking
   concentrationSpell: text("concentration_spell"),
+  /** Legendary actions per round (0 = none) and how many are spent. */
+  legendaryActionsMax: integer("legendary_actions_max").notNull().default(0),
+  legendaryActionsUsed: integer("legendary_actions_used").notNull().default(0),
+  /** Puts a "Lair Actions (initiative 20)" row into every round. */
+  hasLairAction: integer("has_lair_action", { mode: "boolean" }).notNull().default(false),
+  /** Whether this round's reaction is still unspent; resets on its turn. */
+  reactionAvailable: integer("reaction_available", { mode: "boolean" })
+    .notNull()
+    .default(true),
 });
 
 /* -------------------------------------------------------------------------- */

@@ -292,6 +292,7 @@ export const encounterUpdateSchema = z.object({
   status: z.enum(["active", "completed"]).optional(),
   roundNumber: z.number().int().min(1).optional(),
   currentTurnIndex: z.number().int().min(0).optional(),
+  lairTurnActive: z.boolean().optional(),
 });
 
 export const participantCreateSchema = z.object({
@@ -312,6 +313,10 @@ export const participantCreateSchema = z.object({
   deathSaveFailures: z.number().int().min(0).max(3).optional().default(0),
   isActive: z.boolean().optional().default(true),
   turnOrder: z.number().int().optional().default(0),
+  legendaryActionsMax: z.number().int().min(0).max(10).optional().default(0),
+  legendaryActionsUsed: z.number().int().min(0).max(10).optional().default(0),
+  hasLairAction: z.boolean().optional().default(false),
+  reactionAvailable: z.boolean().optional().default(true),
 });
 export const participantUpdateSchema = participantCreateSchema
   .partial()

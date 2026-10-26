@@ -229,6 +229,7 @@ const ImportSchemas = {
   encounter: encounterCreateSchema.omit({ campaignId: true }).extend({
     roundNumber: z.number().int().min(1).max(100000).optional().default(1),
     currentTurnIndex: z.number().int().min(0).max(100000).optional().default(0),
+    lairTurnActive: z.boolean().optional().default(false),
   }),
   participant: participantCreateSchema.omit({ encounterId: true, entityId: true }),
   story: storyEventCreateSchema.omit({
