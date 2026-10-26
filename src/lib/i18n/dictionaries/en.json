@@ -155,5 +155,8 @@
   "aoe.saved": "saved",
   "aoe.failedSave": "failed",
   "aoe.apply": "Apply damage",
-  "aoe.failed": "Couldn't apply the damage to everyone — check the tracker"
+  "aoe.failed": "Couldn't apply the damage to everyone — check the tracker",
+  "player.whoAreYou": "Who are you?",
+  "player.dragHint": "Drag your token to move it.",
+  "player.moveFailed": "Couldn't move the token"
 }

@@ -25,6 +25,7 @@ import {
   Type,
   Upload,
   Users,
+  Hand,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -172,6 +173,80 @@ export function BattleMap({
     },
     [map, flush],
   );
+
+  /* ---------------------------------------------------------------------- */
+  /*  Player-moved tokens                                                    */
+  /* ---------------------------------------------------------------------- */
+
+  // Whether players may drag the tokens handed to them (lan.json), and whether
+  // sharing is on at all — without it no phone can reach the player view.
+  const [lan, setLan] = useState<{ enabled: boolean; allowPlayerTokenMoves: boolean } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get<{ enabled: boolean; allowPlayerTokenMoves: boolean }>("/api/lan")
+      .then((data) => {
+        if (!cancelled) setLan(data);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function togglePlayerMoves() {
+    if (!lan) return;
+    const allowPlayerTokenMoves = !lan.allowPlayerTokenMoves;
+    try {
+      await api.put("/api/lan", { allowPlayerTokenMoves });
+      setLan({ ...lan, allowPlayerTokenMoves });
+    } catch {
+      toast.error("Couldn't change the setting");
+    }
+  }
+
+  // While players can move tokens, pick their moves up from the server so the
+  // DM's map (and the next save from it) doesn't drag them back. Only the
+  // positions of player-controlled tokens are taken, and never while the DM
+  // has unsaved token edits of their own.
+  const watchPlayerMoves =
+    !!map &&
+    map.revealToPlayers &&
+    !!lan?.enabled &&
+    !!lan.allowPlayerTokenMoves &&
+    map.tokens.some((t) => t.playerControllable);
+  const mapId = map?.id;
+  useEffect(() => {
+    if (!watchPlayerMoves || !mapId) return;
+    let cancelled = false;
+    async function pull() {
+      try {
+        const remote = await api.get<BattleMapRow>(`/api/battle-maps/${mapId}`);
+        if (cancelled || pendingPatch.current.tokens) return;
+        const where = new Map(remote.tokens.map((t) => [t.id, t]));
+        setMaps((prev) =>
+          prev.map((m) => {
+            if (m.id !== mapId) return m;
+            let changed = false;
+            const tokens = m.tokens.map((t) => {
+              const r = where.get(t.id);
+              if (!t.playerControllable || !r || (r.x === t.x && r.y === t.y)) return t;
+              changed = true;
+              return { ...t, x: r.x, y: r.y };
+            });
+            return changed ? { ...m, tokens } : m;
+          }),
+        );
+      } catch {
+        // A missed poll is picked up by the next one.
+      }
+    }
+    const timer = setInterval(pull, COMBAT_POLL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [watchPlayerMoves, mapId]);
 
   /* ---------------------------------------------------------------------- */
   /*  Combat sync                                                            */
@@ -734,6 +809,22 @@ export function BattleMap({
               <Monitor className="size-3.5" />
               {map.revealToPlayers ? "Showing to players" : "Show to players"}
             </Button>
+            <Button
+              variant={lan?.enabled && lan.allowPlayerTokenMoves ? "default" : "outline"}
+              size="sm"
+              onClick={togglePlayerMoves}
+              disabled={!lan?.enabled}
+              title={
+                lan?.enabled
+                  ? "Let players drag the tokens you've handed them from their phones"
+                  : "Turn on local-network sharing in Settings first"
+              }
+            >
+              <Hand className="size-3.5" />
+              {lan?.enabled && lan.allowPlayerTokenMoves
+                ? "Players can move their tokens"
+                : "Player token moves off"}
+            </Button>
           </div>
 
           {map.revealToPlayers && (
@@ -870,6 +961,44 @@ export function BattleMap({
                       ) : null}
                     </div>
                   </Field>
+                  <div className="space-y-2 rounded-lg border border-border p-2.5">
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={!!selectedToken.playerControllable}
+                        onChange={(e) =>
+                          patchToken(selectedToken.id, {
+                            playerControllable: e.target.checked,
+                            controllerName:
+                              selectedToken.controllerName || selectedToken.label || undefined,
+                          })
+                        }
+                        className="accent-primary"
+                      />
+                      <Hand className="size-3.5 text-muted-foreground" /> A player moves this token
+                    </label>
+                    {selectedToken.playerControllable ? (
+                      <>
+                        <Input
+                          value={selectedToken.controllerName ?? ""}
+                          onChange={(e) =>
+                            patchToken(selectedToken.id, { controllerName: e.target.value.slice(0, 60) })
+                          }
+                          placeholder="Player name"
+                          aria-label="Player name"
+                          className="h-8"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          On the player view they pick this name, then drag the token.
+                          {!lan?.enabled
+                            ? " Needs local-network sharing (Settings)."
+                            : !lan.allowPlayerTokenMoves
+                              ? " Switch on “Players can move their tokens” above."
+                              : ""}
+                        </p>
+                      </>
+                    ) : null}
+                  </div>
                   <Button
                     variant="outline"
                     size="sm"

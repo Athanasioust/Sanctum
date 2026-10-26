@@ -8,7 +8,14 @@ import {
   writeLanConfig,
 } from "@/lib/lan";
 
-const lanUpdateSchema = z.object({ enabled: z.boolean() });
+const lanUpdateSchema = z
+  .object({
+    enabled: z.boolean().optional(),
+    allowPlayerTokenMoves: z.boolean().optional(),
+  })
+  .refine((v) => v.enabled !== undefined || v.allowPlayerTokenMoves !== undefined, {
+    message: "Nothing to update",
+  });
 
 /**
  * Current local-network sharing state, plus what the player-view URL would be.
@@ -21,6 +28,7 @@ export const GET = apiRoute(async (req) => {
   const url = new URL(req.url);
   return json({
     enabled: config.enabled,
+    allowPlayerTokenMoves: config.allowPlayerTokenMoves,
     addresses: lanAddresses(),
     port: Number(url.port) || (url.protocol === "https:" ? 443 : 80),
     // Whether the running server is actually reachable from the network. In the
@@ -33,7 +41,14 @@ export const GET = apiRoute(async (req) => {
 });
 
 export const PUT = apiRoute(async (req) => {
-  const { enabled } = parseBody(lanUpdateSchema, await readJson(req));
-  writeLanConfig({ enabled });
-  return json({ enabled, restartRequired: true });
+  const patch = parseBody(lanUpdateSchema, await readJson(req));
+  const current = readLanConfig();
+  const next = {
+    enabled: patch.enabled ?? current.enabled,
+    allowPlayerTokenMoves: patch.allowPlayerTokenMoves ?? current.allowPlayerTokenMoves,
+  };
+  writeLanConfig(next);
+  // Only the bind address needs a restart; the token-move switch is read on
+  // every request.
+  return json({ ...next, restartRequired: next.enabled !== current.enabled });
 });

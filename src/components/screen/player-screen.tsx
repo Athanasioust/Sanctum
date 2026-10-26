@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import { Swords, Heart, Shield, Skull, Image, Grid3x3, Castle } from "lucide-react";
 import { api } from "@/lib/client";
-import { fogForGrid, resolveTokenImages } from "@/lib/battle-map";
+import { fogForGrid, resolveTokenImages, tokenVisibleToPlayers } from "@/lib/battle-map";
 import { currentSlotIndex, keepGroupsTogether, turnSlots } from "@/lib/combat-turns";
 import { hpBarColor } from "@/lib/ui";
 import { renderMarkdown } from "@/lib/markdown";
@@ -36,6 +36,8 @@ export type ScreenState = {
   battleMap: BattleMap | null;
   /** Art for the map's tokens, by token id (hidden tokens are never drawn). */
   tokenArt: Record<string, string>;
+  /** The DM lets players drag the tokens handed to them. */
+  playerMoves: boolean;
 };
 
 export const EMPTY_SCREEN_STATE: ScreenState = {
@@ -49,6 +51,7 @@ export const EMPTY_SCREEN_STATE: ScreenState = {
   handouts: [],
   battleMap: null,
   tokenArt: {},
+  playerMoves: false,
 };
 
 /** How long a poll may take before it's abandoned and retried on the next tick. */
@@ -81,12 +84,14 @@ export function PlayerScreen({
     const signal = controller.signal;
 
     try {
-      const [encounters, party, allHandouts, maps] = await Promise.all([
+      const [encounters, party, allHandouts, maps, moves] = await Promise.all([
         api.get<Encounter[]>(`/api/encounters?campaignId=${campaignId}`, { signal }),
         api.get<Character[]>(`/api/characters?campaignId=${campaignId}`, { signal }),
         api.get<Handout[]>(`/api/handouts?campaignId=${campaignId}`, { signal }),
         api.get<BattleMap[]>(`/api/battle-maps?campaignId=${campaignId}`, { signal }),
+        api.get<{ allowed: boolean }>("/api/screen/move-token", { signal }),
       ]);
+      const playerMoves = moves.allowed;
       const handouts = allHandouts.filter((h) => h.isRevealed);
       // Maps come back newest-updated first, so the most recently touched map
       // wins if the DM left more than one flagged.
@@ -111,7 +116,14 @@ export function PlayerScreen({
       const tokenArt = battleMap
         ? resolveTokenImages(battleMap.tokens, art?.participants ?? [], art?.portraits ?? {})
         : {};
-      let next: ScreenState = { ...EMPTY_SCREEN_STATE, party, handouts, battleMap, tokenArt };
+      let next: ScreenState = {
+        ...EMPTY_SCREEN_STATE,
+        party,
+        handouts,
+        battleMap,
+        tokenArt,
+        playerMoves,
+      };
       if (active && full) {
         next = {
           active: true,
@@ -126,6 +138,7 @@ export function PlayerScreen({
           handouts,
           battleMap,
           tokenArt,
+          playerMoves,
         };
       }
       setState(next);
@@ -182,7 +195,12 @@ export function PlayerScreen({
             <h2 className="mb-3 flex items-center gap-2 font-heading text-lg font-semibold text-muted-foreground">
               <Grid3x3 className="size-4" /> {state.battleMap.name}
             </h2>
-            <PlayerBattleMap map={state.battleMap} tokenArt={state.tokenArt} />
+            <PlayerBattleMap
+              campaignId={campaignId}
+              map={state.battleMap}
+              tokenArt={state.tokenArt}
+              playerMoves={state.playerMoves}
+            />
           </section>
         )}
 
@@ -239,34 +257,146 @@ export function PlayerScreen({
  * hid — or that stand in unrevealed squares — are never drawn, so nothing
  * reaches this screen that the players aren't meant to see.
  */
+/**
+ * Which player this phone belongs to, remembered in the browser. There are no
+ * accounts; this only decides which tokens the phone offers to drag.
+ */
+const PLAYER_KEY = "sanctum:player-name";
+const PLAYER_EVENT = "sanctum:player-name-changed";
+
+function subscribePlayer(onChange: () => void) {
+  window.addEventListener(PLAYER_EVENT, onChange);
+  window.addEventListener("storage", onChange);
+  return () => {
+    window.removeEventListener(PLAYER_EVENT, onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+
+function readPlayer(): string {
+  try {
+    return window.localStorage.getItem(PLAYER_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function writePlayer(name: string) {
+  try {
+    if (name) window.localStorage.setItem(PLAYER_KEY, name);
+    else window.localStorage.removeItem(PLAYER_KEY);
+  } catch {
+    /* private mode — the choice just won't be remembered */
+  }
+  window.dispatchEvent(new Event(PLAYER_EVENT));
+}
+
 function PlayerBattleMap({
+  campaignId,
   map,
   tokenArt,
+  playerMoves,
 }: {
+  campaignId: number;
   map: BattleMap;
   tokenArt: Record<string, string>;
+  playerMoves: boolean;
 }) {
+  const t = useT();
+  const player = useSyncExternalStore(subscribePlayer, readPlayer, () => "");
+  // A drag shows at once; it's tied to the map snapshot it was made on, so
+  // the next poll (which already carries the move) simply replaces it.
+  const [pending, setPending] = useState<{ map: BattleMap; id: string; x: number; y: number } | null>(null);
+  const [error, setError] = useState("");
+
+  const fog = fogForGrid(map.fog, map.gridCols, map.gridRows);
+  const tokens =
+    pending && pending.map === map
+      ? map.tokens.map((tk) => (tk.id === pending.id ? { ...tk, x: pending.x, y: pending.y } : tk))
+      : map.tokens;
+
+  // Players can only claim tokens they can actually see.
+  const handed = playerMoves
+    ? tokens.filter(
+        (tk) => tk.playerControllable && tk.controllerName && tokenVisibleToPlayers(tk, fog, map.fogEnabled),
+      )
+    : [];
+  const names = [...new Set(handed.map((tk) => tk.controllerName!.trim()))].sort();
+  const mine = handed
+    .filter((tk) => player && tk.controllerName!.trim().toLowerCase() === player.toLowerCase())
+    .map((tk) => tk.id);
+
+  async function move(id: string, x: number, y: number) {
+    setError("");
+    setPending({ map, id, x, y });
+    try {
+      await api.post("/api/screen/move-token", {
+        campaignId,
+        battleMapId: map.id,
+        tokenId: id,
+        controllerName: player,
+        x,
+        y,
+      });
+    } catch (err) {
+      setPending(null);
+      setError(err instanceof Error ? err.message : t("player.moveFailed"));
+    }
+  }
+
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-[#0b0b0c]">
-      <BattleMapCanvas
-        map={{
-          imageUrl: map.imageUrl,
-          gridSize: map.gridSize,
-          gridCols: map.gridCols,
-          gridRows: map.gridRows,
-          feetPerCell: map.feetPerCell,
-          diagonalRule: map.diagonalRule,
-          tokens: map.tokens,
-          annotations: map.annotations,
-          fog: fogForGrid(map.fog, map.gridCols, map.gridRows),
-          fogEnabled: map.fogEnabled,
-        }}
-        statuses={{}}
-        tokenImages={tokenArt}
-        readOnly
-        playerView
-        fitWidth
-      />
+    <div className="space-y-2">
+      {names.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="text-muted-foreground">{t("player.whoAreYou")}</span>
+          {names.map((name) => {
+            const active = player.toLowerCase() === name.toLowerCase();
+            return (
+              <button
+                key={name}
+                type="button"
+                onClick={() => writePlayer(active ? "" : name)}
+                aria-pressed={active}
+                className={cn(
+                  "rounded-full border px-3 py-1 transition-colors",
+                  active
+                    ? "border-primary bg-primary/15 text-primary"
+                    : "border-border hover:bg-muted",
+                )}
+              >
+                {name}
+              </button>
+            );
+          })}
+          {mine.length > 0 ? (
+            <span className="text-xs text-muted-foreground">{t("player.dragHint")}</span>
+          ) : null}
+        </div>
+      ) : null}
+      <div className="overflow-hidden rounded-xl border border-border bg-[#0b0b0c]">
+        <BattleMapCanvas
+          map={{
+            imageUrl: map.imageUrl,
+            gridSize: map.gridSize,
+            gridCols: map.gridCols,
+            gridRows: map.gridRows,
+            feetPerCell: map.feetPerCell,
+            diagonalRule: map.diagonalRule,
+            tokens,
+            annotations: map.annotations,
+            fog,
+            fogEnabled: map.fogEnabled,
+          }}
+          statuses={{}}
+          tokenImages={tokenArt}
+          draggableTokenIds={mine}
+          onMoveToken={move}
+          readOnly
+          playerView
+          fitWidth
+        />
+      </div>
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
     </div>
   );
 }

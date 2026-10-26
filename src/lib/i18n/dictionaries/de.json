@@ -155,5 +155,8 @@
   "aoe.saved": "geschafft",
   "aoe.failedSave": "misslungen",
   "aoe.apply": "Schaden anwenden",
-  "aoe.failed": "Schaden konnte nicht bei allen angewendet werden – prüfe den Tracker"
+  "aoe.failed": "Schaden konnte nicht bei allen angewendet werden – prüfe den Tracker",
+  "player.whoAreYou": "Wer bist du?",
+  "player.dragHint": "Ziehe deinen Marker, um ihn zu bewegen.",
+  "player.moveFailed": "Marker konnte nicht bewegt werden"
 }

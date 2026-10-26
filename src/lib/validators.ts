@@ -95,6 +95,8 @@ const battleTokenSchema = z.object({
   sizeCells: z.number().int().min(1).max(6).default(1),
   imageUrl: z.string().max(500).optional(),
   hidden: z.boolean().optional(),
+  playerControllable: z.boolean().optional(),
+  controllerName: z.string().trim().max(60).optional(),
 });
 const mapAnnotationSchema = z.object({
   id: z.string().max(64),

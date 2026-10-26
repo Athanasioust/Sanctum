@@ -101,6 +101,7 @@ export default function BattleMapCanvas({
   statuses,
   tokenImages = {},
   highlightTokenIds,
+  draggableTokenIds,
   tool = "select",
   templateSizeFt = 20,
   templateColor = "#f97316",
@@ -123,6 +124,11 @@ export default function BattleMapCanvas({
   tokenImages?: Record<string, string>;
   /** Tokens to ring as "caught" — the targets of a selected AoE template. */
   highlightTokenIds?: string[];
+  /**
+   * Tokens that can be dragged even on a read-only canvas — on the player
+   * view, the ones the DM has handed to this player.
+   */
+  draggableTokenIds?: string[];
   tool?: MapTool;
   /** Size in feet for the next AoE template placed. */
   templateSizeFt?: number;
@@ -354,7 +360,10 @@ export default function BattleMapCanvas({
               gridCols={gridCols}
               gridRows={gridRows}
               selected={token.id === selectedTokenId}
-              draggable={!readOnly && tool === "select"}
+              draggable={
+                (!readOnly && tool === "select") ||
+                (draggableTokenIds?.includes(token.id) ?? false)
+              }
               onSelect={() => onSelectToken?.(token.id)}
               onMove={(x, y) => onMoveToken?.(token.id, x, y)}
             />

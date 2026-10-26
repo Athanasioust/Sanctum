@@ -22,15 +22,26 @@ import { DATA_ROOT_DIR } from "@/lib/paths";
 
 const CONFIG_PATH = path.join(DATA_ROOT_DIR, "lan.json");
 
-export type LanConfig = { enabled: boolean };
+export type LanConfig = {
+  enabled: boolean;
+  /**
+   * Lets players drag the tokens the DM has handed them from the player view —
+   * the only write the player view can make (see /api/screen/move-token).
+   * Separate from `enabled` and off by default; unlike it, it applies at once.
+   */
+  allowPlayerTokenMoves: boolean;
+};
 
-const DEFAULT: LanConfig = { enabled: false };
+const DEFAULT: LanConfig = { enabled: false, allowPlayerTokenMoves: false };
 
 export function readLanConfig(): LanConfig {
   try {
     const raw = fs.readFileSync(CONFIG_PATH, "utf8");
     const parsed = JSON.parse(raw) as Partial<LanConfig>;
-    return { enabled: parsed.enabled === true };
+    return {
+      enabled: parsed.enabled === true,
+      allowPlayerTokenMoves: parsed.allowPlayerTokenMoves === true,
+    };
   } catch {
     // Missing or unreadable config means the safe default: loopback only.
     return { ...DEFAULT };

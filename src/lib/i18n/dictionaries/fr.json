@@ -155,5 +155,8 @@
   "aoe.saved": "réussi",
   "aoe.failedSave": "raté",
   "aoe.apply": "Appliquer les dégâts",
-  "aoe.failed": "Impossible d'appliquer les dégâts à tous — vérifiez le suivi"
+  "aoe.failed": "Impossible d'appliquer les dégâts à tous — vérifiez le suivi",
+  "player.whoAreYou": "Qui êtes-vous ?",
+  "player.dragHint": "Faites glisser votre jeton pour le déplacer.",
+  "player.moveFailed": "Impossible de déplacer le jeton"
 }

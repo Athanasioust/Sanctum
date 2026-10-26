@@ -62,6 +62,12 @@ export type BattleToken = {
   imageUrl?: string;
   /** Kept off the player view until the DM reveals it. */
   hidden?: boolean;
+  /**
+   * The DM has handed this token to a player, who may drag it from the player
+   * view (when player moves are switched on). `controllerName` is who.
+   */
+  playerControllable?: boolean;
+  controllerName?: string;
 };
 
 /** Area-of-effect templates and freehand marks the DM draws on the map. */

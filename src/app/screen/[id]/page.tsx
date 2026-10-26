@@ -15,6 +15,7 @@ import { getLocale } from "@/lib/i18n/server";
 import { keepGroupsTogether } from "@/lib/combat-turns";
 import { resolveTokenImages } from "@/lib/battle-map";
 import { portraitsFor } from "@/lib/portraits";
+import { readLanConfig } from "@/lib/lan";
 
 export const dynamic = "force-dynamic";
 
@@ -83,6 +84,8 @@ async function loadScreenState(campaignId: number): Promise<ScreenState> {
     ? resolveTokenImages(battleMap.tokens, artParticipants, await portraitsFor(artParticipants))
     : {};
 
+  const lan = readLanConfig();
+
   return {
     active: encounter !== null,
     encounterName: encounter?.name ?? "",
@@ -94,6 +97,7 @@ async function loadScreenState(campaignId: number): Promise<ScreenState> {
     handouts: revealedHandouts,
     battleMap,
     tokenArt,
+    playerMoves: lan.enabled && lan.allowPlayerTokenMoves,
   };
 }
 
