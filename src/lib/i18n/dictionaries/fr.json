@@ -109,5 +109,13 @@
   "combat.legendaryPerRoundHint": "0 pour aucune. La plupart des créatures légendaires en ont 3.",
   "combat.bossSettings": "Légendaire et antre",
   "combat.reaction": "Réaction",
-  "combat.reactionHint": "Cliquez quand la réaction est utilisée. Elle revient au début du tour de cette créature."
+  "combat.reactionHint": "Cliquez quand la réaction est utilisée. Elle revient au début du tour de cette créature.",
+  "combat.groupInit": "Initiative du groupe",
+  "combat.groupMod": "Modificateur d'initiative du groupe",
+  "combat.groupSummary": "{up} debout / {down} à terre",
+  "combat.ungroup": "Dégrouper — chaque membre a son propre tour",
+  "combat.addAsGroup": "Ajouter en groupe",
+  "combat.addAsGroupHint": "Une seule ligne d'initiative et un seul tour pour toute la meute. Dépliez-la pour suivre les PV de chaque membre.",
+  "builder.groupMonsters": "Grouper les monstres identiques",
+  "builder.groupMonstersHint": "Plusieurs créatures identiques partagent une ligne d'initiative et un tour."
 }

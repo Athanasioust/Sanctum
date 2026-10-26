@@ -44,6 +44,7 @@ import {
   Crown,
   Castle,
   Undo2,
+  Ungroup,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -83,7 +84,14 @@ import { CONDITIONS, EXHAUSTION_EFFECTS } from "@/lib/constants";
 import { rollDie } from "@/lib/dnd";
 import { cn } from "@/lib/utils";
 import { rateEncounter, difficultyKey, DIFFICULTY_STYLES } from "@/lib/encounter";
-import { currentSlotIndex, pointerForSlot, turnSlots } from "@/lib/combat-turns";
+import {
+  currentSlotIndex,
+  keepGroupsTogether,
+  pointerForSlot,
+  sortByInitiative as sortForInitiative,
+  turnSlots,
+  type TurnSlot,
+} from "@/lib/combat-turns";
 import { useT } from "@/components/i18n/i18n-provider";
 import type { CombatParticipant, CombatLogEntry, Encounter } from "@/db/schema";
 
@@ -111,7 +119,15 @@ type AddInput = {
   entityType?: "character" | "npc";
   /** Add this many copies at once, auto-numbered (Goblin 1, Goblin 2, …). */
   count?: number;
+  /** With count > 1: one initiative entry and one turn for the whole pack. */
+  group?: boolean;
 };
+
+/** The dnd-kit id for a turn slot: a group drags as one row. */
+function slotKey(slot: Extract<TurnSlot, { kind: "creatures" }>, parts: CombatParticipant[]) {
+  const lead = parts[slot.start];
+  return lead.groupId ? `g:${lead.groupId}` : lead.id;
+}
 
 /**
  * Keep every combatant's name distinct so the DM can always tell which goblin
@@ -146,7 +162,7 @@ export function CombatTracker({
 }) {
   const router = useRouter();
   const [parts, setParts] = useState<CombatParticipant[]>(
-    [...encounter.participants].sort((a, b) => a.turnOrder - b.turnOrder),
+    keepGroupsTogether([...encounter.participants].sort((a, b) => a.turnOrder - b.turnOrder)),
   );
   const [round, setRound] = useState(encounter.roundNumber);
   const [turnIndex, setTurnIndex] = useState(encounter.currentTurnIndex);
@@ -302,6 +318,7 @@ export function CombatTracker({
     const count = Math.max(1, Math.min(30, Math.round(input.count ?? 1)));
     const base = input.name.trim() || "Combatant";
     const taken = new Set(partsRef.current.map((p) => p.name));
+    const groupId = input.group && count > 1 ? crypto.randomUUID() : null;
 
     const payloads = Array.from({ length: count }, (_, i) => {
       // A batch is numbered from 1; a single add keeps the plain name unless
@@ -318,6 +335,8 @@ export function CombatTracker({
         entityId: input.entityId ?? null,
         entityType: input.entityType ?? null,
         turnOrder: partsRef.current.length + i,
+        groupId,
+        groupLabel: groupId ? base : null,
       };
     });
 
@@ -385,15 +404,21 @@ export function CombatTracker({
     ).catch(() => toast.error("Failed to save order"));
   }
 
+  /** Rows are dragged a slot at a time, so a group moves as one block. */
   function onDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    const oldIndex = parts.findIndex((p) => p.id === active.id);
-    const newIndex = parts.findIndex((p) => p.id === over.id);
-    const reordered = arrayMove(parts, oldIndex, newIndex).map((p, i) => ({
-      ...p,
-      turnOrder: i,
-    }));
+    const creatureSlots = slots.filter(
+      (s): s is Extract<TurnSlot, { kind: "creatures" }> => s.kind === "creatures",
+    );
+    const keys = creatureSlots.map((s) => slotKey(s, parts));
+    const oldIndex = keys.indexOf(active.id as string | number);
+    const newIndex = keys.indexOf(over.id as string | number);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const byId = new Map(parts.map((p) => [p.id, p]));
+    const reordered = arrayMove(creatureSlots, oldIndex, newIndex)
+      .flatMap((s) => s.ids.map((id) => byId.get(id)!))
+      .map((p, i) => ({ ...p, turnOrder: i }));
     setParts(reordered);
     persistOrder(reordered);
   }
@@ -402,14 +427,19 @@ export function CombatTracker({
     // Players roll their own initiative at the table — the DM types those in.
     // This rolls only NPCs/monsters (d20 + their initiative modifier), leaving
     // any player-entered values untouched, then sorts everyone together.
-    const rolled = parts
-      .map((p) => {
+    // A minion group rolls once and the whole pack acts on that count.
+    const groupRolls = new Map<string, number>();
+    const rolled = sortForInitiative(
+      parts.map((p) => {
         if (p.entityType === "character") return { ...p };
-        const roll = rollDie(20);
+        let roll = rollDie(20);
+        if (p.groupId) {
+          roll = groupRolls.get(p.groupId) ?? roll;
+          groupRolls.set(p.groupId, roll);
+        }
         return { ...p, initiativeRoll: roll, initiativeTotal: roll + p.initiativeMod };
-      })
-      .sort((a, b) => b.initiativeTotal - a.initiativeTotal)
-      .map((p, i) => ({ ...p, turnOrder: i }));
+      }),
+    ).map((p, i) => ({ ...p, turnOrder: i }));
     setParts(rolled);
     // Round one starts at the top of the new order — which is the lair row
     // when every creature rolled under 20.
@@ -430,8 +460,20 @@ export function CombatTracker({
     toast.success("Rolled initiative for NPCs & monsters");
   }
 
+  /** A group shares one initiative, so setting it on one member sets them all. */
   function setInitiative(id: number, total: number) {
-    savePart(id, { initiativeTotal: total });
+    const p = partsRef.current.find((x) => x.id === id);
+    const ids = p?.groupId
+      ? partsRef.current.filter((x) => x.groupId === p.groupId).map((x) => x.id)
+      : [id];
+    for (const memberId of ids) savePart(memberId, { initiativeTotal: total });
+  }
+
+  /** Split a group back into ordinary combatants, each with its own turn. */
+  function ungroup(groupId: string) {
+    for (const p of partsRef.current) {
+      if (p.groupId === groupId) savePart(p.id, { groupId: null, groupLabel: null });
+    }
   }
 
   function setInitiativeMod(id: number, mod: number) {
@@ -439,9 +481,7 @@ export function CombatTracker({
   }
 
   function sortByInitiative() {
-    const sorted = [...parts]
-      .sort((a, b) => b.initiativeTotal - a.initiativeTotal)
-      .map((p, i) => ({ ...p, turnOrder: i }));
+    const sorted = sortForInitiative(parts).map((p, i) => ({ ...p, turnOrder: i }));
     setParts(sorted);
     persistOrder(sorted);
   }
@@ -522,6 +562,18 @@ export function CombatTracker({
     savePart(id, { reactionAvailable });
     if (!reactionAvailable) addLogEntry(p.name, "Reaction", "");
   }
+
+  const rowHandlers: RowHandlers = {
+    onSave: savePart,
+    onAdjustHp: adjustHp,
+    onSetHpCurrent: setHpCurrent,
+    onRemove: removeParticipant,
+    onSetInitiative: setInitiative,
+    onSetInitiativeMod: setInitiativeMod,
+    onSpendLegendary: spendLegendary,
+    onRefundLegendary: refundLegendary,
+    onToggleReaction: toggleReaction,
+  };
 
   async function endEncounter() {
     await api.patch(`/api/encounters/${encounter.id}`, { status: "completed" });
@@ -607,7 +659,10 @@ export function CombatTracker({
           modifiers={[restrictToVerticalAxis]}
           onDragEnd={onDragEnd}
         >
-          <SortableContext items={parts.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+          <SortableContext
+            items={slots.flatMap((s) => (s.kind === "creatures" ? [slotKey(s, parts)] : []))}
+            strategy={verticalListSortingStrategy}
+          >
             <div className="space-y-2">
               {slots.map((slot, si) => {
                 if (slot.kind === "lair") {
@@ -620,20 +675,28 @@ export function CombatTracker({
                   );
                 }
                 const p = parts[slot.start];
+                if (slot.ids.length > 1 && p.groupId) {
+                  return (
+                    <GroupRow
+                      key={`g:${p.groupId}`}
+                      sortId={`g:${p.groupId}`}
+                      members={slot.ids.map((id) => parts.find((x) => x.id === id)!)}
+                      isCurrent={si === currentSlot}
+                      onSetInitiative={setInitiative}
+                      onSetInitiativeMod={(mod) =>
+                        slot.ids.forEach((id) => setInitiativeMod(id, mod))
+                      }
+                      onUngroup={() => ungroup(p.groupId!)}
+                      rowHandlers={rowHandlers}
+                    />
+                  );
+                }
                 return (
                   <ParticipantRow
                     key={p.id}
                     participant={p}
                     isCurrent={si === currentSlot}
-                    onSave={savePart}
-                    onAdjustHp={adjustHp}
-                    onSetHpCurrent={setHpCurrent}
-                    onRemove={removeParticipant}
-                    onSetInitiative={setInitiative}
-                    onSetInitiativeMod={setInitiativeMod}
-                    onSpendLegendary={spendLegendary}
-                    onRefundLegendary={refundLegendary}
-                    onToggleReaction={toggleReaction}
+                    {...rowHandlers}
                   />
                 );
               })}
@@ -730,9 +793,148 @@ ${t("difficulty.easy")} ${th.easy} · ${t("difficulty.medium")} ${th.medium} · 
   );
 }
 
+type RowHandlers = {
+  onSave: (id: number, patch: Partial<CombatParticipant>) => void;
+  onAdjustHp: (id: number, delta: number) => void;
+  onSetHpCurrent: (id: number, value: number) => void;
+  onRemove: (id: number) => void;
+  onSetInitiative: (id: number, total: number) => void;
+  onSetInitiativeMod: (id: number, mod: number) => void;
+  onSpendLegendary: (id: number) => void;
+  onRefundLegendary: (id: number) => void;
+  onToggleReaction: (id: number) => void;
+};
+
+/**
+ * A minion group: one initiative and one turn for the whole pack, collapsed to
+ * a single "5× Goblin" row. Expanding it shows each member as an ordinary row
+ * so any one of them can still be hit, healed or given a condition.
+ */
+function GroupRow({
+  sortId,
+  members,
+  isCurrent,
+  onSetInitiative,
+  onSetInitiativeMod,
+  onUngroup,
+  rowHandlers,
+}: {
+  sortId: string;
+  members: CombatParticipant[];
+  isCurrent: boolean;
+  onSetInitiative: (id: number, total: number) => void;
+  onSetInitiativeMod: (mod: number) => void;
+  onUngroup: () => void;
+  rowHandlers: RowHandlers;
+}) {
+  const t = useT();
+  const [expanded, setExpanded] = useState(false);
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: sortId });
+  const lead = members[0];
+  const down = members.filter((m) => m.hpCurrent <= 0).length;
+  const up = members.length - down;
+  const hpNow = members.reduce((n, m) => n + m.hpCurrent, 0);
+  const hpMax = members.reduce((n, m) => n + m.hpMax, 0);
+  const label = lead.groupLabel || lead.name;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={cn(
+        "rounded-xl border bg-card p-3 transition-colors",
+        isCurrent ? "border-primary ring-1 ring-primary/40" : "border-border",
+        isDragging && "opacity-60",
+        up === 0 && "opacity-70",
+      )}
+    >
+      <div className="flex items-center gap-3">
+        <button
+          {...attributes}
+          {...listeners}
+          className="cursor-grab text-muted-foreground hover:text-foreground active:cursor-grabbing"
+          aria-label="Drag to reorder"
+        >
+          <GripVertical className="size-5" />
+        </button>
+        <div className="flex items-center gap-1">
+          <div className="flex w-12 flex-col items-center">
+            <span className="text-[10px] uppercase text-muted-foreground">Init</span>
+            <Input
+              value={lead.initiativeTotal}
+              onChange={(e) => onSetInitiative(lead.id, Number(e.target.value || 0))}
+              className="h-8 w-11 px-1 text-center text-sm tabular-nums"
+              aria-label={t("combat.groupInit")}
+            />
+          </div>
+          <div className="flex w-11 flex-col items-center">
+            <span className="text-[10px] uppercase text-muted-foreground">Mod</span>
+            <Input
+              type="number"
+              value={lead.initiativeMod}
+              onChange={(e) => onSetInitiativeMod(Number(e.target.value || 0))}
+              className="h-8 w-11 px-1 text-center text-sm tabular-nums"
+              aria-label={t("combat.groupMod")}
+            />
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          className="flex min-w-0 flex-1 items-center gap-2 text-left"
+        >
+          {expanded ? (
+            <ChevronUp className="size-4 shrink-0 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+          )}
+          <span className="min-w-0">
+            <span className="flex flex-wrap items-center gap-2">
+              <span className="truncate font-medium">
+                {members.length}× {label}
+              </span>
+              {isCurrent ? <Badge className="bg-primary text-primary-foreground">Turn</Badge> : null}
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              {t("combat.groupSummary")
+                .replace("{up}", String(up))
+                .replace("{down}", String(down))}
+              {" · "}
+              <span className="tabular-nums">HP {hpNow}/{hpMax}</span>
+            </span>
+          </span>
+        </button>
+        <div className="hidden w-44 sm:block">
+          <HpBar current={hpNow} max={hpMax} />
+        </div>
+        <Button
+          size="icon"
+          variant="ghost"
+          className="size-8 text-muted-foreground"
+          onClick={onUngroup}
+          aria-label={t("combat.ungroup")}
+          title={t("combat.ungroup")}
+        >
+          <Ungroup className="size-4" />
+        </Button>
+      </div>
+      {expanded ? (
+        <div className="mt-3 space-y-2 border-l-2 border-primary/30 pl-3">
+          {members.map((m) => (
+            <ParticipantRow key={m.id} participant={m} isCurrent={false} nested {...rowHandlers} />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function ParticipantRow({
   participant: p,
   isCurrent,
+  nested = false,
   onSave,
   onAdjustHp,
   onSetHpCurrent,
@@ -754,12 +956,14 @@ function ParticipantRow({
   onSpendLegendary: (id: number) => void;
   onRefundLegendary: (id: number) => void;
   onToggleReaction: (id: number) => void;
+  /** A member shown inside an expanded group: no drag handle or initiative. */
+  nested?: boolean;
 }) {
   // Players type their own initiative; NPCs/monsters get a modifier the DM can
   // set, which "Roll NPCs" uses.
   const isNpc = p.entityType !== "character";
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: p.id });
+    useSortable({ id: p.id, disabled: nested });
   const [confirmOpen, setConfirmOpen] = useState(false);
   const isDown = p.hpCurrent <= 0;
   const isBloodied = !isDown && p.hpMax > 0 && p.hpCurrent <= p.hpMax / 2;
@@ -777,6 +981,7 @@ function ParticipantRow({
       )}
     >
       <div className="flex items-center gap-3">
+        {nested ? null : (
         <button
           {...attributes}
           {...listeners}
@@ -785,8 +990,10 @@ function ParticipantRow({
         >
           <GripVertical className="size-5" />
         </button>
+        )}
 
         {/* Initiative (total for everyone; editable modifier for NPCs) */}
+        {nested ? null : (
         <div className="flex items-center gap-1">
           <div className="flex w-12 flex-col items-center">
             <span className="text-[10px] uppercase text-muted-foreground">Init</span>
@@ -810,6 +1017,7 @@ function ParticipantRow({
             </div>
           ) : null}
         </div>
+        )}
 
         {/* Name + status */}
         <div className="min-w-0 flex-1">
@@ -1802,6 +2010,8 @@ function BestiaryPicker({
   const [naming, setNaming] = useState<Addable | null>(null);
   const [customName, setCustomName] = useState("");
   const [count, setCount] = useState("1");
+  const [asGroup, setAsGroup] = useState(true);
+  const t = useT();
 
   const q = search.trim().toLowerCase();
   const filtered = q
@@ -1828,6 +2038,7 @@ function BestiaryPicker({
       entityId: naming.id,
       entityType: "npc",
       count: qty,
+      group: qty > 1 && asGroup,
     });
     setNaming(null);
   }
@@ -1876,6 +2087,20 @@ function BestiaryPicker({
                 onChange={(e) => setCount(e.target.value)}
               />
             </Field>
+            {Number(count) > 1 ? (
+              <label className="flex items-start gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={asGroup}
+                  onChange={(e) => setAsGroup(e.target.checked)}
+                  className="mt-0.5 accent-primary"
+                />
+                <span>
+                  {t("combat.addAsGroup")}
+                  <span className="block text-xs text-muted-foreground">{t("combat.addAsGroupHint")}</span>
+                </span>
+              </label>
+            ) : null}
             <p className="flex items-center gap-3 text-xs text-muted-foreground">
               <span>HP {naming.hpMax}</span>
               <span className="flex items-center gap-0.5">

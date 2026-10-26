@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { Swords, Heart, Shield, Skull, Image, Grid3x3, Castle } from "lucide-react";
 import { api } from "@/lib/client";
 import { fogForGrid } from "@/lib/battle-map";
-import { currentSlotIndex, turnSlots } from "@/lib/combat-turns";
+import { currentSlotIndex, keepGroupsTogether, turnSlots } from "@/lib/combat-turns";
 import { hpBarColor } from "@/lib/ui";
 import { renderMarkdown } from "@/lib/markdown";
 import { cn } from "@/lib/utils";
@@ -101,7 +101,9 @@ export function PlayerScreen({
           round: full.roundNumber,
           turnIndex: full.currentTurnIndex,
           lairActive: full.lairTurnActive,
-          participants: [...full.participants].sort((a, b) => a.turnOrder - b.turnOrder),
+          participants: keepGroupsTogether(
+            [...full.participants].sort((a, b) => a.turnOrder - b.turnOrder),
+          ),
           party,
           handouts,
           battleMap,
@@ -271,6 +273,12 @@ function InitiativeList({ state }: { state: ScreenState }) {
               </span>
             ) : null}
           </div>
+        ) : slot.ids.length > 1 ? (
+          <GroupInitiativeRow
+            key={slot.ids[0]}
+            members={state.participants.slice(slot.start, slot.start + slot.ids.length)}
+            current={si === current}
+          />
         ) : (
           <InitiativeRow
             key={slot.ids[0]}
@@ -279,6 +287,47 @@ function InitiativeList({ state }: { state: ScreenState }) {
           />
         ),
       )}
+    </div>
+  );
+}
+
+/** A minion group — one row, with how many are still standing. */
+function GroupInitiativeRow({
+  members,
+  current,
+}: {
+  members: CombatParticipant[];
+  current: boolean;
+}) {
+  const t = useT();
+  const lead = members[0];
+  const down = members.filter((m) => m.hpCurrent <= 0).length;
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-3 rounded-xl border bg-card p-3 transition-colors sm:gap-4",
+        current ? "border-primary ring-2 ring-primary/40" : "border-border",
+        down === members.length && "opacity-60",
+      )}
+    >
+      <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-muted text-lg font-semibold tabular-nums sm:size-10">
+        {lead.initiativeTotal}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-base font-medium sm:text-lg">
+          {members.length}× {lead.groupLabel || lead.name}
+        </p>
+        <p className="mt-0.5 text-sm text-muted-foreground">
+          {t("combat.groupSummary")
+            .replace("{up}", String(members.length - down))
+            .replace("{down}", String(down))}
+        </p>
+      </div>
+      {current ? (
+        <span className="shrink-0 rounded-full bg-primary px-3 py-1 text-sm font-medium text-primary-foreground">
+          {t("common.turn")}
+        </span>
+      ) : null}
     </div>
   );
 }

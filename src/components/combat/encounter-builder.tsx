@@ -54,6 +54,7 @@ export function EncounterBuilder({
   const [search, setSearch] = useState("");
   const [name, setName] = useState("");
   const [starting, setStarting] = useState(false);
+  const [groupSame, setGroupSame] = useState(true);
 
   const q = search.trim().toLowerCase();
   const filtered = q
@@ -117,6 +118,8 @@ export function EncounterBuilder({
         armorClass: number;
         initiativeMod: number;
         turnOrder: number;
+        groupId?: string | null;
+        groupLabel?: string | null;
       };
       const payloads: PartPayload[] = [];
 
@@ -136,6 +139,7 @@ export function EncounterBuilder({
       for (const m of monsters) {
         const n = counts[m.id] ?? 0;
         const base = labels[m.id]?.trim() || m.name;
+        const groupId = groupSame && n > 1 ? crypto.randomUUID() : null;
         for (let i = 0; i < n; i++) {
           payloads.push({
             encounterId: encounter.id,
@@ -147,6 +151,8 @@ export function EncounterBuilder({
             armorClass: m.armorClass,
             initiativeMod: m.initiativeMod,
             turnOrder: payloads.length,
+            groupId,
+            groupLabel: groupId ? base : null,
           });
         }
       }
@@ -304,12 +310,18 @@ export function EncounterBuilder({
 
       {/* Start bar */}
       <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
-        <Input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Encounter name (e.g. Ambush at the bridge)"
-          className="sm:max-w-xs"
-        />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Encounter name (e.g. Ambush at the bridge)"
+            className="sm:max-w-xs"
+          />
+          <label className="flex items-center gap-2 text-sm" title={t("builder.groupMonstersHint")}>
+            <Checkbox checked={groupSame} onCheckedChange={(v) => setGroupSame(v === true)} />
+            {t("builder.groupMonsters")}
+          </label>
+        </div>
         <Button onClick={start} disabled={starting}>
           <Swords className="size-4" />
           {starting ? "Starting…" : "Start this encounter"}

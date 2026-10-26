@@ -109,5 +109,13 @@
   "combat.legendaryPerRoundHint": "0 für keine. Die meisten legendären Kreaturen haben 3.",
   "combat.bossSettings": "Legendär & Hort",
   "combat.reaction": "Reaktion",
-  "combat.reactionHint": "Klicke, wenn die Reaktion genutzt wird. Sie kehrt zu Beginn des Zugs dieser Kreatur zurück."
+  "combat.reactionHint": "Klicke, wenn die Reaktion genutzt wird. Sie kehrt zu Beginn des Zugs dieser Kreatur zurück.",
+  "combat.groupInit": "Gruppeninitiative",
+  "combat.groupMod": "Initiativemodifikator der Gruppe",
+  "combat.groupSummary": "{up} stehen / {down} am Boden",
+  "combat.ungroup": "Gruppe auflösen – jedes Mitglied bekommt einen eigenen Zug",
+  "combat.addAsGroup": "Als Gruppe hinzufügen",
+  "combat.addAsGroupHint": "Eine Initiativezeile und ein Zug für das ganze Rudel. Aufklappen, um die TP jedes Mitglieds zu verfolgen.",
+  "builder.groupMonsters": "Gleiche Monster gruppieren",
+  "builder.groupMonstersHint": "Mehrere gleiche Kreaturen teilen sich eine Initiativezeile und einen Zug."
 }

@@ -511,6 +511,13 @@ export const combatParticipants = sqliteTable("combat_participants", {
   reactionAvailable: integer("reaction_available", { mode: "boolean" })
     .notNull()
     .default(true),
+  /**
+   * Minion groups: members share an id here (and one initiative), so the
+   * tracker shows them as a single "5× Goblin" row that takes one turn.
+   */
+  groupId: text("group_id"),
+  /** The group's display name — the creature name it was added under. */
+  groupLabel: text("group_label"),
 });
 
 /* -------------------------------------------------------------------------- */

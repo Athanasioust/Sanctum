@@ -317,6 +317,8 @@ export const participantCreateSchema = z.object({
   legendaryActionsUsed: z.number().int().min(0).max(10).optional().default(0),
   hasLairAction: z.boolean().optional().default(false),
   reactionAvailable: z.boolean().optional().default(true),
+  groupId: z.string().max(64).nullable().optional(),
+  groupLabel: z.string().max(120).nullable().optional(),
 });
 export const participantUpdateSchema = participantCreateSchema
   .partial()

@@ -12,6 +12,7 @@ import {
 import { PlayerScreen, type ScreenState } from "@/components/screen/player-screen";
 import { I18nProvider } from "@/components/i18n/i18n-provider";
 import { getLocale } from "@/lib/i18n/server";
+import { keepGroupsTogether } from "@/lib/combat-turns";
 
 export const dynamic = "force-dynamic";
 
@@ -72,7 +73,7 @@ async function loadScreenState(campaignId: number): Promise<ScreenState> {
     round: encounter?.roundNumber ?? 1,
     turnIndex: encounter?.currentTurnIndex ?? 0,
     lairActive: encounter?.lairTurnActive ?? false,
-    participants,
+    participants: keepGroupsTogether(participants),
     party,
     handouts: revealedHandouts,
     battleMap: revealedMaps[0] ?? null,

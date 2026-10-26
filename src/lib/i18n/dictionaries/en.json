@@ -109,5 +109,13 @@
   "combat.legendaryPerRoundHint": "0 for none. Most legendary creatures have 3.",
   "combat.bossSettings": "Legendary & lair",
   "combat.reaction": "Reaction",
-  "combat.reactionHint": "Click when the reaction is used. It comes back at the start of this creature's turn."
+  "combat.reactionHint": "Click when the reaction is used. It comes back at the start of this creature's turn.",
+  "combat.groupInit": "Group initiative",
+  "combat.groupMod": "Group initiative modifier",
+  "combat.groupSummary": "{up} up / {down} down",
+  "combat.ungroup": "Ungroup — give each member its own turn",
+  "combat.addAsGroup": "Add as a group",
+  "combat.addAsGroupHint": "One initiative row and one turn for the whole pack. Expand it to track each member's HP.",
+  "builder.groupMonsters": "Group identical monsters",
+  "builder.groupMonstersHint": "Several of the same creature share one initiative row and one turn."
 }
