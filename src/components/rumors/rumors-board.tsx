@@ -25,6 +25,12 @@ import {
 import { Field } from "@/components/shared/form";
 import { EmptyState } from "@/components/shared/empty-state";
 import { api } from "@/lib/client";
+import {
+  BulkToolbar,
+  SelectOverlay,
+  useBulkDelete,
+  useBulkSelection,
+} from "@/components/shared/bulk-select";
 import type { Rumor, Npc, Location } from "@/db/schema";
 
 type FormState = {
@@ -181,6 +187,13 @@ export function RumorsBoard({
   }
 
   const visible = rumors.filter((r) => !hideFollowedUp || !r.isFollowedUp);
+  const selection = useBulkSelection(visible.map((r) => r.id));
+  const deleteMany = useBulkDelete<Rumor>({
+    entity: "rumors",
+    campaignId,
+    onDeleted: (ids) => setRumors((prev) => prev.filter((x) => !ids.includes(x.id))),
+    onRestored: (rows) => setRumors((prev) => [...rows, ...prev]),
+  });
 
   const npcMap = Object.fromEntries(npcs.map((n) => [n.id, n.name]));
   const locationMap = Object.fromEntries(locations.map((l) => [l.id, l.name]));
@@ -197,17 +210,20 @@ export function RumorsBoard({
           />
           Hide followed-up
         </label>
-        <RumorDialog
-          campaignId={campaignId}
-          npcs={npcs}
-          locations={locations}
-          onSaved={upsert}
-          trigger={
-            <Button size="sm">
-              <Plus className="size-4" /> Add Rumor
-            </Button>
-          }
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <BulkToolbar selection={selection} total={visible.length} onDelete={deleteMany} />
+          <RumorDialog
+            campaignId={campaignId}
+            npcs={npcs}
+            locations={locations}
+            onSaved={upsert}
+            trigger={
+              <Button size="sm">
+                <Plus className="size-4" /> Add Rumor
+              </Button>
+            }
+          />
+        </div>
       </div>
 
       {visible.length === 0 ? (
@@ -224,14 +240,16 @@ export function RumorsBoard({
             return (
               <li
                 key={rumor.id}
-                className={`rounded-xl border bg-card p-4 transition-colors ${
+                className={`relative rounded-xl border bg-card p-4 transition-colors ${
                   rumor.isFollowedUp ? "border-border opacity-60" : "border-border"
                 }`}
               >
+                <SelectOverlay selection={selection} id={rumor.id} label={rumor.text.slice(0, 60)} />
                 <div className="flex items-start gap-3">
                   <button
                     onClick={() => toggleFollowedUp(rumor)}
                     title={rumor.isFollowedUp ? "Mark as open" : "Mark as followed up"}
+                    aria-label={rumor.isFollowedUp ? "Mark as open" : "Mark as followed up"}
                     className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border transition-colors ${
                       rumor.isFollowedUp
                         ? "border-green-500 bg-green-500/20 text-green-400"
@@ -272,7 +290,7 @@ export function RumorsBoard({
                       rumorId={rumor.id}
                       onSaved={upsert}
                       trigger={
-                        <Button variant="ghost" size="icon" className="size-7">
+                        <Button variant="ghost" size="icon" className="size-7" aria-label="Edit rumor">
                           <Pencil className="size-3.5" />
                         </Button>
                       }
@@ -282,6 +300,7 @@ export function RumorsBoard({
                       size="icon"
                       className="size-7 text-destructive hover:text-destructive"
                       onClick={() => remove(rumor)}
+                      aria-label="Delete rumor"
                     >
                       <Trash2 className="size-3.5" />
                     </Button>

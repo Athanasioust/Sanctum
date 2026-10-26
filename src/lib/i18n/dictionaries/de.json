@@ -192,5 +192,16 @@
   "popout.hint": "In einem eigenen Fenster öffnen, z. B. auf einem zweiten Bildschirm",
   "popout.soundHandoff": "Die Wiedergabe läuft jetzt im abgedockten Fenster",
   "shortcuts.title": "Tastenkürzel",
-  "shortcuts.hint": "Tastenkürzel greifen nie, während du in ein Feld tippst oder eine Schaltfläche fokussiert ist. Sie stehen auch in der Regelreferenz."
+  "shortcuts.hint": "Tastenkürzel greifen nie, während du in ein Feld tippst oder eine Schaltfläche fokussiert ist. Sie stehen auch in der Regelreferenz.",
+  "bulk.select": "Auswählen",
+  "bulk.selectAll": "Alle",
+  "bulk.count": "{count} ausgewählt",
+  "bulk.toolbar": "Sammelaktionen",
+  "bulk.confirmTitle": "{count} Einträge löschen?",
+  "bulk.confirmBody": "Du kannst das einige Minuten lang über die Benachrichtigung rückgängig machen.",
+  "bulk.deleted": "{count} gelöscht",
+  "bulk.restored": "{count} wiederhergestellt",
+  "bulk.undo": "Rückgängig",
+  "bulk.undoFailed": "Rückgängig machen fehlgeschlagen",
+  "bulk.failed": "Löschen fehlgeschlagen"
 }

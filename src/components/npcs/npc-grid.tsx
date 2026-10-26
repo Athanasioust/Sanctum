@@ -10,6 +10,12 @@ import { Button } from "@/components/ui/button";
 import { HpBar } from "@/components/shared/hp-bar";
 import { EntityActions } from "@/components/shared/entity-actions";
 import { api } from "@/lib/client";
+import {
+  BulkToolbar,
+  SelectOverlay,
+  useBulkDelete,
+  useBulkSelection,
+} from "@/components/shared/bulk-select";
 import { cn } from "@/lib/utils";
 import type { Encounter, Npc } from "@/db/schema";
 
@@ -32,9 +38,12 @@ export function NpcGrid({
 }) {
   const [filter, setFilter] = useState<"all" | "npc" | "monster">("all");
   const filtered = filter === "all" ? npcs : npcs.filter((n) => n.type === filter);
+  const selection = useBulkSelection(filtered.map((n) => n.id));
+  const deleteMany = useBulkDelete({ entity: "npcs", campaignId });
 
   return (
     <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
       <div className="inline-flex rounded-lg border border-border bg-card p-1">
         {FILTERS.map((f) => (
           <button
@@ -48,6 +57,8 @@ export function NpcGrid({
             {f.label}
           </button>
         ))}
+      </div>
+        <BulkToolbar selection={selection} total={filtered.length} onDelete={deleteMany} />
       </div>
 
       {filtered.length === 0 ? (
@@ -86,13 +97,16 @@ export function NpcGrid({
               {basePath === "bestiary" ? (
                 <BestiaryCardActions npc={n} campaignId={campaignId} />
               ) : null}
-              <div className="absolute right-3 top-3 opacity-0 transition-opacity group-hover:opacity-100">
-                <EntityActions
-                  editHref={`/campaign/${campaignId}/${basePath}/${n.id}/edit`}
-                  deleteEndpoint={`/api/npcs/${n.id}`}
-                  entityLabel={entityLabel}
-                />
-              </div>
+              {selection.selecting ? null : (
+                <div className="absolute right-3 top-3 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                  <EntityActions
+                    editHref={`/campaign/${campaignId}/${basePath}/${n.id}/edit`}
+                    deleteEndpoint={`/api/npcs/${n.id}`}
+                    entityLabel={entityLabel}
+                  />
+                </div>
+              )}
+              <SelectOverlay selection={selection} id={n.id} label={n.name} />
             </div>
           ))}
         </div>

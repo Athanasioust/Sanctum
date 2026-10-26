@@ -18,6 +18,12 @@ import { Field } from "@/components/shared/form";
 import { DeleteIconButton } from "@/components/shared/delete-icon-button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { api } from "@/lib/client";
+import {
+  BulkToolbar,
+  SelectOverlay,
+  useBulkDelete,
+  useBulkSelection,
+} from "@/components/shared/bulk-select";
 import { NOTE_COLORS } from "@/lib/constants";
 import { noteColorClasses } from "@/lib/ui";
 import { renderMarkdown } from "@/lib/markdown";
@@ -57,6 +63,14 @@ export function NotesBoard({
     }
   }
 
+  const selection = useBulkSelection(sorted.map((n) => n.id));
+  const deleteMany = useBulkDelete<Note>({
+    entity: "notes",
+    campaignId,
+    onDeleted: (ids) => setNotes((prev) => prev.filter((x) => !ids.includes(x.id))),
+    onRestored: (rows) => setNotes((prev) => [...rows, ...prev]),
+  });
+
   async function remove(id: number) {
     setNotes((prev) => prev.filter((n) => n.id !== id));
     try {
@@ -69,7 +83,8 @@ export function NotesBoard({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <BulkToolbar selection={selection} total={sorted.length} onDelete={deleteMany} />
         <NoteDialog campaignId={campaignId} onSaved={upsert} />
       </div>
 
@@ -85,10 +100,11 @@ export function NotesBoard({
             <div
               key={note.id}
               className={cn(
-                "group break-inside-avoid rounded-xl border p-4",
+                "group relative break-inside-avoid rounded-xl border p-4",
                 noteColorClasses(note.color),
               )}
             >
+              <SelectOverlay selection={selection} id={note.id} label={note.title || "Untitled note"} />
               <div className="flex items-start justify-between gap-2">
                 <h3 className="font-heading font-semibold">
                   {note.title || "Untitled note"}

@@ -25,6 +25,13 @@ import {
 import { Field } from "@/components/shared/form";
 import { EmptyState } from "@/components/shared/empty-state";
 import { api } from "@/lib/client";
+import {
+  BulkToolbar,
+  SelectOverlay,
+  useBulkDelete,
+  useBulkSelection,
+  type BulkSelection,
+} from "@/components/shared/bulk-select";
 import { ListTodo } from "lucide-react";
 import type { Quest } from "@/db/schema";
 import type { SubObjective } from "@/db/schema";
@@ -160,11 +167,13 @@ function QuestCard({
   campaignId,
   onUpdated,
   onDeleted,
+  selection,
 }: {
   quest: Quest;
   campaignId: number;
   onUpdated: (q: Quest) => void;
   onDeleted: (id: number) => void;
+  selection: BulkSelection;
 }) {
   const [expanded, setExpanded] = useState(false);
   const subObjectives = (quest.subObjectives ?? []) as SubObjective[];
@@ -193,7 +202,8 @@ function QuestCard({
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card">
+    <div className="relative rounded-xl border border-border bg-card">
+      <SelectOverlay selection={selection} id={quest.id} label={quest.title} />
       <div className="flex items-start gap-3 p-4">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -216,16 +226,29 @@ function QuestCard({
             questId={quest.id}
             onSaved={onUpdated}
             trigger={
-              <Button variant="ghost" size="icon" className="size-8">
+              <Button variant="ghost" size="icon" className="size-8" aria-label={`Edit ${quest.title}`}>
                 <Pencil className="size-3.5" />
               </Button>
             }
           />
-          <Button variant="ghost" size="icon" className="size-8 text-destructive hover:text-destructive" onClick={remove}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8 text-destructive hover:text-destructive"
+            onClick={remove}
+            aria-label={`Delete ${quest.title}`}
+          >
             <Trash2 className="size-3.5" />
           </Button>
           {subObjectives.length > 0 && (
-            <Button variant="ghost" size="icon" className="size-8" onClick={() => setExpanded((v) => !v)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              onClick={() => setExpanded((v) => !v)}
+              aria-expanded={expanded}
+              aria-label="Objectives"
+            >
               {expanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
             </Button>
           )}
@@ -281,6 +304,13 @@ export function QuestsBoard({
   const visible = quests
     .filter((q) => filter === "all" || q.status === filter)
     .sort((a, b) => STATUS_ORDER.indexOf(a.status as QuestStatus) - STATUS_ORDER.indexOf(b.status as QuestStatus));
+  const selection = useBulkSelection(visible.map((q) => q.id));
+  const deleteMany = useBulkDelete<Quest>({
+    entity: "quests",
+    campaignId,
+    onDeleted: (ids) => setQuests((prev) => prev.filter((x) => !ids.includes(x.id))),
+    onRestored: (rows) => setQuests((prev) => [...rows, ...prev]),
+  });
 
   return (
     <div className="space-y-4">
@@ -300,15 +330,18 @@ export function QuestsBoard({
             </button>
           ))}
         </div>
-        <QuestDialog
-          campaignId={campaignId}
-          onSaved={upsert}
-          trigger={
-            <Button size="sm">
-              <Plus className="size-4" /> New Quest
-            </Button>
-          }
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <BulkToolbar selection={selection} total={visible.length} onDelete={deleteMany} />
+          <QuestDialog
+            campaignId={campaignId}
+            onSaved={upsert}
+            trigger={
+              <Button size="sm">
+                <Plus className="size-4" /> New Quest
+              </Button>
+            }
+          />
+        </div>
       </div>
 
       {visible.length === 0 ? (
@@ -326,6 +359,7 @@ export function QuestsBoard({
               campaignId={campaignId}
               onUpdated={upsert}
               onDeleted={(id) => setQuests((prev) => prev.filter((x) => x.id !== id))}
+              selection={selection}
             />
           ))}
         </div>

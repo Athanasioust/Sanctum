@@ -25,6 +25,12 @@ import {
 import { Field } from "@/components/shared/form";
 import { EmptyState } from "@/components/shared/empty-state";
 import { api } from "@/lib/client";
+import {
+  BulkToolbar,
+  SelectOverlay,
+  useBulkDelete,
+  useBulkSelection,
+} from "@/components/shared/bulk-select";
 import { rarityClasses } from "@/lib/ui";
 import type { MagicItem, Character } from "@/db/schema";
 
@@ -248,6 +254,13 @@ export function MagicItemsList({
   const visible = items.filter(
     (i) => !search || i.name.toLowerCase().includes(search.toLowerCase()),
   );
+  const selection = useBulkSelection(visible.map((i) => i.id));
+  const deleteMany = useBulkDelete<MagicItem>({
+    entity: "magicItems",
+    campaignId,
+    onDeleted: (ids) => setItems((prev) => prev.filter((x) => !ids.includes(x.id))),
+    onRestored: (rows) => setItems((prev) => [...rows, ...prev]),
+  });
 
   return (
     <div className="space-y-4">
@@ -258,16 +271,19 @@ export function MagicItemsList({
           placeholder="Search items…"
           className="sm:max-w-xs"
         />
-        <MagicItemDialog
-          campaignId={campaignId}
-          characters={characters}
-          onSaved={upsert}
-          trigger={
-            <Button size="sm">
-              <Plus className="size-4" /> New Item
-            </Button>
-          }
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <BulkToolbar selection={selection} total={visible.length} onDelete={deleteMany} />
+          <MagicItemDialog
+            campaignId={campaignId}
+            characters={characters}
+            onSaved={upsert}
+            trigger={
+              <Button size="sm">
+                <Plus className="size-4" /> New Item
+              </Button>
+            }
+          />
+        </div>
       </div>
 
       {visible.length === 0 ? (
@@ -281,7 +297,8 @@ export function MagicItemsList({
           {visible.map((item) => {
             const holder = characters.find((c) => c.id === item.characterId);
             return (
-              <div key={item.id} className="rounded-xl border border-border bg-card p-4">
+              <div key={item.id} className="relative rounded-xl border border-border bg-card p-4">
+                <SelectOverlay selection={selection} id={item.id} label={item.name} />
                 <div className="mb-2 flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <h3 className="truncate font-semibold">{item.name}</h3>
@@ -310,7 +327,7 @@ export function MagicItemsList({
                       itemId={item.id}
                       onSaved={upsert}
                       trigger={
-                        <Button variant="ghost" size="icon" className="size-7">
+                        <Button variant="ghost" size="icon" className="size-7" aria-label={`Edit ${item.name}`}>
                           <Pencil className="size-3.5" />
                         </Button>
                       }
@@ -320,6 +337,7 @@ export function MagicItemsList({
                       size="icon"
                       className="size-7 text-destructive hover:text-destructive"
                       onClick={() => remove(item)}
+                      aria-label={`Delete ${item.name}`}
                     >
                       <Trash2 className="size-3.5" />
                     </Button>

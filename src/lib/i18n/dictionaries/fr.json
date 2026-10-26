@@ -192,5 +192,16 @@
   "popout.hint": "Ouvrir dans sa propre fenêtre, par ex. sur un second écran",
   "popout.soundHandoff": "La lecture passe dans la fenêtre détachée",
   "shortcuts.title": "Raccourcis clavier",
-  "shortcuts.hint": "Les raccourcis ne se déclenchent jamais pendant la saisie dans un champ ou quand un bouton a le focus. Ils figurent aussi dans la référence des règles."
+  "shortcuts.hint": "Les raccourcis ne se déclenchent jamais pendant la saisie dans un champ ou quand un bouton a le focus. Ils figurent aussi dans la référence des règles.",
+  "bulk.select": "Sélectionner",
+  "bulk.selectAll": "Tout",
+  "bulk.count": "{count} sélectionné(s)",
+  "bulk.toolbar": "Actions groupées",
+  "bulk.confirmTitle": "Supprimer {count} élément(s) ?",
+  "bulk.confirmBody": "Vous pourrez annuler depuis la notification pendant quelques minutes.",
+  "bulk.deleted": "{count} supprimé(s)",
+  "bulk.restored": "{count} restauré(s)",
+  "bulk.undo": "Annuler",
+  "bulk.undoFailed": "Impossible d'annuler",
+  "bulk.failed": "Suppression impossible"
 }

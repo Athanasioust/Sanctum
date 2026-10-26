@@ -192,5 +192,16 @@
   "popout.hint": "Open in its own window, e.g. on a second monitor",
   "popout.soundHandoff": "Playback moved to the pop-out window",
   "shortcuts.title": "Keyboard shortcuts",
-  "shortcuts.hint": "Shortcuts never fire while you're typing in a field or have a button focused, and they're also listed in the rules reference."
+  "shortcuts.hint": "Shortcuts never fire while you're typing in a field or have a button focused, and they're also listed in the rules reference.",
+  "bulk.select": "Select",
+  "bulk.selectAll": "All",
+  "bulk.count": "{count} selected",
+  "bulk.toolbar": "Bulk actions",
+  "bulk.confirmTitle": "Delete {count} item(s)?",
+  "bulk.confirmBody": "You can undo this from the notification for a few minutes.",
+  "bulk.deleted": "Deleted {count}",
+  "bulk.restored": "Restored {count}",
+  "bulk.undo": "Undo",
+  "bulk.undoFailed": "Couldn't undo",
+  "bulk.failed": "Couldn't delete"
 }
