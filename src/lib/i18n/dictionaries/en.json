@@ -141,5 +141,19 @@
   "portrait.replace": "Replace portrait",
   "portrait.remove": "Remove portrait",
   "portrait.saved": "Portrait saved",
-  "portrait.failed": "Couldn't save the portrait"
+  "portrait.failed": "Couldn't save the portrait",
+  "aoe.title": "Apply area damage",
+  "aoe.noTargets": "No combatant tokens on this map yet. Add combatants from the linked encounter to damage them here.",
+  "aoe.effect": "Effect",
+  "aoe.defaultEffect": "Area effect",
+  "aoe.damage": "Damage",
+  "aoe.type": "Damage type",
+  "aoe.saveForHalf": "Save for half",
+  "aoe.caught": "Caught in it",
+  "aoe.allFailed": "All failed",
+  "aoe.allSaved": "All saved",
+  "aoe.saved": "saved",
+  "aoe.failedSave": "failed",
+  "aoe.apply": "Apply damage",
+  "aoe.failed": "Couldn't apply the damage to everyone — check the tracker"
 }

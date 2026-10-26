@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import {
   ArrowUpRight,
   Circle as CircleIcon,
@@ -46,7 +47,9 @@ import {
   paintFog,
   resolveTokenImages,
   revealAllFog,
+  tokensInTemplate,
 } from "@/lib/battle-map";
+import { AoeDamagePanel, type AoeSelection } from "@/components/combat/aoe-damage-panel";
 import { conditionNames } from "@/lib/conditions";
 import { cn } from "@/lib/utils";
 import type { MapTool, TokenStatus } from "@/components/combat/battle-map-canvas";
@@ -108,6 +111,7 @@ export function BattleMap({
   maps: BattleMapRow[];
   encounters: Encounter[];
 }) {
+  const router = useRouter();
   const [maps, setMaps] = useState(initialMaps);
   const [activeId, setActiveId] = useState<number | null>(initialMaps[0]?.id ?? null);
   const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
@@ -119,6 +123,11 @@ export function BattleMap({
   const [uploading, setUploading] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [fetched, setFetched] = useState<EncounterWithParts | null>(null);
+  // Bumped after area damage so the encounter (and token HP) reloads at once.
+  const [reloadKey, setReloadKey] = useState(0);
+  // The DM's edits to who an AoE template catches, tied to the exact template
+  // position they were made for; moving or resizing it starts a fresh guess.
+  const [aoeEdit, setAoeEdit] = useState<(AoeSelection & { key: string }) | null>(null);
 
   const map = maps.find((m) => m.id === activeId) ?? null;
 
@@ -189,7 +198,7 @@ export function BattleMap({
       cancelled = true;
       clearInterval(timer);
     };
-  }, [map?.encounterId]);
+  }, [map?.encounterId, reloadKey]);
 
   const statuses = useMemo(() => {
     const result: Record<string, TokenStatus> = {};
@@ -437,6 +446,33 @@ export function BattleMap({
   const isTemplate =
     selectedAnnotation !== null &&
     ["circle", "cone", "line", "cube"].includes(selectedAnnotation.kind);
+
+  // Who the selected template catches: the DM's own picks for this exact
+  // placement, else every combatant token whose centre is inside it.
+  const aoeKey = selectedAnnotation
+    ? [
+        selectedAnnotation.id,
+        selectedAnnotation.x,
+        selectedAnnotation.y,
+        selectedAnnotation.sizeFt,
+        selectedAnnotation.rotation,
+        selectedAnnotation.widthFt,
+      ].join(":")
+    : "";
+  const aoeSelection: AoeSelection | null =
+    map && live && isTemplate && selectedAnnotation
+      ? aoeEdit?.key === aoeKey
+        ? aoeEdit
+        : {
+            affected: tokensInTemplate(selectedAnnotation, map.tokens, map.feetPerCell).filter(
+              (id) => {
+                const token = map.tokens.find((t) => t.id === id);
+                return live.participants.some((p) => p.id === token?.participantId);
+              },
+            ),
+            saved: [],
+          }
+      : null;
 
   if (maps.length === 0) {
     return (
@@ -724,6 +760,7 @@ export function BattleMap({
               }}
               statuses={statuses}
               tokenImages={tokenImages}
+              highlightTokenIds={aoeSelection?.affected}
               tool={tool}
               templateSizeFt={templateSizeFt}
               templateColor={templateColor}
@@ -912,6 +949,27 @@ export function BattleMap({
                         </Field>
                       )}
                     </>
+                  )}
+                  {isTemplate && live && aoeSelection && (
+                    <AoeDamagePanel
+                      tokens={map.tokens}
+                      participants={live.participants}
+                      encounterId={live.id}
+                      round={live.roundNumber}
+                      selection={aoeSelection}
+                      onSelectionChange={(next) => setAoeEdit({ ...next, key: aoeKey })}
+                      onApplied={() => {
+                        setAoeEdit(null);
+                        setReloadKey((k) => k + 1);
+                        router.refresh();
+                      }}
+                    />
+                  )}
+                  {isTemplate && !live && (
+                    <p className="border-t border-border pt-3 text-xs text-muted-foreground">
+                      Link an encounter to this map to apply this area&apos;s damage to the
+                      combatants under it.
+                    </p>
                   )}
                   <Field label="Colour">
                     <div className="flex flex-wrap gap-2">

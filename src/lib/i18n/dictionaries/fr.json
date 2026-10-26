@@ -141,5 +141,19 @@
   "portrait.replace": "Remplacer le portrait",
   "portrait.remove": "Retirer le portrait",
   "portrait.saved": "Portrait enregistré",
-  "portrait.failed": "Impossible d'enregistrer le portrait"
+  "portrait.failed": "Impossible d'enregistrer le portrait",
+  "aoe.title": "Appliquer les dégâts de zone",
+  "aoe.noTargets": "Aucun jeton de combattant sur cette carte. Ajoutez les combattants de la rencontre liée pour leur infliger des dégâts ici.",
+  "aoe.effect": "Effet",
+  "aoe.defaultEffect": "Effet de zone",
+  "aoe.damage": "Dégâts",
+  "aoe.type": "Type de dégâts",
+  "aoe.saveForHalf": "Moitié en cas de sauvegarde",
+  "aoe.caught": "Touchés",
+  "aoe.allFailed": "Tous ratés",
+  "aoe.allSaved": "Tous réussis",
+  "aoe.saved": "réussi",
+  "aoe.failedSave": "raté",
+  "aoe.apply": "Appliquer les dégâts",
+  "aoe.failed": "Impossible d'appliquer les dégâts à tous — vérifiez le suivi"
 }

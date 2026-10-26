@@ -141,5 +141,19 @@
   "portrait.replace": "Porträt ersetzen",
   "portrait.remove": "Porträt entfernen",
   "portrait.saved": "Porträt gespeichert",
-  "portrait.failed": "Porträt konnte nicht gespeichert werden"
+  "portrait.failed": "Porträt konnte nicht gespeichert werden",
+  "aoe.title": "Flächenschaden anwenden",
+  "aoe.noTargets": "Noch keine Kampfteilnehmer-Marker auf dieser Karte. Füge Teilnehmer aus der verknüpften Begegnung hinzu, um ihnen hier Schaden zuzufügen.",
+  "aoe.effect": "Effekt",
+  "aoe.defaultEffect": "Flächeneffekt",
+  "aoe.damage": "Schaden",
+  "aoe.type": "Schadensart",
+  "aoe.saveForHalf": "Rettungswurf halbiert",
+  "aoe.caught": "Betroffen",
+  "aoe.allFailed": "Alle misslungen",
+  "aoe.allSaved": "Alle geschafft",
+  "aoe.saved": "geschafft",
+  "aoe.failedSave": "misslungen",
+  "aoe.apply": "Schaden anwenden",
+  "aoe.failed": "Schaden konnte nicht bei allen angewendet werden – prüfe den Tracker"
 }

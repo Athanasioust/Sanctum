@@ -101,6 +101,7 @@ import {
 } from "@/lib/combat-turns";
 import { useT } from "@/components/i18n/i18n-provider";
 import { portraitKey } from "@/lib/portrait-key";
+import { applyHpDelta, concentrationDc } from "@/lib/combat-hp";
 import type { CombatParticipant, CombatLogEntry, Encounter } from "@/db/schema";
 
 export type Addable = {
@@ -291,24 +292,12 @@ export function CombatTracker({
     const p = partsRef.current.find((x) => x.id === id);
     if (!p) return;
     markHpBaseline(id);
-    let hpCurrent = p.hpCurrent;
-    let hpTemp = p.hpTemp;
-    if (delta < 0) {
-      let dmg = -delta;
-      if (hpTemp > 0) {
-        const absorbed = Math.min(hpTemp, dmg);
-        hpTemp -= absorbed;
-        dmg -= absorbed;
-      }
-      hpCurrent = Math.max(0, hpCurrent - dmg);
-    } else {
-      hpCurrent = Math.min(p.hpMax, hpCurrent + delta);
-    }
+    const { hpCurrent, hpTemp } = applyHpDelta(p, delta);
     if (hpCurrent === p.hpCurrent && hpTemp === p.hpTemp) return;
     // Concentration check warning
     if (delta < 0 && p.concentrationSpell) {
       const dmgDealt = p.hpCurrent - hpCurrent + (p.hpTemp - hpTemp);
-      const dc = Math.max(10, Math.floor(dmgDealt / 2));
+      const dc = concentrationDc(dmgDealt);
       toast.warning(
         `${p.name} is concentrating on ${p.concentrationSpell}! CON save DC ${dc}`,
         { duration: 6000 },

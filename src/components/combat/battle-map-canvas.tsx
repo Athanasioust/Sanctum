@@ -100,6 +100,7 @@ export default function BattleMapCanvas({
   map,
   statuses,
   tokenImages = {},
+  highlightTokenIds,
   tool = "select",
   templateSizeFt = 20,
   templateColor = "#f97316",
@@ -120,6 +121,8 @@ export default function BattleMapCanvas({
   statuses: Record<string, TokenStatus>;
   /** Art per token id — the token's own image or its combatant's portrait. */
   tokenImages?: Record<string, string>;
+  /** Tokens to ring as "caught" — the targets of a selected AoE template. */
+  highlightTokenIds?: string[];
   tool?: MapTool;
   /** Size in feet for the next AoE template placed. */
   templateSizeFt?: number;
@@ -345,6 +348,7 @@ export default function BattleMapCanvas({
               key={token.id}
               token={token}
               imageUrl={tokenImages[token.id]}
+              highlighted={highlightTokenIds?.includes(token.id) ?? false}
               status={statuses[token.id]}
               gridSize={gridSize}
               gridCols={gridCols}
@@ -625,6 +629,7 @@ function AnnotationShape({
 function TokenShape({
   token,
   imageUrl,
+  highlighted,
   status,
   gridSize,
   gridCols,
@@ -636,6 +641,7 @@ function TokenShape({
 }: {
   token: BattleToken;
   imageUrl?: string;
+  highlighted: boolean;
   status?: TokenStatus;
   gridSize: number;
   gridCols: number;
@@ -680,6 +686,20 @@ function TokenShape({
       }}
       opacity={token.hidden ? 0.45 : 1}
     >
+      {highlighted && (
+        <Circle
+          x={px / 2}
+          y={px / 2}
+          radius={radius + 4}
+          stroke="#f97316"
+          strokeWidth={3}
+          dash={[5, 3]}
+          shadowColor="#f97316"
+          shadowBlur={8}
+          listening={false}
+        />
+      )}
+
       {/* The disc is the hit area, and what shows while art is still loading. */}
       <Circle
         x={px / 2}

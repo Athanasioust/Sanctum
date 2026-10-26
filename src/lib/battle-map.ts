@@ -272,3 +272,54 @@ export function resolveTokenImages(
   }
   return out;
 }
+
+/* -------------------------------------------------------------------------- */
+/*  What a template covers                                                     */
+/* -------------------------------------------------------------------------- */
+
+const TEMPLATE_KINDS = new Set<MapAnnotation["kind"]>(["circle", "cone", "line", "cube"]);
+
+export function isAoeTemplate(annotation: MapAnnotation): boolean {
+  return TEMPLATE_KINDS.has(annotation.kind);
+}
+
+/** Ray-casting point-in-polygon over a flat [x1,y1,x2,y2,…] list. */
+function pointInPolygon(x: number, y: number, flat: number[]): boolean {
+  let inside = false;
+  const n = flat.length / 2;
+  for (let i = 0, j = n - 1; i < n; j = i++) {
+    const xi = flat[i * 2];
+    const yi = flat[i * 2 + 1];
+    const xj = flat[j * 2];
+    const yj = flat[j * 2 + 1];
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+/**
+ * Ids of the tokens whose centre sits inside an AoE template. This is a
+ * starting guess for "who's caught in the fireball" — the DM confirms or
+ * changes it — so a token straddling the edge is judged by its centre alone.
+ */
+export function tokensInTemplate(
+  annotation: MapAnnotation,
+  tokens: BattleToken[],
+  feetPerCell: number,
+): string[] {
+  if (!isAoeTemplate(annotation)) return [];
+  const hits: string[] = [];
+  const polygon = annotation.kind === "circle" ? null : aoePoints(annotation, feetPerCell);
+  const radius = aoeRadiusCells(annotation, feetPerCell);
+  for (const token of tokens) {
+    const half = Math.max(1, token.sizeCells) / 2;
+    // Relative to the template's anchor, which its geometry is built around.
+    const cx = token.x + half - annotation.x;
+    const cy = token.y + half - annotation.y;
+    const inside = polygon
+      ? pointInPolygon(cx, cy, polygon)
+      : Math.hypot(cx, cy) <= radius + 1e-9;
+    if (inside) hits.push(token.id);
+  }
+  return hits;
+}
