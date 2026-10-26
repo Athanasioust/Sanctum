@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { Grid3x3, Monitor } from "lucide-react";
 import Link from "next/link";
 import { db } from "@/db";
@@ -25,7 +25,7 @@ export default async function BattleMapPage({
     db
       .select()
       .from(encounters)
-      .where(eq(encounters.campaignId, campaignId))
+      .where(and(eq(encounters.campaignId, campaignId), eq(encounters.isTemplate, false)))
       .orderBy(desc(encounters.createdAt)),
   ]);
 

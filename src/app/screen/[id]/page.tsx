@@ -57,7 +57,13 @@ async function loadScreenState(campaignId: number): Promise<ScreenState> {
     db
       .select()
       .from(encounters)
-      .where(and(eq(encounters.campaignId, campaignId), eq(encounters.status, "active")))
+      .where(
+        and(
+          eq(encounters.campaignId, campaignId),
+          eq(encounters.status, "active"),
+          eq(encounters.isTemplate, false),
+        ),
+      )
       .orderBy(desc(encounters.createdAt))
       .limit(1),
   ]);

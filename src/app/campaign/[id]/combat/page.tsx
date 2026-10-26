@@ -16,6 +16,7 @@ import { CombatTracker, type Addable } from "@/components/combat/combat-tracker"
 import {
   NewEncounterButton,
   PastEncounters,
+  StartSavedEncounterButton,
 } from "@/components/combat/encounter-controls";
 import { abilityModifier } from "@/lib/dnd";
 import { crToXp } from "@/lib/encounter";
@@ -36,8 +37,10 @@ export default async function CombatPage({
     .where(eq(encounters.campaignId, campaignId))
     .orderBy(desc(encounters.createdAt));
 
-  const active = allEncounters.find((e) => e.status === "active");
-  const past = allEncounters.filter((e) => e.status !== "active");
+  const saved = allEncounters.filter((e) => e.isTemplate);
+  const real = allEncounters.filter((e) => !e.isTemplate);
+  const active = real.find((e) => e.status === "active");
+  const past = real.filter((e) => e.status !== "active");
 
   const [chars, monsters, templates] = await Promise.all([
     db.select().from(characters).where(eq(characters.campaignId, campaignId)).orderBy(asc(characters.name)),
@@ -121,6 +124,7 @@ export default async function CombatPage({
                 <Monitor className="size-4" /> Player view
               </a>
             </Button>
+            {active ? null : <StartSavedEncounterButton saved={saved} />}
             {active ? null : <NewEncounterButton campaignId={campaignId} />}
           </div>
         }

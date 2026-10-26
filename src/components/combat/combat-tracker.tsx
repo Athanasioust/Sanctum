@@ -79,6 +79,7 @@ import { Field } from "@/components/shared/form";
 import { HpBar } from "@/components/shared/hp-bar";
 import { Slider } from "@/components/ui/slider";
 import { COMBAT_LOG_ADDED_EVENT, rollDice } from "@/components/dice/dice-roller";
+import { SaveEncounterButton } from "@/components/combat/encounter-controls";
 import { api } from "@/lib/client";
 import { CONDITIONS, EXHAUSTION_EFFECTS } from "@/lib/constants";
 import {
@@ -679,6 +680,7 @@ export function CombatTracker({
             bestiary={addableBestiary}
             onAdd={addParticipant}
           />
+          <SaveEncounterButton encounterId={encounter.id} name={encounter.name} />
           <Button variant="destructive" onClick={() => setEndOpen(true)}>
             <Flag className="size-4" /> End
           </Button>

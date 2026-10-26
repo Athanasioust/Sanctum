@@ -251,7 +251,7 @@ const ImportSchemas = {
   calendar: calendarEventCreateSchema.omit({ campaignId: true }),
   shop: shopCreateSchema.omit({ campaignId: true, locationId: true, ownerNpcId: true }),
   shopItem: shopItemCreateSchema.omit({ shopId: true }),
-  rollTable: rollTableCreateSchema.omit({ campaignId: true }),
+  rollTable: rollTableCreateSchema.omit({ campaignId: true, locationId: true }),
   session: sessionPrepCreateSchema.omit({
     campaignId: true,
     plannedEncounters: true,
@@ -453,8 +453,12 @@ export async function importCampaign(raw: unknown): Promise<number> {
     for (const { data } of validateRows(ImportSchemas.calendar, bundle.calendarEvents)) {
       tx.insert(calendarEvents).values({ ...data, campaignId } as never).run();
     }
-    for (const { data } of validateRows(ImportSchemas.rollTable, bundle.rollTables)) {
-      tx.insert(rollTables).values({ ...data, campaignId } as never).run();
+    for (const { raw: r, data } of validateRows(ImportSchemas.rollTable, bundle.rollTables)) {
+      tx.insert(rollTables).values({
+        ...data,
+        campaignId,
+        locationId: locMap.get(Number(r.locationId)) ?? null,
+      } as never).run();
     }
     for (const { raw: r, data } of validateRows(ImportSchemas.session, bundle.sessionPreps)) {
       tx.insert(sessionPreps).values({

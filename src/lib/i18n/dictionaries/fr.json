@@ -175,5 +175,17 @@
   "whatsNew.title": "Nouveautés de Sanctum {version}",
   "whatsNew.description": "Les points forts de cette mise à jour.",
   "whatsNew.dismiss": "Compris",
-  "whatsNew.button": "Nouveautés"
+  "whatsNew.button": "Nouveautés",
+  "randomEnc.title": "Rencontres aléatoires",
+  "randomEnc.none": "Pas encore de table de rencontres ici. Liez une de vos tables (Boutiques et butin → Tables aléatoires), puis lancez-la depuis cette page.",
+  "randomEnc.link": "Lier une table",
+  "randomEnc.unlink": "Délier de ce lieu",
+  "randomEnc.roll": "Lancer",
+  "randomEnc.empty": "Cette table n'a pas encore d'entrées",
+  "randomEnc.noCreatures": "Aucune créature de votre bestiaire n'est nommée dans ce résultat.",
+  "randomEnc.startFight": "Lancer le combat",
+  "randomEnc.addToFight": "Ajouter au combat en cours",
+  "randomEnc.started": "Rencontre lancée",
+  "randomEnc.added": "Ajouté au combat en cours",
+  "randomEnc.failed": "Un problème est survenu — réessayez"
 }

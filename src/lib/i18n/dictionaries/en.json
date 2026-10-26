@@ -175,5 +175,17 @@
   "whatsNew.title": "What's new in Sanctum {version}",
   "whatsNew.description": "Highlights from this update.",
   "whatsNew.dismiss": "Got it",
-  "whatsNew.button": "What's new"
+  "whatsNew.button": "What's new",
+  "randomEnc.title": "Random encounters",
+  "randomEnc.none": "No random-encounter table here yet. Link one of your roll tables (Shops & Loot → Roll Tables), then roll it from this page.",
+  "randomEnc.link": "Link a roll table",
+  "randomEnc.unlink": "Unlink from this location",
+  "randomEnc.roll": "Roll",
+  "randomEnc.empty": "That table has no entries yet",
+  "randomEnc.noCreatures": "No creatures from your bestiary are named in this result.",
+  "randomEnc.startFight": "Start this fight",
+  "randomEnc.addToFight": "Add to the current fight",
+  "randomEnc.started": "Encounter started",
+  "randomEnc.added": "Added to the current fight",
+  "randomEnc.failed": "Something went wrong — try again"
 }

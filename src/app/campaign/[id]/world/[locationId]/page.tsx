@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, or } from "drizzle-orm";
 import { ArrowLeft } from "lucide-react";
 import { db } from "@/db";
-import { locations } from "@/db/schema";
+import { characters, encounters, locations, npcs, rollTables } from "@/db/schema";
+import { LocationEncounters } from "@/components/world/location-encounters";
+import { abilityModifier } from "@/lib/dnd";
 import { PageContainer } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { EntityActions } from "@/components/shared/entity-actions";
@@ -26,12 +28,41 @@ export default async function LocationDetailPage({
     .where(eq(locations.id, Number(locationId)));
   if (!location || location.campaignId !== campaignId) notFound();
 
-  const [parent, all] = await Promise.all([
+  const [parent, all, tables, monsterRows, partyRows, active] = await Promise.all([
     location.parentLocationId
       ? db.select({ id: locations.id, name: locations.name }).from(locations).where(eq(locations.id, location.parentLocationId))
       : Promise.resolve([]),
     db.select({ id: locations.id, name: locations.name }).from(locations).where(eq(locations.campaignId, campaignId)).orderBy(asc(locations.name)),
+    db.select().from(rollTables).where(eq(rollTables.campaignId, campaignId)).orderBy(asc(rollTables.name)),
+    db
+      .select()
+      .from(npcs)
+      .where(and(eq(npcs.campaignId, campaignId), or(eq(npcs.type, "monster"), eq(npcs.isTemplate, true)))),
+    db.select().from(characters).where(eq(characters.campaignId, campaignId)).orderBy(asc(characters.name)),
+    db
+      .select({ id: encounters.id })
+      .from(encounters)
+      .where(
+        and(
+          eq(encounters.campaignId, campaignId),
+          eq(encounters.status, "active"),
+          eq(encounters.isTemplate, false),
+        ),
+      )
+      .limit(1),
   ]);
+  // Creatures a rolled result can name. A bestiary template and a placed copy
+  // can share a name; the template is the canonical stat block, so it wins.
+  const creatures = [...monsterRows]
+    .sort((a, b) => Number(b.isTemplate) - Number(a.isTemplate))
+    .filter((n, i, list) => n.hpMax > 0 && list.findIndex((m) => m.name === n.name) === i)
+    .map((n) => ({
+      id: n.id,
+      name: n.name,
+      hpMax: n.hpMax,
+      armorClass: n.armorClass,
+      initiativeMod: abilityModifier(n.dex),
+    }));
 
   return (
     <PageContainer>
@@ -81,6 +112,26 @@ export default async function LocationDetailPage({
           <p className="whitespace-pre-wrap text-sm text-muted-foreground">{location.notes}</p>
         </div>
       ) : null}
+
+      <LocationEncounters
+        campaignId={campaignId}
+        locationId={location.id}
+        locationName={location.name}
+        tables={tables.filter((t) => t.locationId === location.id)}
+        otherTables={tables
+          .filter((t) => t.locationId !== location.id)
+          .map((t) => ({ id: t.id, name: t.name }))}
+        creatures={creatures}
+        party={partyRows.map((c) => ({
+          id: c.id,
+          name: c.name,
+          hpMax: c.hpMax,
+          hpCurrent: c.hpCurrent,
+          armorClass: c.armorClass,
+          initiativeMod: c.initiativeBonus,
+        }))}
+        activeEncounterId={active[0]?.id ?? null}
+      />
 
       <h2 className="mb-3 font-heading text-lg font-semibold">Map</h2>
       <LocationMap location={location} />

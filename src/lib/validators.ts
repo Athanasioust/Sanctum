@@ -306,6 +306,7 @@ export const encounterCreateSchema = z.object({
   campaignId: z.number().int(),
   name: z.string().trim().min(1, "Name is required").max(120),
   status: z.enum(["active", "completed"]).optional().default("active"),
+  isTemplate: z.boolean().optional().default(false),
 });
 export const encounterUpdateSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
@@ -596,6 +597,7 @@ export const rollTableCreateSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(120),
   description: optionalString(5000),
   entries: z.array(rollTableEntrySchema).optional().default([]),
+  locationId: z.number().int().nullable().optional(),
 });
 export const rollTableUpdateSchema = rollTableCreateSchema.partial();
 

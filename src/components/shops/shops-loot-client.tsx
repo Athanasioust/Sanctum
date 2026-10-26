@@ -92,7 +92,7 @@ export function ShopsLootClient({
 
       <TabsContent value="tables">
         <div className="mb-4 flex justify-end">
-          <RollTableDialog campaignId={campaignId} onSaved={(t) => setTables((p) => [...p, t])} />
+          <RollTableDialog campaignId={campaignId} locations={locations} onSaved={(t) => setTables((p) => [...p, t])} />
         </div>
         {tables.length === 0 ? (
           <EmptyState icon={Dices} title="No roll tables" description="Build weighted random tables for loot, encounters, rumours and more." />
@@ -103,6 +103,7 @@ export function ShopsLootClient({
                 key={table.id}
                 table={table}
                 campaignId={campaignId}
+                locations={locations}
                 onUpdated={(t) => setTables((p) => p.map((x) => (x.id === t.id ? t : x)))}
                 onDeleted={(id) => setTables((p) => p.filter((x) => x.id !== id))}
               />
@@ -117,11 +118,13 @@ export function ShopsLootClient({
 function RollTableCard({
   table,
   campaignId,
+  locations,
   onUpdated,
   onDeleted,
 }: {
   table: RollTable;
   campaignId: number;
+  locations: Option[];
   onUpdated: (t: RollTable) => void;
   onDeleted: (id: number) => void;
 }) {
@@ -142,9 +145,18 @@ function RollTableCard({
         <div>
           <h3 className="font-heading text-lg font-semibold">{table.name}</h3>
           {table.description ? <p className="text-sm text-muted-foreground">{table.description}</p> : null}
+          {table.locationId ? (
+            <Link
+              href={`/campaign/${campaignId}/world/${table.locationId}`}
+              className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <MapPin className="size-3.5" />
+              {locations.find((l) => l.id === table.locationId)?.name ?? "Location"}
+            </Link>
+          ) : null}
         </div>
         <div className="flex items-center gap-1">
-          <RollTableDialog campaignId={campaignId} table={table} onSaved={onUpdated} trigger={<Button size="sm" variant="outline">Edit</Button>} />
+          <RollTableDialog campaignId={campaignId} table={table} locations={locations} onSaved={onUpdated} trigger={<Button size="sm" variant="outline">Edit</Button>} />
           <EntityActions deleteEndpoint={`/api/roll-tables/${table.id}`} entityLabel="Roll table" redirectTo={undefined} />
         </div>
       </div>
@@ -270,11 +282,13 @@ function ShopDialog({
 function RollTableDialog({
   campaignId,
   table,
+  locations,
   onSaved,
   trigger,
 }: {
   campaignId: number;
   table?: RollTable;
+  locations: Option[];
   onSaved: (t: RollTable) => void;
   trigger?: React.ReactNode;
 }) {
@@ -283,6 +297,7 @@ function RollTableDialog({
   const [name, setName] = useState(table?.name ?? "");
   const [description, setDescription] = useState(table?.description ?? "");
   const [entries, setEntries] = useState<RollTableEntry[]>(table?.entries ?? []);
+  const [locationId, setLocationId] = useState<number | null>(table?.locationId ?? null);
 
   function updateEntry(i: number, patch: Partial<RollTableEntry>) {
     setEntries((prev) => prev.map((e, idx) => (idx === i ? { ...e, ...patch } : e)));
@@ -294,7 +309,13 @@ function RollTableDialog({
       return;
     }
     setPending(true);
-    const payload = { campaignId, name, description, entries: entries.filter((e) => e.result.trim()) };
+    const payload = {
+      campaignId,
+      name,
+      description,
+      entries: entries.filter((e) => e.result.trim()),
+      locationId,
+    };
     try {
       const saved = table
         ? await api.patch<RollTable>(`/api/roll-tables/${table.id}`, payload)
@@ -323,6 +344,25 @@ function RollTableDialog({
           <Field label="Description">
             <Input value={description} onChange={(e) => setDescription(e.target.value)} />
           </Field>
+          {locations.length > 0 ? (
+            <Field
+              label="Random encounters for"
+              hint="Link it to a location to roll it from that location's page and turn the result into a fight."
+            >
+              <Select
+                value={locationId ? String(locationId) : "none"}
+                onValueChange={(v) => setLocationId(v === "none" ? null : Number(v))}
+              >
+                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No location</SelectItem>
+                  {locations.map((l) => (
+                    <SelectItem key={l.id} value={String(l.id)}>{l.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+          ) : null}
           <div>
             <p className="mb-2 text-sm font-medium">Entries</p>
             <div className="space-y-2">

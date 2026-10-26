@@ -175,5 +175,17 @@
   "whatsNew.title": "Neu in Sanctum {version}",
   "whatsNew.description": "Die wichtigsten Neuerungen dieses Updates.",
   "whatsNew.dismiss": "Verstanden",
-  "whatsNew.button": "Was ist neu"
+  "whatsNew.button": "Was ist neu",
+  "randomEnc.title": "Zufallsbegegnungen",
+  "randomEnc.none": "Hier gibt es noch keine Zufallsbegegnungstabelle. Verknüpfe eine deiner Würfeltabellen (Läden & Beute → Würfeltabellen) und würfle dann von dieser Seite.",
+  "randomEnc.link": "Würfeltabelle verknüpfen",
+  "randomEnc.unlink": "Von diesem Ort lösen",
+  "randomEnc.roll": "Würfeln",
+  "randomEnc.empty": "Diese Tabelle hat noch keine Einträge",
+  "randomEnc.noCreatures": "In diesem Ergebnis wird keine Kreatur aus deinem Bestiarium genannt.",
+  "randomEnc.startFight": "Kampf starten",
+  "randomEnc.addToFight": "Zum laufenden Kampf hinzufügen",
+  "randomEnc.started": "Begegnung gestartet",
+  "randomEnc.added": "Zum laufenden Kampf hinzugefügt",
+  "randomEnc.failed": "Etwas ist schiefgelaufen – versuche es erneut"
 }

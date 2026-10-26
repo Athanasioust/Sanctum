@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Plus, Minus, Users, Skull, Swords, Check } from "lucide-react";
+import { Search, Plus, Minus, Users, Skull, Swords, Check, Bookmark } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -95,7 +95,11 @@ export function EncounterBuilder({
     });
   }
 
-  async function start() {
+  /**
+   * Create the encounter and its combatants. `saveForLater` files it in the
+   * saved-encounter library instead of starting it.
+   */
+  async function start(saveForLater = false) {
     if (monsterTotal === 0 && included.size === 0) {
       toast.error("Add at least one combatant first");
       return;
@@ -106,6 +110,7 @@ export function EncounterBuilder({
       const encounter = await api.post<{ id: number }>("/api/encounters", {
         campaignId,
         name: encounterName,
+        ...(saveForLater ? { isTemplate: true, status: "completed" } : {}),
       });
 
       type PartPayload = {
@@ -158,6 +163,12 @@ export function EncounterBuilder({
       }
 
       await api.post("/api/participants", payloads);
+      if (saveForLater) {
+        toast.success(`Saved "${encounterName}" — start it from the combat page when you need it`);
+        setStarting(false);
+        router.refresh();
+        return;
+      }
       toast.success(`Started "${encounterName}" with ${payloads.length} combatants`);
       router.push(`/campaign/${campaignId}/combat`);
       router.refresh();
@@ -322,10 +333,15 @@ export function EncounterBuilder({
             {t("builder.groupMonsters")}
           </label>
         </div>
-        <Button onClick={start} disabled={starting}>
-          <Swords className="size-4" />
-          {starting ? "Starting…" : "Start this encounter"}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => start(true)} disabled={starting}>
+            <Bookmark className="size-4" /> Save for later
+          </Button>
+          <Button onClick={() => start()} disabled={starting}>
+            <Swords className="size-4" />
+            {starting ? "Starting…" : "Start this encounter"}
+          </Button>
+        </div>
       </div>
     </div>
   );

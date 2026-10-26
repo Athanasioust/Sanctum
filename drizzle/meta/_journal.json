@@ -127,6 +127,13 @@
       "when": 1793035619692,
       "tag": "0017_gorgeous_morgan_stark",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1793035841335,
+      "tag": "0018_right_mister_sinister",
+      "breakpoints": true
     }
   ]
 }

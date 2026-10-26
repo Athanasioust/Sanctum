@@ -494,6 +494,13 @@ export const encounters = sqliteTable("encounters", {
   status: text("status", { enum: ["active", "completed"] })
     .notNull()
     .default("active"),
+  /**
+   * A saved encounter: a prepared fight kept for reuse, never run itself.
+   * "Start" clones it into a fresh live encounter. Kept with status
+   * "completed" too, so nothing that only checks status mistakes it for the
+   * fight in progress.
+   */
+  isTemplate: integer("is_template", { mode: "boolean" }).notNull().default(false),
   roundNumber: integer("round_number").notNull().default(1),
   currentTurnIndex: integer("current_turn_index").notNull().default(0),
   /**
@@ -936,6 +943,10 @@ export const rollTables = sqliteTable("roll_tables", {
     .notNull()
     .$type<RollTableEntry[]>()
     .$defaultFn(() => []),
+  /** A random-encounter table for this place, rolled from its page. */
+  locationId: integer("location_id").references(() => locations.id, {
+    onDelete: "set null",
+  }),
   ...timestamps,
 });
 
