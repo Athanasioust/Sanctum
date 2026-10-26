@@ -25,6 +25,7 @@ import {
 import { Field } from "@/components/shared/form";
 import { EmptyState } from "@/components/shared/empty-state";
 import { api } from "@/lib/client";
+import { VirtualGrid } from "@/components/shared/virtual-grid";
 import {
   BulkToolbar,
   SelectOverlay,
@@ -293,8 +294,12 @@ export function MagicItemsList({
           description="Track magic items, charges, and attunement slots."
         />
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {visible.map((item) => {
+        <VirtualGrid
+          items={visible}
+          getKey={(item) => item.id}
+          gapClass="gap-3"
+          rowGapClass="pb-3"
+          render={(item) => {
             const holder = characters.find((c) => c.id === item.characterId);
             return (
               <div key={item.id} className="relative rounded-xl border border-border bg-card p-4">
@@ -386,8 +391,8 @@ export function MagicItemsList({
                 )}
               </div>
             );
-          })}
-        </div>
+          }}
+        />
       )}
     </div>
   );

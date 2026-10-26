@@ -17,6 +17,7 @@ import {
   useBulkSelection,
 } from "@/components/shared/bulk-select";
 import { cn } from "@/lib/utils";
+import { VirtualGrid } from "@/components/shared/virtual-grid";
 import type { Encounter, Npc } from "@/db/schema";
 
 const FILTERS = [
@@ -66,8 +67,10 @@ export function NpcGrid({
           No {filter === "all" ? "" : filter === "npc" ? "NPCs" : "monsters"} match this filter.
         </p>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((n) => (
+        <VirtualGrid
+          items={filtered}
+          getKey={(n) => n.id}
+          render={(n) => (
             <div key={n.id} className="group relative rounded-xl border border-border bg-card transition-colors hover:border-primary/50">
               <Link href={`/campaign/${campaignId}/${basePath}/${n.id}`} className="block p-5">
                 <div className="flex items-start justify-between gap-2">
@@ -108,8 +111,8 @@ export function NpcGrid({
               )}
               <SelectOverlay selection={selection} id={n.id} label={n.name} />
             </div>
-          ))}
-        </div>
+)}
+        />
       )}
     </div>
   );

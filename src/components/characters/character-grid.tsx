@@ -11,6 +11,7 @@ import {
   useBulkSelection,
 } from "@/components/shared/bulk-select";
 import { Badge } from "@/components/ui/badge";
+import { VirtualGrid } from "@/components/shared/virtual-grid";
 import type { Character } from "@/db/schema";
 
 /** The character cards, with select mode for deleting several at once. */
@@ -29,8 +30,10 @@ export function CharacterGrid({
       <div className="mb-4 flex justify-end">
         <BulkToolbar selection={selection} total={characters.length} onDelete={deleteMany} />
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {characters.map((c) => {
+      <VirtualGrid
+        items={characters}
+        getKey={(c) => c.id}
+        render={(c) => {
           const classLine = [c.race, c.class && `${c.class}${c.subclass ? ` (${c.subclass})` : ""}`]
             .filter(Boolean)
             .join(" · ");
@@ -83,8 +86,8 @@ export function CharacterGrid({
               <SelectOverlay selection={selection} id={c.id} label={c.name} />
             </div>
           );
-        })}
-      </div>
+        }}
+      />
     </>
   );
 }
