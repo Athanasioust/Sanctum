@@ -1047,6 +1047,7 @@
     {
       "name": "Crypt wandering monsters",
       "description": "Roll when the party lingers in the crypt.",
+      "locationId": 3,
       "entries": [
         {
           "weight": 3,
