@@ -757,6 +757,21 @@ export type NpcRelationshipCreateInput = z.infer<typeof npcRelationshipCreateSch
 export type NpcRelationshipUpdateInput = z.infer<typeof npcRelationshipUpdateSchema>;
 
 /* -------------------------------------------------------------------------- */
+/*  Progress clocks                                                            */
+/* -------------------------------------------------------------------------- */
+
+export const clockCreateSchema = z.object({
+  campaignId: z.number().int(),
+  name: z.string().trim().min(1, "Name is required").max(120),
+  segments: z.number().int().min(2).max(16).optional().default(4),
+  filled: z.number().int().min(0).max(16).optional().default(0),
+  color: z.string().max(32).optional().default("#d4a017"),
+  note: optionalString(2000),
+  revealToPlayers: z.boolean().optional().default(false),
+});
+export const clockUpdateSchema = clockCreateSchema.partial().omit({ campaignId: true });
+
+/* -------------------------------------------------------------------------- */
 /*  Combat Log Entries (Feature 15)                                            */
 /* -------------------------------------------------------------------------- */
 

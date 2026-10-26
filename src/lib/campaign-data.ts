@@ -34,6 +34,7 @@ import {
   homebrewSpells,
   homebrewFeats,
   documents,
+  clocks,
 } from "@/db/schema";
 import type { BattleToken, MindMapNode, SoundscapeTrack } from "@/db/schema";
 import { ApiError } from "@/lib/api";
@@ -69,6 +70,7 @@ import {
   homebrewSpellCreateSchema,
   homebrewFeatCreateSchema,
   documentCreateSchema,
+  clockCreateSchema,
 } from "@/lib/validators";
 
 export const EXPORT_VERSION = 1;
@@ -115,6 +117,7 @@ export async function exportCampaign(campaignId: number) {
     homebrewSpellRows,
     homebrewFeatRows,
     documentRows,
+    clockRows,
   ] = await Promise.all([
     db.select().from(characters).where(eq(characters.campaignId, campaignId)),
     db.select().from(npcs).where(eq(npcs.campaignId, campaignId)),
@@ -139,6 +142,7 @@ export async function exportCampaign(campaignId: number) {
     db.select().from(homebrewSpells).where(eq(homebrewSpells.campaignId, campaignId)),
     db.select().from(homebrewFeats).where(eq(homebrewFeats.campaignId, campaignId)),
     db.select().from(documents).where(eq(documents.campaignId, campaignId)),
+    db.select().from(clocks).where(eq(clocks.campaignId, campaignId)),
   ]);
 
   const charIds = characterRows.map((c) => c.id);
@@ -196,6 +200,7 @@ export async function exportCampaign(campaignId: number) {
     homebrewSpells: homebrewSpellRows,
     homebrewFeats: homebrewFeatRows,
     documents: documentRows,
+    clocks: clockRows,
   };
 }
 
@@ -278,6 +283,7 @@ const ImportSchemas = {
   homebrewSpell: homebrewSpellCreateSchema.omit({ campaignId: true }),
   homebrewFeat: homebrewFeatCreateSchema.omit({ campaignId: true }),
   document: documentCreateSchema.omit({ campaignId: true }),
+  clock: clockCreateSchema.omit({ campaignId: true }),
 };
 
 /** Validate a bundle array, returning {raw, data} pairs for rows that pass. */
@@ -575,6 +581,9 @@ export async function importCampaign(raw: unknown): Promise<number> {
     }
     for (const { data } of validateRows(ImportSchemas.document, bundle.documents)) {
       tx.insert(documents).values({ ...data, campaignId } as never).run();
+    }
+    for (const { data } of validateRows(ImportSchemas.clock, bundle.clocks)) {
+      tx.insert(clocks).values({ ...data, campaignId } as never).run();
     }
 
     return campaignId;

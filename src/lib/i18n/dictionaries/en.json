@@ -158,5 +158,18 @@
   "aoe.failed": "Couldn't apply the damage to everyone — check the tracker",
   "player.whoAreYou": "Who are you?",
   "player.dragHint": "Drag your token to move it.",
-  "player.moveFailed": "Couldn't move the token"
+  "player.moveFailed": "Couldn't move the token",
+  "clocks.title": "Clocks",
+  "clocks.new": "New clock",
+  "clocks.edit": "Edit clock",
+  "clocks.empty": "Track looming threats and long projects as segmented clocks — \"The ritual completes\", \"The guard grows suspicious\".",
+  "clocks.full": "Complete!",
+  "clocks.fill": "Fill a segment",
+  "clocks.unfill": "Empty a segment",
+  "clocks.shown": "Shown to players — click to hide",
+  "clocks.hidden": "Hidden from players — click to show",
+  "clocks.namePlaceholder": "The ritual completes",
+  "clocks.segments": "Segments",
+  "clocks.color": "Colour",
+  "clocks.saveFailed": "Couldn't save the clock"
 }

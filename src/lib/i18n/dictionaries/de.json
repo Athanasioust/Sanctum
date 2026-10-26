@@ -158,5 +158,18 @@
   "aoe.failed": "Schaden konnte nicht bei allen angewendet werden – prüfe den Tracker",
   "player.whoAreYou": "Wer bist du?",
   "player.dragHint": "Ziehe deinen Marker, um ihn zu bewegen.",
-  "player.moveFailed": "Marker konnte nicht bewegt werden"
+  "player.moveFailed": "Marker konnte nicht bewegt werden",
+  "clocks.title": "Uhren",
+  "clocks.new": "Neue Uhr",
+  "clocks.edit": "Uhr bearbeiten",
+  "clocks.empty": "Verfolge drohende Gefahren und lange Vorhaben als Segmentuhren – „Das Ritual vollendet sich“, „Die Wache wird misstrauisch“.",
+  "clocks.full": "Voll!",
+  "clocks.fill": "Segment füllen",
+  "clocks.unfill": "Segment leeren",
+  "clocks.shown": "Für Spieler sichtbar – klicken zum Verbergen",
+  "clocks.hidden": "Für Spieler verborgen – klicken zum Zeigen",
+  "clocks.namePlaceholder": "Das Ritual vollendet sich",
+  "clocks.segments": "Segmente",
+  "clocks.color": "Farbe",
+  "clocks.saveFailed": "Uhr konnte nicht gespeichert werden"
 }

@@ -8,6 +8,7 @@ import {
   combatParticipants,
   encounters,
   handouts,
+  clocks,
 } from "@/db/schema";
 import { PlayerScreen, type ScreenState } from "@/components/screen/player-screen";
 import { I18nProvider } from "@/components/i18n/i18n-provider";
@@ -85,6 +86,11 @@ async function loadScreenState(campaignId: number): Promise<ScreenState> {
     : {};
 
   const lan = readLanConfig();
+  const revealedClocks = await db
+    .select()
+    .from(clocks)
+    .where(and(eq(clocks.campaignId, campaignId), eq(clocks.revealToPlayers, true)))
+    .orderBy(asc(clocks.createdAt));
 
   return {
     active: encounter !== null,
@@ -98,6 +104,7 @@ async function loadScreenState(campaignId: number): Promise<ScreenState> {
     battleMap,
     tokenArt,
     playerMoves: lan.enabled && lan.allowPlayerTokenMoves,
+    clocks: revealedClocks,
   };
 }
 

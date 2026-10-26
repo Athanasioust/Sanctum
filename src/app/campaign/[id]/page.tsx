@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { and, count, desc, eq } from "drizzle-orm";
+import { and, asc, count, desc, eq } from "drizzle-orm";
 import { format, formatDistanceToNow } from "date-fns";
 import {
   Users,
@@ -22,7 +22,9 @@ import {
   storyEvents,
   notes as notesTable,
   quests,
+  clocks,
 } from "@/db/schema";
+import { ClocksPanel } from "@/components/clocks/clocks-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PageContainer } from "@/components/shared/page-header";
@@ -50,6 +52,7 @@ export default async function DashboardPage({
     pinnedNotes,
     recentEvents,
     activeQuests,
+    clockRows,
   ] = await Promise.all([
     db.select({ value: count() }).from(characters).where(eq(characters.campaignId, id)),
     db
@@ -87,6 +90,7 @@ export default async function DashboardPage({
       .from(quests)
       .where(and(eq(quests.campaignId, id), eq(quests.status, "active")))
       .limit(5),
+    db.select().from(clocks).where(eq(clocks.campaignId, id)).orderBy(asc(clocks.createdAt)),
   ]);
 
   const stats = [
@@ -172,6 +176,8 @@ export default async function DashboardPage({
           </Link>
         ))}
       </div>
+
+      <ClocksPanel campaignId={id} initialClocks={clockRows} />
 
       {/* Active quests */}
       {activeQuests.length > 0 && (

@@ -1087,6 +1087,28 @@ export const rumors = sqliteTable("rumors", {
 });
 
 /* -------------------------------------------------------------------------- */
+/*  Progress clocks                                                            */
+/* -------------------------------------------------------------------------- */
+
+/** Blades-style segmented clocks for looming threats and long projects. */
+export const clocks = sqliteTable("clocks", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  campaignId: integer("campaign_id")
+    .notNull()
+    .references(() => campaigns.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  segments: integer("segments").notNull().default(4),
+  filled: integer("filled").notNull().default(0),
+  color: text("color").notNull().default("#d4a017"),
+  note: text("note").notNull().default(""),
+  /** Shown on the player view while set. */
+  revealToPlayers: integer("reveal_to_players", { mode: "boolean" })
+    .notNull()
+    .default(false),
+  ...timestamps,
+});
+
+/* -------------------------------------------------------------------------- */
 /*  Backups                                                                    */
 /* -------------------------------------------------------------------------- */
 
@@ -1168,5 +1190,7 @@ export type Handout = typeof handouts.$inferSelect;
 export type NewHandout = typeof handouts.$inferInsert;
 export type Rumor = typeof rumors.$inferSelect;
 export type NewRumor = typeof rumors.$inferInsert;
+export type Clock = typeof clocks.$inferSelect;
+export type NewClock = typeof clocks.$inferInsert;
 export type Backup = typeof backups.$inferSelect;
 export type NewBackup = typeof backups.$inferInsert;

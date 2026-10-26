@@ -10,9 +10,11 @@ import { hpBarColor } from "@/lib/ui";
 import { renderMarkdown } from "@/lib/markdown";
 import { cn } from "@/lib/utils";
 import { useT } from "@/components/i18n/i18n-provider";
+import { ClockFace } from "@/components/clocks/clock-face";
 import type {
   BattleMap,
   Character,
+  Clock,
   CombatParticipant,
   Encounter,
   Handout,
@@ -38,6 +40,8 @@ export type ScreenState = {
   tokenArt: Record<string, string>;
   /** The DM lets players drag the tokens handed to them. */
   playerMoves: boolean;
+  /** Progress clocks the DM has revealed. */
+  clocks: Clock[];
 };
 
 export const EMPTY_SCREEN_STATE: ScreenState = {
@@ -52,6 +56,7 @@ export const EMPTY_SCREEN_STATE: ScreenState = {
   battleMap: null,
   tokenArt: {},
   playerMoves: false,
+  clocks: [],
 };
 
 /** How long a poll may take before it's abandoned and retried on the next tick. */
@@ -84,13 +89,15 @@ export function PlayerScreen({
     const signal = controller.signal;
 
     try {
-      const [encounters, party, allHandouts, maps, moves] = await Promise.all([
+      const [encounters, party, allHandouts, maps, moves, allClocks] = await Promise.all([
         api.get<Encounter[]>(`/api/encounters?campaignId=${campaignId}`, { signal }),
         api.get<Character[]>(`/api/characters?campaignId=${campaignId}`, { signal }),
         api.get<Handout[]>(`/api/handouts?campaignId=${campaignId}`, { signal }),
         api.get<BattleMap[]>(`/api/battle-maps?campaignId=${campaignId}`, { signal }),
         api.get<{ allowed: boolean }>("/api/screen/move-token", { signal }),
+        api.get<Clock[]>(`/api/clocks?campaignId=${campaignId}`, { signal }),
       ]);
+      const clocks = allClocks.filter((c) => c.revealToPlayers);
       const playerMoves = moves.allowed;
       const handouts = allHandouts.filter((h) => h.isRevealed);
       // Maps come back newest-updated first, so the most recently touched map
@@ -123,6 +130,7 @@ export function PlayerScreen({
         battleMap,
         tokenArt,
         playerMoves,
+        clocks,
       };
       if (active && full) {
         next = {
@@ -139,6 +147,7 @@ export function PlayerScreen({
           battleMap,
           tokenArt,
           playerMoves,
+          clocks,
         };
       }
       setState(next);
@@ -234,6 +243,35 @@ export function PlayerScreen({
             )}
           </section>
         </div>
+
+        {/* Clocks */}
+        {state.clocks.length > 0 && (
+          <section className="mt-8">
+            <h2 className="mb-4 font-heading text-lg font-semibold text-muted-foreground">
+              {t("clocks.title")}
+            </h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {state.clocks.map((c) => (
+                <div
+                  key={c.id}
+                  className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-4 text-center"
+                >
+                  <ClockFace
+                    segments={c.segments}
+                    filled={c.filled}
+                    color={c.color}
+                    size={96}
+                    label={`${c.name}: ${c.filled} / ${c.segments}`}
+                  />
+                  <p className="font-medium">{c.name}</p>
+                  <p className="text-sm tabular-nums text-muted-foreground">
+                    {c.filled} / {c.segments}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Handouts */}
         {state.handouts.length > 0 && (
