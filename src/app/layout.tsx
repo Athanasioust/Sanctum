@@ -36,7 +36,7 @@ export default async function RootLayout({
   const locale = await getLocale();
   return (
     <html
-      lang="en"
+      lang={locale}
       className={`dark ${geistSans.variable} ${geistMono.variable} ${cinzel.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-background text-foreground">

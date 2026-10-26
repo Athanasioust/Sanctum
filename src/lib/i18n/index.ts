@@ -14,11 +14,14 @@
 import en from "./dictionaries/en.json";
 import de from "./dictionaries/de.json";
 import fr from "./dictionaries/fr.json";
+import es from "./dictionaries/es.json";
+import it from "./dictionaries/it.json";
+import pt from "./dictionaries/pt.json";
 import { DEFAULT_LOCALE, type Locale } from "./locales";
 
 export type Dictionary = Record<string, string>;
 
-const DICTIONARIES: Record<Locale, Dictionary> = { en, de, fr };
+const DICTIONARIES: Record<Locale, Dictionary> = { en, de, fr, es, it, pt };
 
 /** Every key that exists, so a typo in a `t()` call is a type error. */
 export type TranslationKey = keyof typeof en;

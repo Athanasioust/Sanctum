@@ -9,6 +9,12 @@ export const LOCALES = [
   { code: "en", label: "English", english: "English" },
   { code: "de", label: "Deutsch", english: "German" },
   { code: "fr", label: "Français", english: "French" },
+  // Spanish, Italian and Portuguese started as machine-translated baselines
+  // in 0.6 and are open to refinement by native speakers — fix a string in
+  // src/lib/i18n/dictionaries/<code>.json. Missing keys fall back to English.
+  { code: "es", label: "Español", english: "Spanish" },
+  { code: "it", label: "Italiano", english: "Italian" },
+  { code: "pt", label: "Português", english: "Portuguese" },
 ] as const;
 
 export type Locale = (typeof LOCALES)[number]["code"];
