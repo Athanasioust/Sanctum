@@ -187,5 +187,8 @@
   "randomEnc.addToFight": "Zum laufenden Kampf hinzufügen",
   "randomEnc.started": "Begegnung gestartet",
   "randomEnc.added": "Zum laufenden Kampf hinzugefügt",
-  "randomEnc.failed": "Etwas ist schiefgelaufen – versuche es erneut"
+  "randomEnc.failed": "Etwas ist schiefgelaufen – versuche es erneut",
+  "popout.button": "Abdocken",
+  "popout.hint": "In einem eigenen Fenster öffnen, z. B. auf einem zweiten Bildschirm",
+  "popout.soundHandoff": "Die Wiedergabe läuft jetzt im abgedockten Fenster"
 }

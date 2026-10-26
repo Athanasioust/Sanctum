@@ -9,6 +9,7 @@ import { Field } from "@/components/shared/form";
 import { useT } from "@/components/i18n/i18n-provider";
 import { COMBAT_LOG_ADDED_EVENT } from "@/components/dice/dice-roller";
 import { api } from "@/lib/client";
+import { announceCombatChange } from "@/lib/combat-sync";
 import { applyHpDelta, concentrationDc } from "@/lib/combat-hp";
 import { DAMAGE_TYPES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -106,6 +107,7 @@ export function AoeDamagePanel({
         details: summary.length <= 200 ? "" : summary.slice(0, 2000),
       });
       window.dispatchEvent(new Event(COMBAT_LOG_ADDED_EVENT));
+      announceCombatChange(encounterId);
       toast.success(`${label}: ${summary}`);
       setAmount("");
       onApplied();

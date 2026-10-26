@@ -51,6 +51,7 @@ import {
   tokensInTemplate,
 } from "@/lib/battle-map";
 import { AoeDamagePanel, type AoeSelection } from "@/components/combat/aoe-damage-panel";
+import { useCombatChanges } from "@/lib/combat-sync";
 import { conditionNames } from "@/lib/conditions";
 import { cn } from "@/lib/utils";
 import type { MapTool, TokenStatus } from "@/components/combat/battle-map-canvas";
@@ -129,6 +130,8 @@ export function BattleMap({
   // The DM's edits to who an AoE template catches, tied to the exact template
   // position they were made for; moving or resizing it starts a fresh guess.
   const [aoeEdit, setAoeEdit] = useState<(AoeSelection & { key: string }) | null>(null);
+  // A change in the tracker (here or in a pop-out) refreshes token HP at once.
+  useCombatChanges(() => setReloadKey((k) => k + 1));
 
   const map = maps.find((m) => m.id === activeId) ?? null;
 

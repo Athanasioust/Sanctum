@@ -24,6 +24,7 @@ import {
 import { Field } from "@/components/shared/form";
 import { EntityActions } from "@/components/shared/entity-actions";
 import { api } from "@/lib/client";
+import { announceCombatChange } from "@/lib/combat-sync";
 import type { Encounter } from "@/db/schema";
 
 export function NewEncounterButton({
@@ -45,7 +46,8 @@ export function NewEncounterButton({
     }
     setPending(true);
     try {
-      await api.post("/api/encounters", { campaignId, name: name.trim() });
+      const created = await api.post<{ id: number }>("/api/encounters", { campaignId, name: name.trim() });
+      announceCombatChange(created.id);
       toast.success("Encounter started");
       setOpen(false);
       setName("");
@@ -97,6 +99,7 @@ export function ReopenEncounterButton({ encounterId }: { encounterId: number }) 
     setPending(true);
     try {
       await api.patch(`/api/encounters/${encounterId}`, { status: "active" });
+      announceCombatChange(encounterId);
       toast.success("Encounter reopened");
       router.refresh();
     } catch (err) {
@@ -146,7 +149,8 @@ export function StartSavedEncounterButton({ saved }: { saved: Encounter[] }) {
   async function start(id: number) {
     setPending(true);
     try {
-      await api.post(`/api/encounters/${id}/clone`, { template: false });
+      const created = await api.post<{ id: number }>(`/api/encounters/${id}/clone`, { template: false });
+      announceCombatChange(created.id);
       toast.success("Encounter started from your saved fight");
       router.refresh();
     } catch (err) {

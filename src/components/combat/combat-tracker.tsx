@@ -103,6 +103,7 @@ import {
 import { useT } from "@/components/i18n/i18n-provider";
 import { portraitKey } from "@/lib/portrait-key";
 import { applyHpDelta, concentrationDc } from "@/lib/combat-hp";
+import { announceCombatChange, useCombatChanges } from "@/lib/combat-sync";
 import type { CombatParticipant, CombatLogEntry, Encounter } from "@/db/schema";
 
 export type Addable = {
@@ -266,9 +267,10 @@ export function CombatTracker({
           const p = partsRef.current.find((x) => x.id === id);
           if (p) logHpDelta(p.name, p.hpCurrent + p.hpTemp - base);
         }
-        api.patch(`/api/participants/${id}`, patch).catch(() =>
-          toast.error("Failed to save HP"),
-        );
+        api
+          .patch(`/api/participants/${id}`, patch)
+          .then(changed)
+          .catch(() => toast.error("Failed to save HP"));
       }, 400),
     );
   }
@@ -323,6 +325,7 @@ export function CombatTracker({
     partsRef.current = partsRef.current.map((p) => (p.id === id ? { ...p, ...patch } : p));
     try {
       await api.patch(`/api/participants/${id}`, patch);
+      changed();
     } catch {
       toast.error("Failed to save change");
     }
@@ -331,10 +334,48 @@ export function CombatTracker({
   async function saveEncounter(patch: Partial<Encounter>) {
     try {
       await api.patch(`/api/encounters/${encounter.id}`, patch);
+      changed();
     } catch {
       toast.error("Failed to update encounter");
     }
   }
+
+  /** Let other windows (a popped-out tracker, the battle map) catch up. */
+  function changed() {
+    announceCombatChange(encounter.id);
+  }
+
+  // …and catch up when another window changes this fight. Combatants with an
+  // HP edit still waiting to save keep their local value, so a refresh landing
+  // mid-burst never snaps their HP back.
+  useCombatChanges((change) => {
+    if (change.encounterId !== encounter.id) return;
+    api
+      .get<EncounterWithParts>(`/api/encounters/${encounter.id}`)
+      .then((fresh) => {
+        if (fresh.status !== "active") {
+          router.refresh();
+          return;
+        }
+        const pending = hpSaveTimers.current;
+        const local = new Map(partsRef.current.map((p) => [p.id, p]));
+        const next = keepGroupsTogether(
+          [...fresh.participants]
+            .sort((a, b) => a.turnOrder - b.turnOrder)
+            .map((p) => (pending.has(p.id) && local.has(p.id) ? local.get(p.id)! : p)),
+        );
+        partsRef.current = next;
+        setParts(next);
+        setRound(fresh.roundNumber);
+        setTurnIndex(fresh.currentTurnIndex);
+        setLairActive(fresh.lairTurnActive);
+        api
+          .get<CombatLogEntry[]>(`/api/combat-log?encounterId=${encounter.id}`)
+          .then(setLogEntries)
+          .catch(() => {});
+      })
+      .catch(() => {});
+  });
 
   async function addParticipant(input: AddInput) {
     const count = Math.max(1, Math.min(30, Math.round(input.count ?? 1)));
@@ -367,6 +408,7 @@ export function CombatTracker({
       const next = [...partsRef.current, ...created];
       partsRef.current = next;
       setParts(next);
+      changed();
       toast.success(
         created.length > 1
           ? `Added ${created.length} × ${base}`
@@ -401,6 +443,7 @@ export function CombatTracker({
       }));
       const created = await api.post<CombatParticipant[]>("/api/participants", payloads);
       setParts((prev) => [...prev, ...created]);
+      changed();
       toast.success(`Added ${created.length} player character${created.length > 1 ? "s" : ""}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to add party");
@@ -411,6 +454,7 @@ export function CombatTracker({
     setParts((prev) => prev.filter((p) => p.id !== id));
     try {
       await api.delete(`/api/participants/${id}`);
+      changed();
     } catch {
       toast.error("Failed to remove combatant");
     }
@@ -423,7 +467,9 @@ export function CombatTracker({
           ? Promise.resolve()
           : api.patch(`/api/participants/${p.id}`, { turnOrder: i }),
       ),
-    ).catch(() => toast.error("Failed to save order"));
+    )
+      .then(changed)
+      .catch(() => toast.error("Failed to save order"));
   }
 
   /** Rows are dragged a slot at a time, so a group moves as one block. */
@@ -477,7 +523,9 @@ export function CombatTracker({
           turnOrder: p.turnOrder,
         }),
       ),
-    ).catch(() => toast.error("Failed to save initiative"));
+    )
+      .then(changed)
+      .catch(() => toast.error("Failed to save initiative"));
     saveEncounter({ ...start, roundNumber: 1 });
     toast.success("Rolled initiative for NPCs & monsters");
   }
@@ -618,6 +666,7 @@ export function CombatTracker({
 
   async function endEncounter() {
     await api.patch(`/api/encounters/${encounter.id}`, { status: "completed" });
+    changed();
     toast.success("Encounter ended");
     router.refresh();
   }
@@ -632,6 +681,7 @@ export function CombatTracker({
         details,
       });
       setLogEntries((prev) => [...prev, entry]);
+      changed();
     } catch {
       toast.error("Failed to log action");
     }

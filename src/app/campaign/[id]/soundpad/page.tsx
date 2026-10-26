@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { soundAssets, soundscapes } from "@/db/schema";
 import { PageContainer, PageHeader } from "@/components/shared/page-header";
 import { Soundpad } from "@/components/soundpad/soundpad";
+import { SoundpadPopOut } from "@/components/soundpad/soundpad-pop-out";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,7 @@ export default async function SoundpadPage({
         title="Soundpad"
         description="Layered music, ambience and one-shot effects from your own audio files."
         icon={Music}
+        actions={<SoundpadPopOut campaignId={campaignId} />}
       />
       <Soundpad campaignId={campaignId} assets={assets} soundscapes={scapes} />
     </PageContainer>

@@ -187,5 +187,8 @@
   "randomEnc.addToFight": "Add to the current fight",
   "randomEnc.started": "Encounter started",
   "randomEnc.added": "Added to the current fight",
-  "randomEnc.failed": "Something went wrong — try again"
+  "randomEnc.failed": "Something went wrong — try again",
+  "popout.button": "Pop out",
+  "popout.hint": "Open in its own window, e.g. on a second monitor",
+  "popout.soundHandoff": "Playback moved to the pop-out window"
 }

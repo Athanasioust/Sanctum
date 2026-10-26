@@ -187,5 +187,8 @@
   "randomEnc.addToFight": "Ajouter au combat en cours",
   "randomEnc.started": "Rencontre lancée",
   "randomEnc.added": "Ajouté au combat en cours",
-  "randomEnc.failed": "Un problème est survenu — réessayez"
+  "randomEnc.failed": "Un problème est survenu — réessayez",
+  "popout.button": "Détacher",
+  "popout.hint": "Ouvrir dans sa propre fenêtre, par ex. sur un second écran",
+  "popout.soundHandoff": "La lecture passe dans la fenêtre détachée"
 }

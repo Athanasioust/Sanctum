@@ -484,6 +484,57 @@ function closeSplash() {
   splashWindow = null;
 }
 
+/**
+ * Whether `target` is one of Sanctum's own pop-out panels (the combat tracker
+ * or soundpad in a window of its own) on the server this app is running.
+ */
+function isPopoutUrl(target) {
+  if (!serverUrl) return false;
+  try {
+    const url = new URL(target);
+    return url.origin === new URL(serverUrl).origin && url.pathname.startsWith("/popout/");
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * What `window.open` does from a Sanctum page. Pop-out panels become native
+ * windows on the same local server (so they share its data and stay in sync);
+ * any other web link opens in the user's default browser, never inside the app.
+ * Pop-out windows get the same rules, so a link clicked in one behaves alike.
+ */
+function routeWindowOpens(contents) {
+  contents.setWindowOpenHandler(({ url: target }) => {
+    if (isPopoutUrl(target)) {
+      return {
+        action: "allow",
+        overrideBrowserWindowOptions: {
+          width: 960,
+          height: 900,
+          minWidth: 480,
+          minHeight: 400,
+          backgroundColor: "#0a0a0a",
+          autoHideMenuBar: true,
+          title: "Sanctum",
+          icon: path.join(__dirname, process.platform === "win32" ? "icon.ico" : "icon.png"),
+          webPreferences: {
+            contextIsolation: true,
+            nodeIntegration: false,
+          },
+        },
+      };
+    }
+    if (target.startsWith("http://") || target.startsWith("https://")) {
+      shell.openExternal(target);
+    }
+    return { action: "deny" };
+  });
+  contents.on("did-create-window", (child) => {
+    routeWindowOpens(child.webContents);
+  });
+}
+
 function createWindow(url) {
   const fitted = fitToWorkArea(windowState);
 
@@ -539,13 +590,7 @@ function createWindow(url) {
   mainWindow.on("unmaximize", captureWindowState);
   mainWindow.on("close", captureWindowState);
 
-  // Open external (non-app) links in the user's default browser.
-  mainWindow.webContents.setWindowOpenHandler(({ url: target }) => {
-    if (target.startsWith("http://") || target.startsWith("https://")) {
-      shell.openExternal(target);
-    }
-    return { action: "deny" };
-  });
+  routeWindowOpens(mainWindow.webContents);
 
   mainWindow.on("closed", () => {
     mainWindow = null;
