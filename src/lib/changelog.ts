@@ -27,6 +27,7 @@ export const CHANGELOG: ChangelogEntry[] = [
       "Progress clocks on the dashboard, optionally shown to players.",
       "Pop the combat tracker or soundpad out into its own window, and run combat from the keyboard (press ? in combat).",
       "Saved encounters and location random-encounter tables, bulk select with undo, more languages (Spanish, Italian, Portuguese) and a sample campaign for new installs.",
+      "Copy or export a fight's combat log, plus keyboard focus rings and screen-reader labels throughout.",
     ],
   },
   {
