@@ -8,7 +8,7 @@ import { KOFI_URL } from "@/lib/support";
 import { cn } from "@/lib/utils";
 
 /**
- * A quiet "Support on Ko-fi" link under the attribution badge. It glows softly
+ * A quiet "Support on Ko-fi" link at the foot of the sidebar and home screen. It glows softly
  * for the first few launches so it gets noticed once, then sits still. Opens in
  * the default browser (the desktop app sends outside links there).
  */

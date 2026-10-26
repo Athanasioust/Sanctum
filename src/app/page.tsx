@@ -7,7 +7,7 @@ import { CreateCampaignDialog } from "@/components/campaigns/create-campaign-dia
 import { ImportCampaignButton } from "@/components/campaigns/import-campaign-button";
 import { SampleCampaignButton } from "@/components/campaigns/sample-campaign-button";
 import { EmptyState } from "@/components/shared/empty-state";
-import { BuiltByBadge } from "@/components/shared/built-by-badge";
+import { SupportLink } from "@/components/shared/support-link";
 
 export const dynamic = "force-dynamic";
 
@@ -62,8 +62,8 @@ export default async function HomePage() {
         </section>
       )}
 
-      <footer className="mt-12 border-t border-border pt-6">
-        <BuiltByBadge />
+      <footer className="mt-12 flex justify-center border-t border-border pt-6">
+        <SupportLink />
       </footer>
     </main>
   );

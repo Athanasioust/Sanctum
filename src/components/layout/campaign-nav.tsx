@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { BuiltByBadge } from "@/components/shared/built-by-badge";
+import { SupportLink } from "@/components/shared/support-link";
 import { openCommandPalette } from "@/components/search/command-palette";
 import { useT } from "@/components/i18n/i18n-provider";
 import type { TranslationKey } from "@/lib/i18n";
@@ -275,7 +275,9 @@ export function CampaignNavContent({
         <NavLinks campaign={campaign} onNavigate={onNavigate} iconsOnly={iconsOnly} />
       </ScrollArea>
       {iconsOnly ? null : (
-        <BuiltByBadge className="shrink-0 border-t border-sidebar-border pt-3" />
+        <div className="flex shrink-0 justify-center border-t border-sidebar-border pt-3">
+          <SupportLink />
+        </div>
       )}
     </div>
   );
