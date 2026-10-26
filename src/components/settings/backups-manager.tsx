@@ -77,7 +77,7 @@ export function BackupsManager({ initialBackups }: { initialBackups: Backup[] })
                 <Button size="sm" variant="outline" onClick={() => setRestoreTarget(b)}>
                   <RotateCcw className="size-4" /> Restore
                 </Button>
-                <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(b)}>
+                <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(b)} aria-label="Delete backup">
                   <Trash2 className="size-4" />
                 </Button>
               </div>

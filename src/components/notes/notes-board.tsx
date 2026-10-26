@@ -120,7 +120,7 @@ export function NotesBoard({
                     {note.isPinned ? (
                       <Pin className="size-4 text-primary" />
                     ) : (
-                      <PinOff className="size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                      <PinOff className="size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100" />
                     )}
                   </Button>
                   <NoteDialog
@@ -128,7 +128,7 @@ export function NotesBoard({
                     note={note}
                     onSaved={upsert}
                     trigger={
-                      <Button size="icon" variant="ghost" className="size-7 opacity-0 transition-opacity group-hover:opacity-100" aria-label="Edit">
+                      <Button size="icon" variant="ghost" className="size-7 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100" aria-label="Edit">
                         <Pencil className="size-4" />
                       </Button>
                     }
@@ -136,7 +136,7 @@ export function NotesBoard({
                   <DeleteIconButton
                     label="note"
                     onConfirm={() => remove(note.id)}
-                    buttonClassName="size-7 opacity-0 transition-opacity group-hover:opacity-100"
+                    buttonClassName="size-7 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                   />
                 </div>
               </div>

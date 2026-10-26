@@ -209,6 +209,7 @@ export function NpcRelationshipsSection({
                   size="icon"
                   className="size-7 text-destructive hover:text-destructive"
                   onClick={() => remove(rel)}
+                  aria-label="Delete relationship"
                 >
                   <Trash2 className="size-3.5" />
                 </Button>

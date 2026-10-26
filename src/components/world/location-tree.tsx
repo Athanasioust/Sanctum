@@ -69,7 +69,7 @@ function TreeNode({
           <span className="font-medium">{node.name}</span>
           <Badge variant="secondary" className="ml-2 capitalize">{node.type}</Badge>
         </Link>
-        <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+        <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
           <LocationDialog
             campaignId={campaignId}
             parentOptions={options}

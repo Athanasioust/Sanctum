@@ -63,7 +63,7 @@ export function CampaignCard({ campaign }: { campaign: Campaign }) {
         </p>
       </Link>
 
-      <div className="absolute right-3 top-3 opacity-0 transition-opacity group-hover:opacity-100">
+      <div className="absolute right-3 top-3 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

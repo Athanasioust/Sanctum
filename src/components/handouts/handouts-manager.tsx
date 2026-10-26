@@ -192,6 +192,7 @@ function HandoutCard({
             className="size-8"
             onClick={toggleReveal}
             title={handout.isRevealed ? "Hide from players" : "Reveal to players"}
+            aria-label={handout.isRevealed ? "Hide from players" : "Reveal to players"}
           >
             {handout.isRevealed ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
           </Button>
@@ -201,12 +202,12 @@ function HandoutCard({
             handoutId={handout.id}
             onSaved={onUpdated}
             trigger={
-              <Button variant="ghost" size="icon" className="size-8">
+              <Button variant="ghost" size="icon" className="size-8" aria-label={`Edit ${handout.title}`}>
                 <Pencil className="size-3.5" />
               </Button>
             }
           />
-          <Button variant="ghost" size="icon" className="size-8 text-destructive hover:text-destructive" onClick={remove}>
+          <Button variant="ghost" size="icon" className="size-8 text-destructive hover:text-destructive" onClick={remove} aria-label={`Delete ${handout.title}`}>
             <Trash2 className="size-3.5" />
           </Button>
         </div>

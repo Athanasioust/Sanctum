@@ -162,6 +162,31 @@
   }
 }
 
+/*
+ * A visible focus ring for keyboard users on anything that doesn't draw its
+ * own. shadcn components bring their own focus-visible ring; plain buttons,
+ * links, ticks and sliders didn't show one. :where() keeps this at zero
+ * specificity, so a component's own focus style always wins.
+ */
+@layer base {
+  :where(
+      a[href],
+      button,
+      summary,
+      select,
+      [role="button"],
+      [role="checkbox"],
+      [role="tab"],
+      [tabindex]:not([tabindex="-1"]),
+      input[type="checkbox"],
+      input[type="radio"],
+      input[type="range"]
+    ):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
 /* Thin, dark scrollbars to match the UI. */
 @layer base {
   * {

@@ -56,7 +56,7 @@ export function RollableStat({
         )}
       </span>
       <span className="flex items-center gap-1.5">
-        <Dices className="size-3 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+        <Dices className="size-3 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" />
         <span className="font-medium tabular-nums">{formatModifier(bonus)}</span>
       </span>
     </button>

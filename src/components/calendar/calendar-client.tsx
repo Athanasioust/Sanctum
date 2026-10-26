@@ -260,7 +260,7 @@ function DayCell({
     <div className="group min-h-20 rounded-lg border border-border bg-background/40 p-1.5 transition-colors hover:border-primary/40">
       <div className="flex items-center justify-between">
         <span className="text-xs text-muted-foreground">{label}</span>
-        <button onClick={onClick} className="opacity-0 transition-opacity group-hover:opacity-100" aria-label="Add event">
+        <button onClick={onClick} className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100" aria-label="Add event">
           <Plus className="size-3.5 text-primary" />
         </button>
       </div>
@@ -416,7 +416,7 @@ function MonthEventList({
               </div>
               <p className="text-xs text-muted-foreground">{dateOf(e)}</p>
             </button>
-            <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-destructive" onClick={() => onDelete(e.id)}>
+            <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-destructive" onClick={() => onDelete(e.id)} aria-label={`Delete ${e.title}`}>
               <Trash2 className="size-4" />
             </Button>
           </div>

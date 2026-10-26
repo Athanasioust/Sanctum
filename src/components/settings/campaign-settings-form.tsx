@@ -156,7 +156,7 @@ export function CampaignSettingsForm({ campaign }: { campaign: Campaign }) {
               <div key={i} className="flex items-center gap-2">
                 <Input value={m.name} onChange={(e) => updateMonth(i, { name: e.target.value })} placeholder="Month name" />
                 <Input type="number" min={1} value={m.days} onChange={(e) => updateMonth(i, { days: Number(e.target.value || 1) })} className="w-24" />
-                <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-destructive" onClick={() => setConfig((c) => ({ ...c, months: c.months.filter((_, idx) => idx !== i) }))}>
+                <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-destructive" onClick={() => setConfig((c) => ({ ...c, months: c.months.filter((_, idx) => idx !== i) }))} aria-label="Remove month">
                   <Trash2 className="size-4" />
                 </Button>
               </div>

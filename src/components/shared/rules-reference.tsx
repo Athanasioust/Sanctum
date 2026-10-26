@@ -136,7 +136,7 @@ export function RulesReference() {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" title="D&D 5e Rules Reference">
+        <Button variant="ghost" size="icon" title="D&D 5e Rules Reference" aria-label="D&D 5e rules reference">
           <BookOpen className="size-4" />
         </Button>
       </SheetTrigger>

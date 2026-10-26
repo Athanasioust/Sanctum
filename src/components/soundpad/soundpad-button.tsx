@@ -58,7 +58,7 @@ export function SoundpadButton({ campaignId }: { campaignId: number }) {
       }}
     >
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" title="Soundpad">
+        <Button variant="ghost" size="icon" title="Soundpad" aria-label="Soundpad">
           <Music className={cn("size-4", soundpad?.anyPlaying && "text-primary")} />
         </Button>
       </SheetTrigger>

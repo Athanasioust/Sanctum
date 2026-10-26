@@ -99,7 +99,7 @@ export function ShopItemsManager({
                   <TableCell>
                     <div className="flex items-center justify-end gap-1">
                       <ItemDialog shopId={shopId} item={item} onSaved={upsert} trigger={
-                        <Button size="icon" variant="ghost" className="size-8"><Pencil className="size-4" /></Button>
+                        <Button size="icon" variant="ghost" className="size-8" aria-label={`Edit ${item.name}`}><Pencil className="size-4" /></Button>
                       } />
                       <DeleteIconButton label="item" onConfirm={() => remove(item.id)} />
                     </div>

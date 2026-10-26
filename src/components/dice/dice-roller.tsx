@@ -174,7 +174,7 @@ export function DiceRoller({ campaignId }: { campaignId: number }) {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" title="Dice roller">
+        <Button variant="ghost" size="icon" title="Dice roller" aria-label="Dice roller">
           <Dices className="size-4" />
         </Button>
       </SheetTrigger>

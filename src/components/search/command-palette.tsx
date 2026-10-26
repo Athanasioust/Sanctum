@@ -200,7 +200,7 @@ export function CommandPalette({ campaignId }: { campaignId: number }) {
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
           {query ? (
-            <button onClick={() => setQuery("")} className="text-muted-foreground hover:text-foreground">
+            <button onClick={() => setQuery("")} className="text-muted-foreground hover:text-foreground" aria-label="Clear search">
               <X className="size-4" />
             </button>
           ) : (

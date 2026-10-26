@@ -81,7 +81,7 @@ export function ShopsLootClient({
                     ) : null}
                   </div>
                 </Link>
-                <div className="absolute right-3 top-3 opacity-0 transition-opacity group-hover:opacity-100">
+                <div className="absolute right-3 top-3 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
                   <EntityActions deleteEndpoint={`/api/shops/${shop.id}`} entityLabel="Shop" />
                 </div>
               </div>
@@ -381,7 +381,7 @@ function RollTableDialog({
                     onChange={(ev) => updateEntry(i, { result: ev.target.value })}
                     placeholder="Result"
                   />
-                  <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-destructive" onClick={() => setEntries((p) => p.filter((_, idx) => idx !== i))}>
+                  <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-destructive" onClick={() => setEntries((p) => p.filter((_, idx) => idx !== i))} aria-label="Remove entry">
                     <Trash2 className="size-4" />
                   </Button>
                 </div>

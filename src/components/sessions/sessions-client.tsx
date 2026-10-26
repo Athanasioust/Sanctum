@@ -76,7 +76,7 @@ export function SessionsClient({
                     <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{s.dmNotes}</p>
                   ) : null}
                 </Link>
-                <div className="absolute right-3 top-3 opacity-0 transition-opacity group-hover:opacity-100">
+                <div className="absolute right-3 top-3 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
                   <EntityActions deleteEndpoint={`/api/session-preps/${s.id}`} entityLabel="Session" />
                 </div>
               </div>

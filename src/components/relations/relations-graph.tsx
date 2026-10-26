@@ -545,7 +545,7 @@ export function RelationsGraph({
                   relId={rel.id}
                   onSaved={upsert}
                   trigger={
-                    <Button variant="ghost" size="icon" className="size-7">
+                    <Button variant="ghost" size="icon" className="size-7" aria-label="Edit relationship">
                       <Pencil className="size-3.5" />
                     </Button>
                   }
@@ -555,6 +555,7 @@ export function RelationsGraph({
                   size="icon"
                   className="size-7 text-destructive hover:text-destructive"
                   onClick={() => remove(rel)}
+                  aria-label="Delete relationship"
                 >
                   <Trash2 className="size-3.5" />
                 </Button>

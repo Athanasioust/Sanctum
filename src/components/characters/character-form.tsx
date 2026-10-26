@@ -558,7 +558,7 @@ function MulticlassEditor({
           <Field label="Level" className="w-24">
             <Input type="number" min={1} value={entry.level} onChange={(e) => update(i, { level: Number(e.target.value || 1) })} />
           </Field>
-          <Button type="button" size="icon" variant="ghost" className="text-muted-foreground hover:text-destructive" onClick={() => removeAt(i)}>
+          <Button type="button" size="icon" variant="ghost" className="text-muted-foreground hover:text-destructive" onClick={() => removeAt(i)} aria-label="Remove class">
             <Trash2 className="size-4" />
           </Button>
         </div>
