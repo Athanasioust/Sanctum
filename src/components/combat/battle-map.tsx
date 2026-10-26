@@ -41,6 +41,7 @@ import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { api } from "@/lib/client";
 import { createFog, fogForGrid, paintFog, revealAllFog } from "@/lib/battle-map";
+import { conditionNames } from "@/lib/conditions";
 import { cn } from "@/lib/utils";
 import type { MapTool, TokenStatus } from "@/components/combat/battle-map-canvas";
 import type {
@@ -189,7 +190,7 @@ export function BattleMap({
         result[token.id] = {
           hpCurrent: participant.hpCurrent,
           hpMax: participant.hpMax,
-          conditions: participant.conditions ?? [],
+          conditions: conditionNames(participant.conditions),
         };
       }
     }

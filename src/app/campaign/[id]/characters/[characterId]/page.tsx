@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { ArrowLeft } from "lucide-react";
 import { db } from "@/db";
-import { characters } from "@/db/schema";
+import { characterResources, characters } from "@/db/schema";
 import { PageContainer } from "@/components/shared/page-header";
 import { CharacterDetail } from "@/components/characters/character-detail";
 
@@ -22,6 +22,12 @@ export default async function CharacterDetailPage({
     .where(eq(characters.id, Number(characterId)));
   if (!character || character.campaignId !== campaignId) notFound();
 
+  const resources = await db
+    .select()
+    .from(characterResources)
+    .where(eq(characterResources.characterId, character.id))
+    .orderBy(asc(characterResources.id));
+
   return (
     <PageContainer>
       <Link
@@ -30,7 +36,7 @@ export default async function CharacterDetailPage({
       >
         <ArrowLeft className="size-4" /> Back to characters
       </Link>
-      <CharacterDetail character={character} campaignId={campaignId} />
+      <CharacterDetail character={character} campaignId={campaignId} resources={resources} />
     </PageContainer>
   );
 }

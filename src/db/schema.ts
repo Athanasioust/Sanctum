@@ -6,6 +6,7 @@ import {
   real,
   type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core";
+import type { ConditionEntry } from "@/lib/conditions";
 
 /* -------------------------------------------------------------------------- */
 /*  Shared JSON shapes                                                         */
@@ -280,6 +281,30 @@ export const characters = sqliteTable("characters", {
 });
 
 /* -------------------------------------------------------------------------- */
+/*  Character resources (limited-use abilities)                                */
+/* -------------------------------------------------------------------------- */
+
+/** When a limited-use ability comes back. "other" is restored by hand. */
+export const RESOURCE_RECHARGES = ["short", "long", "dawn", "other"] as const;
+export type ResourceRecharge = (typeof RESOURCE_RECHARGES)[number];
+
+/**
+ * Channel Divinity, Second Wind, Bardic Inspiration… — anything with uses
+ * that isn't a spell slot. Rests restore them according to `recharge`.
+ */
+export const characterResources = sqliteTable("character_resources", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  characterId: integer("character_id")
+    .notNull()
+    .references(() => characters.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  max: integer("max").notNull().default(1),
+  used: integer("used").notNull().default(0),
+  recharge: text("recharge", { enum: RESOURCE_RECHARGES }).notNull().default("long"),
+  ...timestamps,
+});
+
+/* -------------------------------------------------------------------------- */
 /*  Spells                                                                     */
 /* -------------------------------------------------------------------------- */
 
@@ -491,9 +516,10 @@ export const combatParticipants = sqliteTable("combat_participants", {
   hpMax: integer("hp_max").notNull().default(0),
   hpTemp: integer("hp_temp").notNull().default(0),
   armorClass: integer("armor_class").notNull().default(10),
+  /** Plain names, or names with a countdown — see src/lib/conditions.ts. */
   conditions: text("conditions", { mode: "json" })
     .notNull()
-    .$type<string[]>()
+    .$type<ConditionEntry[]>()
     .$defaultFn(() => []),
   exhaustionLevel: integer("exhaustion_level").notNull().default(0),
   deathSaveSuccesses: integer("death_save_successes").notNull().default(0),
@@ -1070,6 +1096,8 @@ export type Campaign = typeof campaigns.$inferSelect;
 export type NewCampaign = typeof campaigns.$inferInsert;
 export type Character = typeof characters.$inferSelect;
 export type NewCharacter = typeof characters.$inferInsert;
+export type CharacterResource = typeof characterResources.$inferSelect;
+export type NewCharacterResource = typeof characterResources.$inferInsert;
 export type Spell = typeof spells.$inferSelect;
 export type NewSpell = typeof spells.$inferInsert;
 export type SpellSlot = typeof spellSlots.$inferSelect;

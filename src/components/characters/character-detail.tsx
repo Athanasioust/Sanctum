@@ -15,6 +15,7 @@ import { InventoryTab } from "@/components/characters/inventory-tab";
 import { ExportSheetButton } from "@/components/characters/export-sheet-button";
 import { LevelUpDialog } from "@/components/characters/level-up-dialog";
 import { WeaponMasterySection } from "@/components/characters/weapon-mastery-section";
+import { ResourcesTracker } from "@/components/characters/resources-tracker";
 import { rollDice } from "@/components/dice/dice-roller";
 import { RollableStat } from "@/components/dice/rollable-stat";
 import { ABILITIES, SKILLS, EXHAUSTION_EFFECTS, hitDieForClass } from "@/lib/constants";
@@ -22,15 +23,18 @@ import { checkFormula } from "@/lib/dice";
 import { abilityModifier, formatModifier } from "@/lib/dnd";
 import { api } from "@/lib/client";
 import type { AbilityKey } from "@/lib/constants";
-import type { Character, MagicItem, SpellSlot } from "@/db/schema";
+import type { Character, CharacterResource, MagicItem, SpellSlot } from "@/db/schema";
 import type { Currency } from "@/db/schema";
 
 export function CharacterDetail({
   character,
   campaignId,
+  resources = [],
 }: {
   character: Character;
   campaignId: number;
+  /** Limited-use abilities (Second Wind, Channel Divinity…). */
+  resources?: CharacterResource[];
 }) {
   const prof = character.proficiencyBonus;
   const scores: Record<AbilityKey, number> = {
@@ -149,7 +153,10 @@ export function CharacterDetail({
             hpMax={character.hpMax}
             conMod={abilityModifier(character.con)}
             hitDie={hitDieForClass(character.class)}
+            resources={resources}
           />
+
+          <ResourcesTracker characterId={character.id} resources={resources} />
         </TabsContent>
 
         {/* Abilities */}
@@ -452,6 +459,7 @@ function HitDiceTracker({
   hpMax,
   conMod,
   hitDie,
+  resources,
 }: {
   characterId: number;
   level: number;
@@ -462,6 +470,7 @@ function HitDiceTracker({
   hpMax: number;
   conMod: number;
   hitDie: number;
+  resources: CharacterResource[];
 }) {
   const router = useRouter();
   // Every value shown here comes from the server-fetched character, so a rest
@@ -482,6 +491,36 @@ function HitDiceTracker({
     try {
       await api.patch(`/api/characters/${characterId}`, { hitDiceUsed: used + 1, hpCurrent: newHp });
       toast.success(`Spent hit die — rolled d${hitDie} (${roll}) + CON ${conMod} = +${healed} HP`);
+      startRefresh(() => router.refresh());
+    } catch {
+      toast.error("Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  /** Give back the spent uses of every resource whose recharge is in `kinds`. */
+  async function restoreResources(kinds: CharacterResource["recharge"][]) {
+    const spent = resources.filter((r) => r.used > 0 && kinds.includes(r.recharge));
+    await Promise.all(
+      spent.map((r) => api.patch(`/api/character-resources/${r.id}`, { used: 0 })),
+    );
+    return spent.length;
+  }
+
+  /**
+   * A short rest restores short-rest abilities. Hit dice are spent separately
+   * (as many as the player wants) with the button beside it.
+   */
+  async function shortRest() {
+    setSaving(true);
+    try {
+      const restored = await restoreResources(["short"]);
+      toast.success(
+        restored > 0
+          ? `Short rest taken — ${restored} ${restored === 1 ? "ability" : "abilities"} recharged`
+          : "Short rest taken — nothing to recharge",
+      );
       startRefresh(() => router.refresh());
     } catch {
       toast.error("Failed to save");
@@ -515,7 +554,10 @@ function HitDiceTracker({
           .filter((s) => s.used > 0)
           .map((s) => api.patch(`/api/spell-slots/${s.id}`, { used: 0 })),
       );
-      toast.success("Long rest taken — HP, hit dice and spell slots restored");
+      // "At dawn" abilities are treated as coming back with the long rest,
+      // which is when nearly every table's dawn falls.
+      await restoreResources(["short", "long", "dawn"]);
+      toast.success("Long rest taken — HP, hit dice, spell slots and abilities restored");
       startRefresh(() => router.refresh());
     } catch {
       toast.error("Failed to save");
@@ -547,13 +589,16 @@ function HitDiceTracker({
         </div>
       </div>
       <div className="flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" onClick={shortRest} disabled={busy}>
+          Short Rest
+        </Button>
         <Button
           variant="outline"
           size="sm"
           onClick={spendHitDie}
           disabled={available <= 0 || busy}
         >
-          Short Rest (spend 1d{hitDie})
+          Spend hit die (1d{hitDie})
         </Button>
         <Button variant="outline" size="sm" onClick={longRest} disabled={busy}>
           Long Rest

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { IMPORT_TARGET_VALUES } from "./markdown-import";
+import { CONDITION_EXPIRIES } from "./conditions";
 
 /* -------------------------------------------------------------------------- */
 /*  Shared primitives                                                          */
@@ -279,6 +280,21 @@ export const inventoryItemCreateSchema = z.object({
 export const inventoryItemUpdateSchema = inventoryItemCreateSchema.partial();
 
 /* -------------------------------------------------------------------------- */
+/*  Character resources                                                        */
+/* -------------------------------------------------------------------------- */
+
+export const characterResourceCreateSchema = z.object({
+  characterId: z.number().int(),
+  name: z.string().trim().min(1, "Name is required").max(120),
+  max: z.number().int().min(1).max(99).optional().default(1),
+  used: z.number().int().min(0).max(99).optional().default(0),
+  recharge: z.enum(["short", "long", "dawn", "other"]).optional().default("long"),
+});
+export const characterResourceUpdateSchema = characterResourceCreateSchema
+  .partial()
+  .omit({ characterId: true });
+
+/* -------------------------------------------------------------------------- */
 /*  Combat                                                                     */
 /* -------------------------------------------------------------------------- */
 
@@ -295,6 +311,16 @@ export const encounterUpdateSchema = z.object({
   lairTurnActive: z.boolean().optional(),
 });
 
+/** A plain condition name, or one with a countdown (see src/lib/conditions.ts). */
+const conditionEntrySchema = z.union([
+  z.string().max(80),
+  z.object({
+    name: z.string().trim().min(1).max(80),
+    rounds: z.number().int().min(1).max(1000).optional(),
+    expiry: z.enum(CONDITION_EXPIRIES).optional(),
+  }),
+]);
+
 export const participantCreateSchema = z.object({
   encounterId: z.number().int(),
   entityId: z.number().int().nullable().optional(),
@@ -307,7 +333,7 @@ export const participantCreateSchema = z.object({
   hpMax: nonNegInt(0),
   hpTemp: nonNegInt(0),
   armorClass: z.number().int().min(0).max(40).optional().default(10),
-  conditions: stringArray,
+  conditions: z.array(conditionEntrySchema).max(60).optional().default([]),
   exhaustionLevel: z.number().int().min(0).max(6).optional().default(0),
   deathSaveSuccesses: z.number().int().min(0).max(3).optional().default(0),
   deathSaveFailures: z.number().int().min(0).max(3).optional().default(0),

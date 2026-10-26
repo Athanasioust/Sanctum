@@ -5,6 +5,7 @@ import { db } from "@/db";
 import {
   campaigns,
   characters,
+  characterResources,
   spells,
   spellSlots,
   inventoryItems,
@@ -39,6 +40,7 @@ import { ApiError } from "@/lib/api";
 import {
   campaignCreateSchema,
   characterCreateSchema,
+  characterResourceCreateSchema,
   npcCreateSchema,
   locationCreateSchema,
   spellCreateSchema,
@@ -147,13 +149,14 @@ export async function exportCampaign(campaignId: number) {
   const shopIds = shopRows.map((s) => s.id);
   const encounterIds = encounterRows.map((e) => e.id);
 
-  const [spellRows, slotRows, inventoryRows, shopItemRows, participantRows, combatLogRows] = await Promise.all([
+  const [spellRows, slotRows, inventoryRows, shopItemRows, participantRows, combatLogRows, resourceRows] = await Promise.all([
     ownerIds.length ? db.select().from(spells).where(inArray(spells.ownerId, ownerIds)) : [],
     ownerIds.length ? db.select().from(spellSlots).where(inArray(spellSlots.ownerId, ownerIds)) : [],
     ownerIds.length ? db.select().from(inventoryItems).where(inArray(inventoryItems.ownerId, ownerIds)) : [],
     shopIds.length ? db.select().from(shopItems).where(inArray(shopItems.shopId, shopIds)) : [],
     encounterIds.length ? db.select().from(combatParticipants).where(inArray(combatParticipants.encounterId, encounterIds)) : [],
     encounterIds.length ? db.select().from(combatLogEntries).where(inArray(combatLogEntries.encounterId, encounterIds)) : [],
+    charIds.length ? db.select().from(characterResources).where(inArray(characterResources.characterId, charIds)) : [],
   ]);
 
   const ownerMatch = <T extends { ownerId: number; ownerType: string }>(rows: T[]) =>
@@ -164,6 +167,7 @@ export async function exportCampaign(campaignId: number) {
     exportedAt: new Date().toISOString(),
     campaign,
     characters: characterRows,
+    characterResources: resourceRows,
     npcs: npcRows,
     spells: ownerMatch(spellRows),
     spellSlots: ownerMatch(slotRows),
@@ -221,6 +225,7 @@ function mapIds(ids: unknown, map: Map<number, number>): number[] {
 const ImportSchemas = {
   campaign: campaignCreateSchema,
   character: characterCreateSchema.omit({ campaignId: true }),
+  characterResource: characterResourceCreateSchema.omit({ characterId: true }),
   npc: npcCreateSchema.omit({ campaignId: true }),
   location: locationCreateSchema.omit({ campaignId: true, parentLocationId: true }),
   spell: spellCreateSchema.omit({ ownerId: true }),
@@ -332,6 +337,10 @@ export async function importCampaign(raw: unknown): Promise<number> {
       const id = rowId(r);
       const created = tx.insert(characters).values({ ...data, campaignId } as never).returning().all()[0] as { id: number };
       if (id !== null) charMap.set(id, created.id);
+    }
+    for (const { raw: r, data } of validateRows(ImportSchemas.characterResource, bundle.characterResources)) {
+      const characterId = charMap.get(Number(r.characterId));
+      if (characterId) tx.insert(characterResources).values({ ...data, characterId } as never).run();
     }
     for (const { raw: r, data } of validateRows(ImportSchemas.npc, bundle.npcs)) {
       const id = rowId(r);

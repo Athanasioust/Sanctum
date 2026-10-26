@@ -81,6 +81,13 @@ import { Slider } from "@/components/ui/slider";
 import { COMBAT_LOG_ADDED_EVENT, rollDice } from "@/components/dice/dice-roller";
 import { api } from "@/lib/client";
 import { CONDITIONS, EXHAUSTION_EFFECTS } from "@/lib/constants";
+import {
+  conditionName,
+  conditionTimer,
+  tickConditions,
+  type ConditionEntry,
+  type ConditionExpiry,
+} from "@/lib/conditions";
 import { rollDie } from "@/lib/dnd";
 import { cn } from "@/lib/utils";
 import { rateEncounter, difficultyKey, DIFFICULTY_STYLES } from "@/lib/encounter";
@@ -299,6 +306,9 @@ export function CombatTracker({
 
   async function savePart(id: number, patch: Partial<CombatParticipant>) {
     patchLocal(id, patch);
+    // Keep the ref current too, so several saves in one tick (a turn change
+    // touching reactions and condition timers) each see the last one's result.
+    partsRef.current = partsRef.current.map((p) => (p.id === id ? { ...p, ...patch } : p));
     try {
       await api.patch(`/api/participants/${id}`, patch);
     } catch {
@@ -490,8 +500,24 @@ export function CombatTracker({
   const currentSlot = currentSlotIndex(slots, turnIndex, lairActive);
 
   /**
+   * Count down timed conditions at the start or end of these creatures' turn,
+   * dropping (and logging) the ones that run out.
+   */
+  function tickTimers(ids: number[], phase: "startOfTurn" | "endOfTurn") {
+    for (const id of ids) {
+      const p = partsRef.current.find((x) => x.id === id);
+      if (!p) continue;
+      const { next, expired } = tickConditions(p.conditions, phase);
+      if (next === p.conditions) continue;
+      savePart(id, { conditions: next });
+      for (const name of expired) addLogEntry(p.name, `${name} ends`, "");
+    }
+  }
+
+  /**
    * Start-of-turn bookkeeping for the creatures whose turn just began: spent
-   * legendary actions come back, and so does the reaction.
+   * legendary actions come back, so does the reaction, and start-of-turn
+   * condition timers tick.
    */
   function startTurnFor(ids: number[]) {
     for (const id of ids) {
@@ -502,6 +528,7 @@ export function CombatTracker({
       if (!p.reactionAvailable) patch.reactionAvailable = true;
       if (Object.keys(patch).length > 0) savePart(id, patch);
     }
+    tickTimers(ids, "startOfTurn");
   }
 
   function goToSlot(slotIndex: number, r: number) {
@@ -520,6 +547,8 @@ export function CombatTracker({
       next = 0;
       r = round + 1;
     }
+    const leaving = slots[currentSlot];
+    if (leaving?.kind === "creatures") tickTimers(leaving.ids, "endOfTurn");
     const slot = slots[next];
     if (slot.kind === "creatures") startTurnFor(slot.ids);
     goToSlot(next, r);
@@ -1035,7 +1064,7 @@ function ParticipantRow({
           </div>
           <div className="mt-1 flex flex-wrap gap-1">
             {p.conditions.map((c) => (
-              <Badge key={c} variant="secondary" className="text-xs">{c}</Badge>
+              <ConditionBadge key={conditionName(c)} entry={c} />
             ))}
             {p.exhaustionLevel > 0 ? (
               <Badge className="bg-destructive/20 text-red-200 text-xs">Exhaustion {p.exhaustionLevel}</Badge>
@@ -1627,6 +1656,44 @@ function HpDialog({
   );
 }
 
+/** How a condition's timer reads on its badge: "Stunned · 1 (end)". */
+function ConditionBadge({ entry }: { entry: ConditionEntry }) {
+  const t = useT();
+  const timer = conditionTimer(entry);
+  const name = conditionName(entry);
+  if (!timer) {
+    return <Badge variant="secondary" className="text-xs">{name}</Badge>;
+  }
+  const when = t(expiryKey(timer.expiry));
+  return (
+    <Badge
+      variant="secondary"
+      className="gap-1 text-xs"
+      title={
+        timer.expiry === "endOfCombat"
+          ? when
+          : `${timer.rounds ?? 1} × ${when}`
+      }
+    >
+      {name}
+      <span className="text-muted-foreground tabular-nums">
+        {timer.expiry === "endOfCombat" ? "∞" : `${timer.rounds ?? 1}`}
+      </span>
+    </Badge>
+  );
+}
+
+function expiryKey(expiry: ConditionExpiry) {
+  return expiry === "startOfTurn"
+    ? ("conditions.startOfTurn" as const)
+    : expiry === "endOfTurn"
+      ? ("conditions.endOfTurn" as const)
+      : ("conditions.endOfCombat" as const);
+}
+
+/** Per-condition timer being edited in the dialog. Blank rounds = no timer. */
+type TimerDraft = { rounds: string; expiry: ConditionExpiry };
+
 function ConditionsDialog({
   participant: p,
   onSave,
@@ -1634,13 +1701,46 @@ function ConditionsDialog({
   participant: CombatParticipant;
   onSave: (id: number, patch: Partial<CombatParticipant>) => void;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
-  const [conditions, setConditions] = useState<string[]>(p.conditions);
+  const [conditions, setConditions] = useState<string[]>(p.conditions.map(conditionName));
+  const [timers, setTimers] = useState<Record<string, TimerDraft>>({});
   const [exhaustion, setExhaustion] = useState(p.exhaustionLevel);
 
+  function load() {
+    setConditions(p.conditions.map(conditionName));
+    const drafts: Record<string, TimerDraft> = {};
+    for (const entry of p.conditions) {
+      const timer = conditionTimer(entry);
+      if (timer) {
+        drafts[conditionName(entry)] = {
+          rounds: timer.rounds ? String(timer.rounds) : "",
+          expiry: timer.expiry,
+        };
+      }
+    }
+    setTimers(drafts);
+    setExhaustion(p.exhaustionLevel);
+  }
+
   function save() {
-    onSave(p.id, { conditions, exhaustionLevel: exhaustion });
+    // Untimed conditions stay plain strings, exactly as they always were.
+    const entries: ConditionEntry[] = conditions.map((name) => {
+      const draft = timers[name];
+      if (!draft) return name;
+      if (draft.expiry === "endOfCombat") return { name, expiry: "endOfCombat" };
+      const rounds = Math.round(Number(draft.rounds));
+      return rounds > 0 ? { name, rounds, expiry: draft.expiry } : name;
+    });
+    onSave(p.id, { conditions: entries, exhaustionLevel: exhaustion });
     setOpen(false);
+  }
+
+  function setTimer(name: string, patch: Partial<TimerDraft>) {
+    setTimers((prev) => ({
+      ...prev,
+      [name]: { ...(prev[name] ?? { rounds: "", expiry: "endOfTurn" }), ...patch },
+    }));
   }
 
   return (
@@ -1648,10 +1748,7 @@ function ConditionsDialog({
       open={open}
       onOpenChange={(o) => {
         setOpen(o);
-        if (o) {
-          setConditions(p.conditions);
-          setExhaustion(p.exhaustionLevel);
-        }
+        if (o) load();
       }}
     >
       <DialogTrigger asChild>
@@ -1664,7 +1761,51 @@ function ConditionsDialog({
           <DialogTitle>{p.name} — Conditions</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
-          <CheckboxGroup columns={2} options={[...CONDITIONS]} value={conditions} onChange={setConditions} />
+          <CheckboxGroup
+            columns={2}
+            options={[...new Set([...CONDITIONS, ...conditions])]}
+            value={conditions}
+            onChange={setConditions}
+          />
+          {conditions.length > 0 ? (
+            <div className="space-y-2 rounded-lg border border-border p-3">
+              <p className="text-xs font-medium text-muted-foreground">{t("conditions.duration")}</p>
+              {conditions.map((name) => {
+                const draft = timers[name];
+                return (
+                  <div key={name} className="flex flex-wrap items-center gap-2 text-sm">
+                    <span className="w-28 truncate">{name}</span>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={1000}
+                      value={draft?.expiry === "endOfCombat" ? "" : (draft?.rounds ?? "")}
+                      disabled={draft?.expiry === "endOfCombat"}
+                      onChange={(e) => setTimer(name, { rounds: e.target.value })}
+                      placeholder="—"
+                      className="h-8 w-16 text-center tabular-nums"
+                      aria-label={`${name}: ${t("conditions.rounds")}`}
+                    />
+                    <span className="text-xs text-muted-foreground">{t("conditions.rounds")}</span>
+                    <Select
+                      value={draft?.expiry ?? "endOfTurn"}
+                      onValueChange={(v) => setTimer(name, { expiry: v as ConditionExpiry })}
+                    >
+                      <SelectTrigger className="h-8 w-44" aria-label={`${name}: ${t("conditions.expires")}`}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="startOfTurn">{t("conditions.startOfTurn")}</SelectItem>
+                        <SelectItem value="endOfTurn">{t("conditions.endOfTurn")}</SelectItem>
+                        <SelectItem value="endOfCombat">{t("conditions.endOfCombat")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                );
+              })}
+              <p className="text-xs text-muted-foreground">{t("conditions.durationHint")}</p>
+            </div>
+          ) : null}
           <Field label="Exhaustion Level">
             <Select value={String(exhaustion)} onValueChange={(v) => setExhaustion(Number(v))}>
               <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
