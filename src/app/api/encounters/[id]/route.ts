@@ -10,6 +10,7 @@ import {
   requireId,
 } from "@/lib/api";
 import { encounterUpdateSchema } from "@/lib/validators";
+import { portraitsFor } from "@/lib/portraits";
 
 type Params = { id: string };
 
@@ -30,7 +31,11 @@ export const GET = apiRoute<Params>(async (_req, { params }) => {
       desc(combatParticipants.initiativeTotal),
     );
 
-  return json({ ...encounter, participants });
+  // Portraits ride along so the battle map and player view can draw token art
+  // without a second round trip per poll.
+  const portraits = await portraitsFor(participants);
+
+  return json({ ...encounter, participants, portraits });
 });
 
 export const PATCH = apiRoute<Params>(async (req, { params }) => {

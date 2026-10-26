@@ -136,5 +136,10 @@
   "resources.namePlaceholder": "Nouvelle capacité, p. ex. Second souffle",
   "resources.uses": "Charges",
   "resources.recharge": "Recharge",
-  "resources.saveFailed": "Échec de l'enregistrement"
+  "resources.saveFailed": "Échec de l'enregistrement",
+  "portrait.upload": "Importer un portrait (sert aussi de jeton sur la carte)",
+  "portrait.replace": "Remplacer le portrait",
+  "portrait.remove": "Retirer le portrait",
+  "portrait.saved": "Portrait enregistré",
+  "portrait.failed": "Impossible d'enregistrer le portrait"
 }

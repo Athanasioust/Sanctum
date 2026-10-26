@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { Swords, Heart, Shield, Skull, Image, Grid3x3, Castle } from "lucide-react";
 import { api } from "@/lib/client";
-import { fogForGrid } from "@/lib/battle-map";
+import { fogForGrid, resolveTokenImages } from "@/lib/battle-map";
 import { currentSlotIndex, keepGroupsTogether, turnSlots } from "@/lib/combat-turns";
 import { hpBarColor } from "@/lib/ui";
 import { renderMarkdown } from "@/lib/markdown";
@@ -34,6 +34,8 @@ export type ScreenState = {
   handouts: Handout[];
   /** The battle map the DM is currently showing, if any. */
   battleMap: BattleMap | null;
+  /** Art for the map's tokens, by token id (hidden tokens are never drawn). */
+  tokenArt: Record<string, string>;
 };
 
 export const EMPTY_SCREEN_STATE: ScreenState = {
@@ -46,6 +48,7 @@ export const EMPTY_SCREEN_STATE: ScreenState = {
   party: [],
   handouts: [],
   battleMap: null,
+  tokenArt: {},
 };
 
 /** How long a poll may take before it's abandoned and retried on the next tick. */
@@ -89,12 +92,27 @@ export function PlayerScreen({
       // wins if the DM left more than one flagged.
       const battleMap = maps.find((m) => m.revealToPlayers) ?? null;
       const active = encounters.find((e) => e.status === "active") ?? null;
-      let next: ScreenState = { ...EMPTY_SCREEN_STATE, party, handouts, battleMap };
-      if (active) {
-        const full = await api.get<Encounter & { participants: CombatParticipant[] }>(
-          `/api/encounters/${active.id}`,
-          { signal },
-        );
+      type FullEncounter = Encounter & {
+        participants: CombatParticipant[];
+        portraits?: Record<string, string>;
+      };
+      // Token art comes from the encounter the map is linked to, which is
+      // usually — but not necessarily — the one being fought.
+      const mapEncounterId = battleMap?.encounterId ?? null;
+      const [full, linked] = await Promise.all([
+        active
+          ? api.get<FullEncounter>(`/api/encounters/${active.id}`, { signal })
+          : Promise.resolve(null),
+        mapEncounterId && mapEncounterId !== active?.id
+          ? api.get<FullEncounter>(`/api/encounters/${mapEncounterId}`, { signal }).catch(() => null)
+          : Promise.resolve(null),
+      ]);
+      const art = linked ?? full;
+      const tokenArt = battleMap
+        ? resolveTokenImages(battleMap.tokens, art?.participants ?? [], art?.portraits ?? {})
+        : {};
+      let next: ScreenState = { ...EMPTY_SCREEN_STATE, party, handouts, battleMap, tokenArt };
+      if (active && full) {
         next = {
           active: true,
           encounterName: full.name,
@@ -107,6 +125,7 @@ export function PlayerScreen({
           party,
           handouts,
           battleMap,
+          tokenArt,
         };
       }
       setState(next);
@@ -163,7 +182,7 @@ export function PlayerScreen({
             <h2 className="mb-3 flex items-center gap-2 font-heading text-lg font-semibold text-muted-foreground">
               <Grid3x3 className="size-4" /> {state.battleMap.name}
             </h2>
-            <PlayerBattleMap map={state.battleMap} />
+            <PlayerBattleMap map={state.battleMap} tokenArt={state.tokenArt} />
           </section>
         )}
 
@@ -220,7 +239,13 @@ export function PlayerScreen({
  * hid — or that stand in unrevealed squares — are never drawn, so nothing
  * reaches this screen that the players aren't meant to see.
  */
-function PlayerBattleMap({ map }: { map: BattleMap }) {
+function PlayerBattleMap({
+  map,
+  tokenArt,
+}: {
+  map: BattleMap;
+  tokenArt: Record<string, string>;
+}) {
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-[#0b0b0c]">
       <BattleMapCanvas
@@ -237,6 +262,7 @@ function PlayerBattleMap({ map }: { map: BattleMap }) {
           fogEnabled: map.fogEnabled,
         }}
         statuses={{}}
+        tokenImages={tokenArt}
         readOnly
         playerView
         fitWidth

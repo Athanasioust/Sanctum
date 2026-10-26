@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { NpcRelationshipsSection } from "@/components/npcs/npc-relationships-section";
+import { PortraitUpload } from "@/components/shared/portrait-upload";
 
 export const dynamic = "force-dynamic";
 
@@ -45,7 +46,8 @@ export default async function NpcDetailPage({
       </Link>
 
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+        <div className="flex items-center gap-4">
+          <PortraitUpload name={npc.name} url={npc.portraitUrl} endpoint={`/api/npcs/${npc.id}`} />
           <div className="flex items-center gap-3">
             <h1 className="font-heading text-3xl font-semibold tracking-tight">{npc.name}</h1>
             <Badge variant={npc.type === "monster" ? "destructive" : "secondary"}>

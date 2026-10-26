@@ -40,7 +40,13 @@ import { Field } from "@/components/shared/form";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { api } from "@/lib/client";
-import { createFog, fogForGrid, paintFog, revealAllFog } from "@/lib/battle-map";
+import {
+  createFog,
+  fogForGrid,
+  paintFog,
+  resolveTokenImages,
+  revealAllFog,
+} from "@/lib/battle-map";
 import { conditionNames } from "@/lib/conditions";
 import { cn } from "@/lib/utils";
 import type { MapTool, TokenStatus } from "@/components/combat/battle-map-canvas";
@@ -87,7 +93,11 @@ const TEMPLATE_SIZES = [5, 10, 15, 20, 30, 40, 60];
 
 const TEMPLATE_COLORS = ["#f97316", "#dc2626", "#7c3aed", "#2563eb", "#16a34a", "#facc15"];
 
-type EncounterWithParts = Encounter & { participants: CombatParticipant[] };
+type EncounterWithParts = Encounter & {
+  participants: CombatParticipant[];
+  /** Portrait URL by `portraitKey`, for token art. */
+  portraits?: Record<string, string>;
+};
 
 export function BattleMap({
   campaignId,
@@ -196,6 +206,30 @@ export function BattleMap({
     }
     return result;
   }, [map, live]);
+
+  // Token art: the token's own image, else its combatant's portrait.
+  const tokenImages = useMemo(
+    () =>
+      map
+        ? resolveTokenImages(map.tokens, live?.participants ?? [], live?.portraits ?? {})
+        : {},
+    [map, live],
+  );
+
+  const [tokenArtUploading, setTokenArtUploading] = useState(false);
+  async function uploadTokenArt(tokenId: string, file: File) {
+    setTokenArtUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const { url } = await api.upload<{ url: string }>("/api/upload", fd);
+      patchToken(tokenId, { imageUrl: url });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setTokenArtUploading(false);
+    }
+  }
 
   /* ---------------------------------------------------------------------- */
   /*  Map + token actions                                                    */
@@ -689,6 +723,7 @@ export function BattleMap({
                 fogEnabled: map.fogEnabled,
               }}
               statuses={statuses}
+              tokenImages={tokenImages}
               tool={tool}
               templateSizeFt={templateSizeFt}
               templateColor={templateColor}
@@ -748,6 +783,54 @@ export function BattleMap({
                           aria-label={`Colour ${c}`}
                         />
                       ))}
+                    </div>
+                  </Field>
+                  <Field
+                    label="Token art"
+                    hint={
+                      selectedToken.imageUrl
+                        ? undefined
+                        : tokenImages[selectedToken.id]
+                          ? "Using the combatant's portrait"
+                          : "None — a plain coloured disc"
+                    }
+                  >
+                    <div className="flex items-center gap-2">
+                      {tokenImages[selectedToken.id] ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={tokenImages[selectedToken.id]}
+                          alt=""
+                          className="size-9 rounded-full border border-border object-cover"
+                        />
+                      ) : null}
+                      <label className="inline-flex">
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/gif,image/webp"
+                          className="hidden"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) uploadTokenArt(selectedToken.id, f);
+                            e.target.value = "";
+                          }}
+                        />
+                        <Button asChild variant="outline" size="sm" disabled={tokenArtUploading}>
+                          <span>
+                            <Upload className="size-3.5" />
+                            {tokenArtUploading ? "Uploading…" : selectedToken.imageUrl ? "Replace" : "Upload"}
+                          </span>
+                        </Button>
+                      </label>
+                      {selectedToken.imageUrl ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => patchToken(selectedToken.id, { imageUrl: undefined })}
+                        >
+                          Clear
+                        </Button>
+                      ) : null}
                     </div>
                   </Field>
                   <Button

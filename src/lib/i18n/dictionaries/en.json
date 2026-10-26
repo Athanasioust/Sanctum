@@ -136,5 +136,10 @@
   "resources.namePlaceholder": "New ability, e.g. Second Wind",
   "resources.uses": "Uses",
   "resources.recharge": "Recharge",
-  "resources.saveFailed": "Failed to save"
+  "resources.saveFailed": "Failed to save",
+  "portrait.upload": "Upload a portrait (also used as the battle-map token)",
+  "portrait.replace": "Replace portrait",
+  "portrait.remove": "Remove portrait",
+  "portrait.saved": "Portrait saved",
+  "portrait.failed": "Couldn't save the portrait"
 }

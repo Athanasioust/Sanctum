@@ -189,6 +189,7 @@ export const characterCreateSchema = z.object({
   hitDiceUsed: z.number().int().min(0).optional().default(0),
   weaponMasteries: stringArray,
   notes: optionalString(20000),
+  portraitUrl: z.string().max(500).nullable().optional(),
 });
 export const characterUpdateSchema = characterCreateSchema.partial();
 
@@ -233,6 +234,7 @@ export const npcCreateSchema = z.object({
   isTemplate: z.boolean().optional().default(false),
   source: optionalString(40),
   notes: optionalString(20000),
+  portraitUrl: z.string().max(500).nullable().optional(),
 });
 export const npcUpdateSchema = npcCreateSchema.partial();
 

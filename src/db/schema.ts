@@ -55,6 +55,10 @@ export type BattleToken = {
   color: string;
   /** Token footprint in cells: 1 = Medium, 2 = Large, 3 = Huge. */
   sizeCells: number;
+  /**
+   * Token art. When unset the map falls back to the linked combatant's
+   * character/NPC portrait, then to a plain coloured disc.
+   */
   imageUrl?: string;
   /** Kept off the player view until the DM reveals it. */
   hidden?: boolean;
@@ -277,6 +281,8 @@ export const characters = sqliteTable("characters", {
   hitDiceUsed: integer("hit_dice_used").notNull().default(0),
 
   notes: text("notes").notNull().default(""),
+  /** Uploaded portrait; also the battle-map token art for this character. */
+  portraitUrl: text("portrait_url"),
   ...timestamps,
 });
 
@@ -444,6 +450,8 @@ export const npcs = sqliteTable("npcs", {
   isTemplate: integer("is_template", { mode: "boolean" }).notNull().default(false),
   source,
   notes: text("notes").notNull().default(""),
+  /** Uploaded portrait; also the battle-map token art for this creature. */
+  portraitUrl: text("portrait_url"),
   ...timestamps,
 });
 

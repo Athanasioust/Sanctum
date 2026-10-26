@@ -48,6 +48,40 @@ export type TokenStatus = {
   conditions: string[];
 };
 
+/**
+ * Decoded token images, shared by every token and every canvas on the page.
+ * Twenty goblins with the same portrait decode it once, and a re-render (a
+ * drag, a poll) never re-requests it.
+ */
+const tokenImageCache = new Map<string, HTMLImageElement>();
+
+function useTokenImage(url: string | undefined): HTMLImageElement | null {
+  const [, setLoaded] = useState(0);
+  useEffect(() => {
+    if (!url) return;
+    let img = tokenImageCache.get(url);
+    if (img?.complete && img.naturalWidth > 0) return;
+    if (!img) {
+      img = new window.Image();
+      img.src = url;
+      tokenImageCache.set(url, img);
+    }
+    const onLoad = () => setLoaded((n) => n + 1);
+    img.addEventListener("load", onLoad);
+    return () => img.removeEventListener("load", onLoad);
+  }, [url]);
+  const img = url ? tokenImageCache.get(url) : undefined;
+  return img?.complete && img.naturalWidth > 0 ? img : null;
+}
+
+/** Scale an image to cover a square, cropping the overflow evenly. */
+function coverSquare(img: HTMLImageElement, px: number) {
+  const scale = Math.max(px / img.naturalWidth, px / img.naturalHeight);
+  const width = img.naturalWidth * scale;
+  const height = img.naturalHeight * scale;
+  return { width, height, x: (px - width) / 2, y: (px - height) / 2 };
+}
+
 /** What a click on the canvas does. */
 export type MapTool =
   | "select"
@@ -65,6 +99,7 @@ export type MapTool =
 export default function BattleMapCanvas({
   map,
   statuses,
+  tokenImages = {},
   tool = "select",
   templateSizeFt = 20,
   templateColor = "#f97316",
@@ -83,6 +118,8 @@ export default function BattleMapCanvas({
 }: {
   map: CanvasMap;
   statuses: Record<string, TokenStatus>;
+  /** Art per token id — the token's own image or its combatant's portrait. */
+  tokenImages?: Record<string, string>;
   tool?: MapTool;
   /** Size in feet for the next AoE template placed. */
   templateSizeFt?: number;
@@ -307,6 +344,7 @@ export default function BattleMapCanvas({
             <TokenShape
               key={token.id}
               token={token}
+              imageUrl={tokenImages[token.id]}
               status={statuses[token.id]}
               gridSize={gridSize}
               gridCols={gridCols}
@@ -586,6 +624,7 @@ function AnnotationShape({
 
 function TokenShape({
   token,
+  imageUrl,
   status,
   gridSize,
   gridCols,
@@ -596,6 +635,7 @@ function TokenShape({
   onMove,
 }: {
   token: BattleToken;
+  imageUrl?: string;
   status?: TokenStatus;
   gridSize: number;
   gridCols: number;
@@ -612,6 +652,8 @@ function TokenShape({
   const down = status ? status.hpCurrent <= 0 : false;
   const bloodied = status ? !down && status.hpMax > 0 && status.hpCurrent <= status.hpMax / 2 : false;
   const fontSize = Math.max(9, Math.min(14, gridSize / 4.5));
+  const image = useTokenImage(imageUrl);
+  const ring = selected ? "#ffffff" : down ? "#dc2626" : token.color;
 
   function handleDragEnd(e: Konva.KonvaEventObject<DragEvent>) {
     const node = e.target;
@@ -638,27 +680,52 @@ function TokenShape({
       }}
       opacity={token.hidden ? 0.45 : 1}
     >
+      {/* The disc is the hit area, and what shows while art is still loading. */}
       <Circle
         x={px / 2}
         y={px / 2}
         radius={radius}
         fill={token.color}
-        stroke={selected ? "#ffffff" : down ? "#dc2626" : "rgba(0,0,0,0.6)"}
-        strokeWidth={selected ? 3 : 2}
+        stroke={image ? undefined : selected ? "#ffffff" : down ? "#dc2626" : "rgba(0,0,0,0.6)"}
+        strokeWidth={image ? 0 : selected ? 3 : 2}
         dash={token.hidden ? [6, 4] : undefined}
       />
 
-      {/* Name */}
+      {image && (
+        <>
+          <Group
+            listening={false}
+            clipFunc={(ctx) => {
+              ctx.arc(px / 2, px / 2, radius, 0, Math.PI * 2, false);
+            }}
+          >
+            <KonvaImage image={image} {...coverSquare(image, px)} />
+          </Group>
+          {/* Coloured ring keeps side/identity readable over the art. */}
+          <Circle
+            x={px / 2}
+            y={px / 2}
+            radius={radius}
+            stroke={ring}
+            strokeWidth={selected ? 4 : 3}
+            dash={token.hidden ? [6, 4] : undefined}
+            listening={false}
+          />
+        </>
+      )}
+
+      {/* Name — centred on a plain disc, tucked along the bottom over art. */}
       <Text
-        y={px / 2 - fontSize / 2}
+        y={image ? px - fontSize - 12 : px / 2 - fontSize / 2}
         width={px}
         align="center"
         text={token.label}
-        fontSize={fontSize}
+        fontSize={image ? Math.max(8, fontSize - 2) : fontSize}
         fontStyle="bold"
         fill="#ffffff"
         shadowColor="#000000"
-        shadowBlur={3}
+        shadowBlur={image ? 4 : 3}
+        shadowOpacity={1}
         listening={false}
       />
 

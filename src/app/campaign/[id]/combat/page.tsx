@@ -19,6 +19,7 @@ import {
 } from "@/components/combat/encounter-controls";
 import { abilityModifier } from "@/lib/dnd";
 import { crToXp } from "@/lib/encounter";
+import { portraitsFor } from "@/lib/portraits";
 
 export const dynamic = "force-dynamic";
 
@@ -133,6 +134,7 @@ export default async function CombatPage({
           addableBestiary={addableBestiary}
           partyLevels={partyLevels}
           npcXp={npcXp}
+          portraits={await portraitsFor(participants)}
         />
       ) : (
         <EmptyState

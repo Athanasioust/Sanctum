@@ -136,5 +136,10 @@
   "resources.namePlaceholder": "Neue Fähigkeit, z. B. Durchhaltevermögen",
   "resources.uses": "Nutzungen",
   "resources.recharge": "Aufladung",
-  "resources.saveFailed": "Speichern fehlgeschlagen"
+  "resources.saveFailed": "Speichern fehlgeschlagen",
+  "portrait.upload": "Porträt hochladen (auch als Spielfeldmarker verwendet)",
+  "portrait.replace": "Porträt ersetzen",
+  "portrait.remove": "Porträt entfernen",
+  "portrait.saved": "Porträt gespeichert",
+  "portrait.failed": "Porträt konnte nicht gespeichert werden"
 }

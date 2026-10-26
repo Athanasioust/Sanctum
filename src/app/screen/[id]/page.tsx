@@ -13,6 +13,8 @@ import { PlayerScreen, type ScreenState } from "@/components/screen/player-scree
 import { I18nProvider } from "@/components/i18n/i18n-provider";
 import { getLocale } from "@/lib/i18n/server";
 import { keepGroupsTogether } from "@/lib/combat-turns";
+import { resolveTokenImages } from "@/lib/battle-map";
+import { portraitsFor } from "@/lib/portraits";
 
 export const dynamic = "force-dynamic";
 
@@ -67,6 +69,20 @@ async function loadScreenState(campaignId: number): Promise<ScreenState> {
         .orderBy(asc(combatParticipants.turnOrder))
     : [];
 
+  // Token art follows the encounter the shown map is linked to.
+  const battleMap = revealedMaps[0] ?? null;
+  const mapEncounterId = battleMap?.encounterId ?? null;
+  const artParticipants =
+    mapEncounterId && mapEncounterId !== encounter?.id
+      ? await db
+          .select()
+          .from(combatParticipants)
+          .where(eq(combatParticipants.encounterId, mapEncounterId))
+      : participants;
+  const tokenArt = battleMap
+    ? resolveTokenImages(battleMap.tokens, artParticipants, await portraitsFor(artParticipants))
+    : {};
+
   return {
     active: encounter !== null,
     encounterName: encounter?.name ?? "",
@@ -76,7 +92,8 @@ async function loadScreenState(campaignId: number): Promise<ScreenState> {
     participants: keepGroupsTogether(participants),
     party,
     handouts: revealedHandouts,
-    battleMap: revealedMaps[0] ?? null,
+    battleMap,
+    tokenArt,
   };
 }
 

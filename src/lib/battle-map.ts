@@ -7,6 +7,7 @@
  */
 
 import type { BattleToken, FogData, MapAnnotation } from "@/db/schema";
+import { portraitKey } from "@/lib/portrait-key";
 
 export type DiagonalRule = "5-10-5" | "5-5-5";
 
@@ -241,4 +242,33 @@ export function tokenVisibleToPlayers(
     }
   }
   return false;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Token art                                                                  */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The image each token is drawn with: its own uploaded art first, then the
+ * portrait of the character or NPC its combatant came from. Tokens with
+ * neither are left out and stay plain coloured discs.
+ */
+export function resolveTokenImages(
+  tokens: BattleToken[],
+  participants: { id: number; entityType: string | null; entityId: number | null }[],
+  portraits: Record<string, string>,
+): Record<string, string> {
+  const byParticipant = new Map(participants.map((p) => [p.id, p]));
+  const out: Record<string, string> = {};
+  for (const token of tokens) {
+    if (token.imageUrl) {
+      out[token.id] = token.imageUrl;
+      continue;
+    }
+    const participant =
+      token.participantId !== undefined ? byParticipant.get(token.participantId) : undefined;
+    const key = participant ? portraitKey(participant.entityType, participant.entityId) : null;
+    if (key && portraits[key]) out[token.id] = portraits[key];
+  }
+  return out;
 }

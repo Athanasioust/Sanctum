@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   DndContext,
@@ -100,6 +100,7 @@ import {
   type TurnSlot,
 } from "@/lib/combat-turns";
 import { useT } from "@/components/i18n/i18n-provider";
+import { portraitKey } from "@/lib/portrait-key";
 import type { CombatParticipant, CombatLogEntry, Encounter } from "@/db/schema";
 
 export type Addable = {
@@ -130,6 +131,24 @@ type AddInput = {
   group?: boolean;
 };
 
+/** Portrait URL by `portraitKey`, for the avatars on initiative rows. */
+const PortraitsContext = createContext<Record<string, string>>({});
+
+function Avatar({ participant: p }: { participant: CombatParticipant }) {
+  const portraits = useContext(PortraitsContext);
+  const key = portraitKey(p.entityType, p.entityId);
+  const url = key ? portraits[key] : undefined;
+  if (!url) return null;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={url}
+      alt=""
+      className="size-7 shrink-0 rounded-full border border-border object-cover"
+    />
+  );
+}
+
 /** The dnd-kit id for a turn slot: a group drags as one row. */
 function slotKey(slot: Extract<TurnSlot, { kind: "creatures" }>, parts: CombatParticipant[]) {
   const lead = parts[slot.start];
@@ -157,6 +176,7 @@ export function CombatTracker({
   addableBestiary,
   partyLevels = {},
   npcXp = {},
+  portraits = {},
 }: {
   encounter: EncounterWithParts;
   addableCharacters: Addable[];
@@ -166,6 +186,8 @@ export function CombatTracker({
   partyLevels?: Record<number, number>;
   /** NPC/monster id → XP, for rating the fight. */
   npcXp?: Record<number, number>;
+  /** Portrait URL by `portraitKey`. */
+  portraits?: Record<string, string>;
 }) {
   const router = useRouter();
   const [parts, setParts] = useState<CombatParticipant[]>(
@@ -626,6 +648,7 @@ export function CombatTracker({
   }
 
   return (
+    <PortraitsContext.Provider value={portraits}>
     <div className="space-y-5">
       {/* Control bar */}
       <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -773,6 +796,7 @@ export function CombatTracker({
         )}
       </div>
     </div>
+    </PortraitsContext.Provider>
   );
 }
 
@@ -919,6 +943,7 @@ function GroupRow({
           ) : (
             <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
           )}
+          <Avatar participant={lead} />
           <span className="min-w-0">
             <span className="flex flex-wrap items-center gap-2">
               <span className="truncate font-medium">
@@ -1047,6 +1072,8 @@ function ParticipantRow({
           ) : null}
         </div>
         )}
+
+        <Avatar participant={p} />
 
         {/* Name + status */}
         <div className="min-w-0 flex-1">
