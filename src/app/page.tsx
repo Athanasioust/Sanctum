@@ -5,6 +5,7 @@ import { campaigns } from "@/db/schema";
 import { CampaignCard } from "@/components/campaigns/campaign-card";
 import { CreateCampaignDialog } from "@/components/campaigns/create-campaign-dialog";
 import { ImportCampaignButton } from "@/components/campaigns/import-campaign-button";
+import { SampleCampaignButton } from "@/components/campaigns/sample-campaign-button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { BuiltByBadge } from "@/components/shared/built-by-badge";
 
@@ -44,9 +45,10 @@ export default async function HomePage() {
         <EmptyState
           icon={Sparkles}
           title="No campaigns yet"
-          description="Create your first campaign to start tracking characters, combat, your world and story."
+          description="Create your first campaign to start tracking characters, combat, your world and story — or load a ready-made sample to look around first. It's a normal campaign you can change or delete."
           action={
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <SampleCampaignButton variant="default" />
               <CreateCampaignDialog />
               <ImportCampaignButton />
             </div>

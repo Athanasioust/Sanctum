@@ -1,0 +1,1165 @@
+{
+  "version": 1,
+  "exportedAt": "2026-10-26T00:00:00.000Z",
+  "campaign": {
+    "name": "The Lost Souls (Sample)",
+    "setting": "Dark fantasy",
+    "description": "A small sample campaign to explore Sanctum with: a party of four, a crypt full of restless dead and a fight already in progress. Change anything you like, or delete it from Settings → Danger zone when you're done.",
+    "inWorldCalendarType": "real",
+    "rulebooks": []
+  },
+  "characters": [
+    {
+      "id": 1,
+      "name": "Seraphine Vale",
+      "race": "Human",
+      "class": "Cleric",
+      "subclass": "Life Domain",
+      "level": 5,
+      "background": "Acolyte",
+      "proficiencyBonus": 3,
+      "str": 10,
+      "dex": 12,
+      "con": 14,
+      "int": 10,
+      "wis": 17,
+      "cha": 13,
+      "speed": 30,
+      "hitDiceTotal": 5,
+      "hitDiceUsed": 0,
+      "alignment": "Neutral Good",
+      "hpMax": 38,
+      "hpCurrent": 38,
+      "armorClass": 18,
+      "initiativeBonus": 1,
+      "passivePerception": 13,
+      "savingThrowProficiencies": [
+        "wis",
+        "cha"
+      ],
+      "skillProficiencies": [
+        "insight",
+        "medicine",
+        "religion"
+      ],
+      "languages": [
+        "Common",
+        "Celestial"
+      ],
+      "backstory": "Raised in the Weeping Abbey before it fell. She hears the lost souls in her sleep."
+    },
+    {
+      "id": 2,
+      "name": "Brakka Ironhide",
+      "race": "Dwarf",
+      "class": "Fighter",
+      "subclass": "Champion",
+      "level": 5,
+      "background": "Soldier",
+      "proficiencyBonus": 3,
+      "str": 17,
+      "dex": 12,
+      "con": 16,
+      "int": 8,
+      "wis": 12,
+      "cha": 10,
+      "speed": 30,
+      "hitDiceTotal": 5,
+      "hitDiceUsed": 0,
+      "alignment": "Lawful Neutral",
+      "hpMax": 49,
+      "hpCurrent": 49,
+      "armorClass": 18,
+      "initiativeBonus": 1,
+      "passivePerception": 13,
+      "darkvision": 60,
+      "savingThrowProficiencies": [
+        "str",
+        "con"
+      ],
+      "skillProficiencies": [
+        "athletics",
+        "intimidation",
+        "perception"
+      ],
+      "languages": [
+        "Common",
+        "Dwarvish"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Lyr Thistledown",
+      "race": "Halfling",
+      "class": "Rogue",
+      "subclass": "Thief",
+      "level": 5,
+      "background": "Urchin",
+      "proficiencyBonus": 3,
+      "str": 8,
+      "dex": 18,
+      "con": 12,
+      "int": 13,
+      "wis": 12,
+      "cha": 14,
+      "speed": 30,
+      "hitDiceTotal": 5,
+      "hitDiceUsed": 0,
+      "alignment": "Chaotic Good",
+      "hpMax": 33,
+      "hpCurrent": 33,
+      "armorClass": 15,
+      "initiativeBonus": 4,
+      "passivePerception": 15,
+      "savingThrowProficiencies": [
+        "dex",
+        "int"
+      ],
+      "skillProficiencies": [
+        "acrobatics",
+        "perception",
+        "sleight_of_hand",
+        "stealth"
+      ],
+      "languages": [
+        "Common",
+        "Halfling",
+        "Thieves' Cant"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Ilvaris Dawnsong",
+      "race": "Elf",
+      "class": "Wizard",
+      "subclass": "School of Evocation",
+      "level": 5,
+      "background": "Sage",
+      "proficiencyBonus": 3,
+      "str": 8,
+      "dex": 14,
+      "con": 13,
+      "int": 18,
+      "wis": 12,
+      "cha": 10,
+      "speed": 30,
+      "hitDiceTotal": 5,
+      "hitDiceUsed": 0,
+      "alignment": "Neutral",
+      "hpMax": 27,
+      "hpCurrent": 27,
+      "armorClass": 12,
+      "initiativeBonus": 2,
+      "passivePerception": 13,
+      "darkvision": 60,
+      "savingThrowProficiencies": [
+        "int",
+        "wis"
+      ],
+      "skillProficiencies": [
+        "arcana",
+        "history",
+        "investigation"
+      ],
+      "languages": [
+        "Common",
+        "Elvish",
+        "Draconic"
+      ]
+    }
+  ],
+  "characterResources": [
+    {
+      "characterId": 1,
+      "name": "Channel Divinity",
+      "max": 1,
+      "used": 0,
+      "recharge": "short"
+    },
+    {
+      "characterId": 2,
+      "name": "Second Wind",
+      "max": 1,
+      "used": 0,
+      "recharge": "short"
+    },
+    {
+      "characterId": 2,
+      "name": "Action Surge",
+      "max": 1,
+      "used": 0,
+      "recharge": "short"
+    },
+    {
+      "characterId": 4,
+      "name": "Arcane Recovery",
+      "max": 1,
+      "used": 0,
+      "recharge": "long"
+    }
+  ],
+  "npcs": [
+    {
+      "id": 1,
+      "name": "Mother Ysolde",
+      "type": "npc",
+      "race": "Human",
+      "class": "Priest",
+      "alignment": "Lawful Good",
+      "hpMax": 27,
+      "hpCurrent": 27,
+      "armorClass": 13,
+      "wis": 16,
+      "cha": 13,
+      "notes": "Last abbess of the Weeping Abbey. Knows the binding ritual and fears what it cost."
+    },
+    {
+      "id": 2,
+      "name": "Captain Doran Hale",
+      "type": "npc",
+      "race": "Human",
+      "class": "Veteran",
+      "alignment": "Neutral",
+      "hpMax": 58,
+      "hpCurrent": 58,
+      "armorClass": 17,
+      "str": 16,
+      "con": 14,
+      "notes": "Commands Duskmere's watch. Wants the crypt sealed, not explored."
+    },
+    {
+      "name": "Skeleton",
+      "type": "monster",
+      "race": "Undead",
+      "size": "Medium",
+      "alignment": "Lawful Evil",
+      "challengeRating": "1/4",
+      "experiencePoints": 50,
+      "str": 10,
+      "dex": 14,
+      "con": 15,
+      "int": 6,
+      "wis": 8,
+      "cha": 5,
+      "armorClass": 13,
+      "hpMax": 13,
+      "speed": "30 ft.",
+      "savingThrowProficiencies": [],
+      "skillProficiencies": [],
+      "languages": [
+        "Understands All Languages It Knew In Life But Can't Speak"
+      ],
+      "traits": [],
+      "actions": [
+        {
+          "name": "Shortsword",
+          "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 5 (1d6 + 2) piercing damage."
+        },
+        {
+          "name": "Shortbow",
+          "description": "Ranged Weapon Attack: +4 to hit, range 80/320 ft., one target. Hit: 5 (1d6 + 2) piercing damage."
+        }
+      ],
+      "reactions": [],
+      "legendaryActions": [],
+      "id": 3,
+      "hpCurrent": 13,
+      "isTemplate": false
+    },
+    {
+      "name": "Ghoul",
+      "type": "monster",
+      "race": "Undead",
+      "size": "Medium",
+      "alignment": "Chaotic Evil",
+      "challengeRating": "1",
+      "experiencePoints": 200,
+      "str": 13,
+      "dex": 15,
+      "con": 10,
+      "int": 7,
+      "wis": 10,
+      "cha": 6,
+      "armorClass": 12,
+      "hpMax": 22,
+      "speed": "30 ft.",
+      "savingThrowProficiencies": [],
+      "skillProficiencies": [],
+      "languages": [
+        "Common"
+      ],
+      "traits": [],
+      "actions": [
+        {
+          "name": "Bite",
+          "description": "Melee Weapon Attack: +2 to hit, reach 5 ft., one creature. Hit: 9 (2d6 + 2) piercing damage."
+        },
+        {
+          "name": "Claws",
+          "description": "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 7 (2d4 + 2) slashing damage. If the target is a creature other than an elf or undead, it must succeed on a DC 10 Constitution saving throw or be paralyzed for 1 minute. The target can repeat the saving throw at the end of each of its turns, ending the effect on itself on a success."
+        }
+      ],
+      "reactions": [],
+      "legendaryActions": [],
+      "id": 4,
+      "hpCurrent": 22,
+      "isTemplate": false
+    },
+    {
+      "id": 5,
+      "name": "The Warden of Souls",
+      "type": "monster",
+      "race": "Undead",
+      "size": "Medium",
+      "alignment": "Lawful Evil",
+      "challengeRating": "5",
+      "experiencePoints": 1800,
+      "str": 16,
+      "dex": 12,
+      "con": 16,
+      "int": 12,
+      "wis": 14,
+      "cha": 16,
+      "hpMax": 90,
+      "hpCurrent": 90,
+      "armorClass": 16,
+      "speed": "30 ft.",
+      "source": "homebrew",
+      "savingThrowProficiencies": [
+        "wis",
+        "cha"
+      ],
+      "immunities": [
+        "Poison",
+        "Necrotic"
+      ],
+      "senses": [
+        "Darkvision 60 ft."
+      ],
+      "languages": [
+        "Common"
+      ],
+      "traits": [
+        {
+          "name": "Bound to the Crypt",
+          "description": "The Warden cannot leave the Crypt of the Lost while a soul remains bound."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Multiattack",
+          "description": "The Warden makes two Soul Blade attacks."
+        },
+        {
+          "name": "Soul Blade",
+          "description": "Melee Weapon Attack: +6 to hit, reach 5 ft., one target. Hit: 10 (2d6 + 3) slashing damage plus 7 (2d6) necrotic damage."
+        }
+      ],
+      "reactions": [
+        {
+          "name": "Grasp of the Lost",
+          "description": "When a creature within 10 ft. of the Warden moves, the Warden forces a DC 14 Strength save. On a failure, the creature's speed is 0 until the end of its turn."
+        }
+      ],
+      "legendaryActions": [
+        {
+          "name": "Legendary Actions",
+          "description": "The Warden can take 3 legendary actions, choosing from the options below. Only one legendary action can be used at a time and only at the end of another creature's turn. The Warden regains spent legendary actions at the start of its turn."
+        },
+        {
+          "name": "Step Through Shadow",
+          "description": "The Warden teleports up to 20 ft. to an unoccupied space it can see in dim light or darkness."
+        },
+        {
+          "name": "Soul Blade (Costs 2 Actions)",
+          "description": "The Warden makes one Soul Blade attack."
+        }
+      ],
+      "lairActions": [
+        {
+          "name": "Wailing Dead",
+          "description": "On initiative count 20, the bound souls wail. Each creature in the crypt makes a DC 13 Wisdom save or is frightened of the Warden until initiative count 20 on the next round."
+        }
+      ],
+      "notes": "Original sample boss — shows off legendary and lair actions in the combat tracker."
+    }
+  ],
+  "spells": [],
+  "spellSlots": [
+    {
+      "ownerId": 1,
+      "ownerType": "character",
+      "slotLevel": 1,
+      "total": 4,
+      "used": 0
+    },
+    {
+      "ownerId": 1,
+      "ownerType": "character",
+      "slotLevel": 2,
+      "total": 3,
+      "used": 0
+    },
+    {
+      "ownerId": 1,
+      "ownerType": "character",
+      "slotLevel": 3,
+      "total": 2,
+      "used": 0
+    },
+    {
+      "ownerId": 4,
+      "ownerType": "character",
+      "slotLevel": 1,
+      "total": 4,
+      "used": 1
+    },
+    {
+      "ownerId": 4,
+      "ownerType": "character",
+      "slotLevel": 2,
+      "total": 3,
+      "used": 1
+    },
+    {
+      "ownerId": 4,
+      "ownerType": "character",
+      "slotLevel": 3,
+      "total": 2,
+      "used": 1
+    }
+  ],
+  "inventoryItems": [
+    {
+      "ownerId": 2,
+      "ownerType": "character",
+      "name": "Warhammer",
+      "quantity": 1,
+      "weight": 2,
+      "isEquipped": true
+    },
+    {
+      "ownerId": 3,
+      "ownerType": "character",
+      "name": "Thieves' tools",
+      "quantity": 1,
+      "weight": 1
+    },
+    {
+      "ownerId": 1,
+      "ownerType": "character",
+      "name": "Holy symbol of the Pale Lantern",
+      "quantity": 1,
+      "weight": 0,
+      "isEquipped": true
+    }
+  ],
+  "encounters": [
+    {
+      "id": 1,
+      "name": "Ambush in the Crypt",
+      "status": "active",
+      "roundNumber": 1,
+      "currentTurnIndex": 0
+    }
+  ],
+  "combatParticipants": [
+    {
+      "id": 1,
+      "encounterId": 1,
+      "entityType": "character",
+      "entityId": 3,
+      "name": "Lyr Thistledown",
+      "initiativeTotal": 21,
+      "hpMax": 33,
+      "hpCurrent": 33,
+      "armorClass": 15,
+      "initiativeMod": 4,
+      "turnOrder": 0
+    },
+    {
+      "id": 2,
+      "encounterId": 1,
+      "entityType": "npc",
+      "entityId": 3,
+      "name": "Skeleton 1",
+      "initiativeTotal": 15,
+      "initiativeMod": 2,
+      "hpMax": 13,
+      "hpCurrent": 13,
+      "armorClass": 13,
+      "groupId": "sample-skeletons",
+      "groupLabel": "Skeleton",
+      "turnOrder": 1
+    },
+    {
+      "id": 3,
+      "encounterId": 1,
+      "entityType": "npc",
+      "entityId": 3,
+      "name": "Skeleton 2",
+      "initiativeTotal": 15,
+      "initiativeMod": 2,
+      "hpMax": 13,
+      "hpCurrent": 13,
+      "armorClass": 13,
+      "groupId": "sample-skeletons",
+      "groupLabel": "Skeleton",
+      "turnOrder": 2
+    },
+    {
+      "id": 4,
+      "encounterId": 1,
+      "entityType": "npc",
+      "entityId": 3,
+      "name": "Skeleton 3",
+      "initiativeTotal": 15,
+      "initiativeMod": 2,
+      "hpMax": 13,
+      "hpCurrent": 6,
+      "armorClass": 13,
+      "groupId": "sample-skeletons",
+      "groupLabel": "Skeleton",
+      "turnOrder": 3
+    },
+    {
+      "id": 5,
+      "encounterId": 1,
+      "entityType": "character",
+      "entityId": 1,
+      "name": "Seraphine Vale",
+      "initiativeTotal": 14,
+      "hpMax": 38,
+      "hpCurrent": 38,
+      "armorClass": 18,
+      "initiativeMod": 1,
+      "turnOrder": 4
+    },
+    {
+      "id": 6,
+      "encounterId": 1,
+      "entityType": "character",
+      "entityId": 2,
+      "name": "Brakka Ironhide",
+      "initiativeTotal": 11,
+      "hpMax": 49,
+      "hpCurrent": 41,
+      "armorClass": 18,
+      "initiativeMod": 1,
+      "turnOrder": 5
+    },
+    {
+      "id": 7,
+      "encounterId": 1,
+      "entityType": "npc",
+      "entityId": 4,
+      "name": "Ghoul",
+      "initiativeTotal": 9,
+      "initiativeMod": 2,
+      "hpMax": 22,
+      "hpCurrent": 22,
+      "armorClass": 12,
+      "turnOrder": 6
+    },
+    {
+      "id": 8,
+      "encounterId": 1,
+      "entityType": "character",
+      "entityId": 4,
+      "name": "Ilvaris Dawnsong",
+      "initiativeTotal": 6,
+      "hpMax": 27,
+      "hpCurrent": 27,
+      "armorClass": 12,
+      "initiativeMod": 2,
+      "turnOrder": 7
+    }
+  ],
+  "battleMaps": [
+    {
+      "id": 1,
+      "name": "Crypt of the Lost",
+      "imageUrl": "/sample/crypt-map.svg",
+      "gridSize": 70,
+      "gridCols": 20,
+      "gridRows": 15,
+      "feetPerCell": 5,
+      "diagonalRule": "5-10-5",
+      "encounterId": 1,
+      "fogEnabled": true,
+      "revealToPlayers": false,
+      "fog": {
+        "cols": 20,
+        "rows": 15,
+        "revealed": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          false,
+          false,
+          false,
+          false,
+          false,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          false,
+          false,
+          false,
+          false,
+          false,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          false,
+          false,
+          false,
+          false,
+          false,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          false,
+          false,
+          false,
+          false,
+          false,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          false,
+          false,
+          false,
+          false,
+          false,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          false,
+          false,
+          false,
+          false,
+          false,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ]
+      },
+      "tokens": [
+        {
+          "id": "t-lyr",
+          "participantId": 1,
+          "label": "Lyr",
+          "x": 6,
+          "y": 7,
+          "color": "#2563eb",
+          "sizeCells": 1,
+          "playerControllable": true,
+          "controllerName": "Lyr"
+        },
+        {
+          "id": "t-sera",
+          "participantId": 5,
+          "label": "Seraphine",
+          "x": 4,
+          "y": 6,
+          "color": "#2563eb",
+          "sizeCells": 1,
+          "playerControllable": true,
+          "controllerName": "Seraphine"
+        },
+        {
+          "id": "t-brakka",
+          "participantId": 6,
+          "label": "Brakka",
+          "x": 5,
+          "y": 8,
+          "color": "#2563eb",
+          "sizeCells": 1,
+          "playerControllable": true,
+          "controllerName": "Brakka"
+        },
+        {
+          "id": "t-ilv",
+          "participantId": 8,
+          "label": "Ilvaris",
+          "x": 3,
+          "y": 8,
+          "color": "#2563eb",
+          "sizeCells": 1,
+          "playerControllable": true,
+          "controllerName": "Ilvaris"
+        },
+        {
+          "id": "t-sk1",
+          "participantId": 2,
+          "label": "Skel 1",
+          "x": 12,
+          "y": 6,
+          "color": "#dc2626",
+          "sizeCells": 1
+        },
+        {
+          "id": "t-sk2",
+          "participantId": 3,
+          "label": "Skel 2",
+          "x": 12,
+          "y": 8,
+          "color": "#dc2626",
+          "sizeCells": 1
+        },
+        {
+          "id": "t-sk3",
+          "participantId": 4,
+          "label": "Skel 3",
+          "x": 13,
+          "y": 9,
+          "color": "#dc2626",
+          "sizeCells": 1
+        },
+        {
+          "id": "t-ghoul",
+          "participantId": 7,
+          "label": "Ghoul",
+          "x": 17,
+          "y": 7,
+          "color": "#a16207",
+          "sizeCells": 1,
+          "hidden": true
+        }
+      ],
+      "annotations": [
+        {
+          "id": "a-note",
+          "kind": "text",
+          "color": "#7c3aed",
+          "x": 13.7,
+          "y": 5.2,
+          "text": "Sealed sarcophagus"
+        }
+      ]
+    }
+  ],
+  "locations": [
+    {
+      "id": 1,
+      "name": "Duskmere",
+      "type": "town",
+      "description": "A fog-bound market town at the edge of the moors. The bells have been silent for a month."
+    },
+    {
+      "id": 2,
+      "name": "The Weeping Abbey",
+      "type": "building",
+      "parentLocationId": 1,
+      "description": "A ruined abbey on the hill above Duskmere. Its statues weep black water."
+    },
+    {
+      "id": 3,
+      "name": "Crypt of the Lost",
+      "type": "dungeon",
+      "parentLocationId": 2,
+      "description": "Beneath the abbey, where the souls of the faithful were bound to guard it — and never released."
+    }
+  ],
+  "storyEvents": [
+    {
+      "title": "Session 1 — The silent bells",
+      "eventType": "session_log",
+      "sessionNumber": 1,
+      "status": "resolved",
+      "description": "The party arrived in Duskmere, met Mother Ysolde and learned the abbey bells stopped the night the bell-ringer vanished."
+    },
+    {
+      "title": "Who bound the souls?",
+      "eventType": "plot_thread",
+      "status": "open",
+      "description": "Ysolde admits the abbey's founders bound their own dead to guard the crypt. Someone has been feeding the binding."
+    }
+  ],
+  "factions": [
+    {
+      "name": "Order of the Pale Lantern",
+      "relationshipWithPlayers": "allied",
+      "keyNpcIds": [
+        1
+      ],
+      "description": "What remains of the abbey's priesthood.",
+      "goals": "Release the bound souls and reconsecrate the abbey."
+    },
+    {
+      "name": "The Hollow Choir",
+      "relationshipWithPlayers": "hostile",
+      "description": "A cult that sings to the dead.",
+      "goals": "Strengthen the binding and raise the Warden as their saint."
+    }
+  ],
+  "rollTables": [
+    {
+      "name": "Crypt wandering monsters",
+      "description": "Roll when the party lingers in the crypt.",
+      "entries": [
+        {
+          "weight": 3,
+          "result": "2d4 Skeletons rise from the alcoves"
+        },
+        {
+          "weight": 2,
+          "result": "A Ghoul stalks the corridor"
+        },
+        {
+          "weight": 1,
+          "result": "The bound souls wail — DC 12 Wisdom save or frightened for 1 minute"
+        },
+        {
+          "weight": 2,
+          "result": "Nothing — but the candles gutter"
+        }
+      ]
+    }
+  ],
+  "notes": [
+    {
+      "title": "Read this first",
+      "isPinned": true,
+      "color": "default",
+      "content": "This is a **sample campaign**. Try the combat tracker (a fight is already running), the battle map (fog, tokens, AoE templates) and the player view. Delete it from Settings when you're done."
+    },
+    {
+      "title": "The binding ritual",
+      "content": "Three candles, three names, and a bell rung at midnight. Ysolde knows the words but not the third name."
+    }
+  ],
+  "quests": [
+    {
+      "title": "Free the Lost Souls",
+      "status": "active",
+      "linkedNpcIds": [
+        1
+      ],
+      "linkedLocationIds": [
+        3
+      ],
+      "reward": "The Order's blessing and 300 gp",
+      "subObjectives": [
+        {
+          "text": "Find the crypt entrance",
+          "checked": true
+        },
+        {
+          "text": "Learn the third name",
+          "checked": false
+        },
+        {
+          "text": "Defeat the Warden of Souls",
+          "checked": false
+        }
+      ]
+    },
+    {
+      "title": "The Missing Bell-ringer",
+      "status": "active",
+      "linkedNpcIds": [
+        2
+      ],
+      "linkedLocationIds": [
+        1
+      ],
+      "description": "Captain Hale wants to know what happened to old Tomas.",
+      "subObjectives": [
+        {
+          "text": "Search the bell tower",
+          "checked": false
+        }
+      ]
+    }
+  ],
+  "magicItems": [
+    {
+      "name": "Lantern of Pale Light",
+      "itemType": "wondrous",
+      "rarity": "uncommon",
+      "characterId": 1,
+      "description": "Sheds bright light in a 30 ft. radius. Undead in the light have disadvantage on saves against turning.",
+      "charges": 3,
+      "chargesMax": 3,
+      "rechargeCondition": "Dawn"
+    }
+  ],
+  "handouts": [
+    {
+      "title": "Rubbing from the crypt door",
+      "isRevealed": false,
+      "content": "*Here lie the faithful, bound in duty. Ring once to wake them, twice to warn them, thrice to set them free.*"
+    }
+  ],
+  "rumors": [
+    {
+      "text": "Folk say the bell-ringer was seen walking into the abbey at midnight — without a lantern.",
+      "source": "The Drowned Rat tavern"
+    },
+    {
+      "text": "The abbey's statues weep only when someone new enters the crypt.",
+      "source": "A shepherd boy"
+    }
+  ],
+  "clocks": [
+    {
+      "name": "The souls are bound forever",
+      "segments": 6,
+      "filled": 2,
+      "color": "#7c3aed",
+      "revealToPlayers": true,
+      "note": "Fills each night the binding is fed. When full, the souls are lost for good."
+    }
+  ]
+}

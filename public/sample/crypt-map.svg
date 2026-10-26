@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1050" width="1400" height="1050">
+<defs>
+<pattern id="flag" width="70" height="70" patternUnits="userSpaceOnUse">
+<rect width="70" height="70" fill="#4b453d"/>
+<path d="M0 35H70M35 0V35M17 35V70M52 35V70" stroke="#3b362f" stroke-width="2"/>
+<circle cx="12" cy="14" r="2" fill="#575046"/><circle cx="50" cy="52" r="2.5" fill="#403a33"/>
+</pattern>
+<radialGradient id="glow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#6fd3c4" stop-opacity="0.35"/><stop offset="1" stop-color="#6fd3c4" stop-opacity="0"/></radialGradient>
+</defs>
+<rect width="1400" height="1050" fill="#100e0d"/>
+<g fill="none" stroke="#1c1916" stroke-width="22" stroke-linejoin="round"><rect x="70" y="350" width="420" height="420"/><rect x="490" y="490" width="280" height="140"/><rect x="770" y="140" width="560" height="770"/><rect x="140" y="70" width="280" height="210"/><rect x="210" y="280" width="140" height="70"/></g>
+<g fill="url(#flag)"><rect x="70" y="350" width="420" height="420"/><rect x="490" y="490" width="280" height="140"/><rect x="770" y="140" width="560" height="770"/><rect x="140" y="70" width="280" height="210"/><rect x="210" y="280" width="140" height="70"/></g>
+<g stroke="#23201c" stroke-width="6">
+<path d="M70 490h70M70 513.1h70M70 536.2h70M70 560h70M70 583.1h70M70 606.2h70"/>
+</g>
+<circle cx="875" cy="245" r="22.400000000000002" fill="#2a2622" stroke="#151311" stroke-width="5"/><circle cx="1225" cy="245" r="22.400000000000002" fill="#2a2622" stroke="#151311" stroke-width="5"/><circle cx="875" cy="805" r="22.400000000000002" fill="#2a2622" stroke="#151311" stroke-width="5"/><circle cx="1225" cy="805" r="22.400000000000002" fill="#2a2622" stroke="#151311" stroke-width="5"/>
+<rect x="952" y="434" width="196" height="182" rx="12" fill="#5d564c" stroke="#24201c" stroke-width="6"/>
+<rect x="980" y="462" width="140" height="126" rx="8" fill="none" stroke="#3a342d" stroke-width="4"/>
+<circle cx="1050" cy="525" r="224" fill="url(#glow)"/>
+<rect x="189" y="98" width="182" height="56" fill="#5d564c" stroke="#24201c" stroke-width="5"/>
+<g fill="#7a6a4a" opacity="0.8"><circle cx="294" cy="392" r="7"/><circle cx="441" cy="728" r="7"/><circle cx="798" cy="168" r="7"/><circle cx="1302" cy="882" r="7"/></g>
+</svg>
