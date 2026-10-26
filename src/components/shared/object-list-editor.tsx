@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,9 +29,8 @@ export function ObjectListEditor({
   // reconciliation (which with index keys can drop input focus). Kept in sync
   // with `value`, and rebuilt if the array is replaced from outside (form reset).
   const [keys, setKeys] = useState<string[]>(() => value.map(nextKey));
-  useEffect(() => {
-    setKeys((k) => (k.length === value.length ? k : value.map(nextKey)));
-  }, [value.length]);
+  // Adjusting state during render is React's documented pattern for this.
+  if (keys.length !== value.length) setKeys(value.map(nextKey));
 
   function update(index: number, patch: Partial<Entry>) {
     onChange(value.map((e, i) => (i === index ? { ...e, ...patch } : e)));

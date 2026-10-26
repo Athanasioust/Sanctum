@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -50,12 +50,16 @@ const PINNED_BOTTOM = CAMPAIGN_NAV.filter((i) => i.group === null && i.segment !
 /** Shows ⌘K on macOS, Ctrl K elsewhere; renders a neutral placeholder on the
  *  server so hydration is stable. */
 function useShortcutLabel() {
-  const [label, setLabel] = useState("");
-  useEffect(() => {
-    const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
-    setLabel(isMac ? "⌘K" : "Ctrl K");
-  }, []);
-  return label;
+  return useSyncExternalStore(
+    noopSubscribe,
+    () => (/Mac|iPhone|iPad|iPod/.test(navigator.platform) ? "⌘K" : "Ctrl K"),
+    () => "",
+  );
+}
+
+/** The platform never changes while the page is open. */
+function noopSubscribe() {
+  return () => {};
 }
 
 /** Visible affordance for the global search palette (opened via ⌘K/Ctrl+K). */

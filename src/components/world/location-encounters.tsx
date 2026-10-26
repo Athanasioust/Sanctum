@@ -10,7 +10,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import { useT } from "@/components/i18n/i18n-provider";
 import { api } from "@/lib/client";

@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Plus, CheckCircle2, Clock, XCircle, PauseCircle, ChevronDown, ChevronUp, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {

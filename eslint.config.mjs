@@ -12,7 +12,18 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Packaged desktop builds, local data and generated files — not source.
+    "dist/**",
+    "data/**",
+    "backups/**",
+    "uploads/**",
+    "public/pdf.worker*",
   ]),
+  {
+    // The Electron shell runs as plain CommonJS in the main process.
+    files: ["electron/**/*.js"],
+    rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
   {
     rules: {
       // Apostrophes in copy are fine; correctness is enforced by tsc.

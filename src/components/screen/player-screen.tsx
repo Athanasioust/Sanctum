@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
-import { Swords, Heart, Shield, Skull, Image, Grid3x3, Castle } from "lucide-react";
+import { Swords, Heart, Shield, Skull, Image as ImageIcon, Grid3x3, Castle } from "lucide-react";
 import { api } from "@/lib/client";
 import { fogForGrid, resolveTokenImages, tokenVisibleToPlayers } from "@/lib/battle-map";
 import { currentSlotIndex, keepGroupsTogether, turnSlots } from "@/lib/combat-turns";
@@ -277,7 +277,7 @@ export function PlayerScreen({
         {state.handouts.length > 0 && (
           <section className="mt-8">
             <h2 className="mb-4 flex items-center gap-2 font-heading text-lg font-semibold text-muted-foreground">
-              <Image className="size-4" /> {t("player.handouts")}
+              <ImageIcon className="size-4" /> {t("player.handouts")}
             </h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
               {state.handouts.map((h) => (

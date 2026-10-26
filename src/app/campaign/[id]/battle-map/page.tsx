@@ -1,6 +1,5 @@
 import { and, desc, eq } from "drizzle-orm";
 import { Grid3x3, Monitor } from "lucide-react";
-import Link from "next/link";
 import { db } from "@/db";
 import { battleMaps, encounters } from "@/db/schema";
 import { PageContainer, PageHeader } from "@/components/shared/page-header";

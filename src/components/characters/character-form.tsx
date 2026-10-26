@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, Save } from "lucide-react";
 import { toast } from "sonner";
@@ -517,9 +517,9 @@ function MulticlassEditor({
   usedSubclasses: string[];
 }) {
   const [keys, setKeys] = useState<string[]>(() => value.map(nextMulticlassKey));
-  useEffect(() => {
-    setKeys((k) => (k.length === value.length ? k : value.map(nextMulticlassKey)));
-  }, [value.length]);
+  // Rebuilt when the array is replaced from outside (a form reset). Adjusting
+  // state during render is React's documented pattern for this — no effect.
+  if (keys.length !== value.length) setKeys(value.map(nextMulticlassKey));
 
   function update(i: number, patch: Partial<MulticlassEntry>) {
     onChange(value.map((e, idx) => (idx === i ? { ...e, ...patch } : e)));

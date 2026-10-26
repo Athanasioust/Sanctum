@@ -62,8 +62,25 @@ export function SpellsTab({
   }, [ownerId, ownerType]);
 
   useEffect(() => {
-    load().catch(() => setLoading(false));
-  }, [load]);
+    let cancelled = false;
+    const q = `ownerId=${ownerId}&ownerType=${ownerType}`;
+    Promise.all([
+      api.get<Spell[]>(`/api/spells?${q}`),
+      api.get<SpellSlot[]>(`/api/spell-slots?${q}`),
+    ])
+      .then(([s, sl]) => {
+        if (cancelled) return;
+        setSpells(s);
+        setSlots(sl);
+        setLoading(false);
+      })
+      .catch(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ownerId, ownerType]);
 
   async function adjustSlot(slot: SpellSlot, delta: number) {
     const used = Math.max(0, Math.min(slot.total, slot.used + delta));

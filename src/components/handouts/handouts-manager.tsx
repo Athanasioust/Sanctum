@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Eye, EyeOff, Pencil, Trash2, Image, GripVertical } from "lucide-react";
+import { Plus, Eye, EyeOff, Pencil, Trash2, Image } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

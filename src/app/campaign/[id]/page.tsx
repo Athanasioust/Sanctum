@@ -28,7 +28,6 @@ import { ClocksPanel } from "@/components/clocks/clocks-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PageContainer } from "@/components/shared/page-header";
-import { EmptyState } from "@/components/shared/empty-state";
 import { ALL_DESTINATIONS, NAV_GROUPS } from "@/lib/nav";
 import { STORY_EVENT_TYPES } from "@/lib/constants";
 import { noteColorClasses } from "@/lib/ui";

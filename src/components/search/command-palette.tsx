@@ -45,7 +45,7 @@ const TYPE_LABELS: Record<SearchResult["type"], string> = {
 export function CommandPalette({ campaignId }: { campaignId: number }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SearchResult[]>([]);
+  const [fetchedResults, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -90,10 +90,8 @@ export function CommandPalette({ campaignId }: { campaignId: number }) {
   // Debounced search
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!query || query.length < 2) {
-      setResults([]);
-      return;
-    }
+    // Too short to search: `results` below is empty, no state to clear.
+    if (!query || query.length < 2) return;
     debounceRef.current = setTimeout(async () => {
       setLoading(true);
       try {
@@ -110,6 +108,9 @@ export function CommandPalette({ campaignId }: { campaignId: number }) {
       }
     }, 220);
   }, [query, campaignId]);
+
+  // Results only count for a query long enough to have searched.
+  const results = query.length >= 2 ? fetchedResults : [];
 
   // A query that reads as dice notation ("2d6+3") becomes a roll option at the
   // top of the list. Requires an actual die term so plain numbers don't match.

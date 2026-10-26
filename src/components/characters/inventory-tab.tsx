@@ -43,8 +43,21 @@ export function InventoryTab({
   }, [ownerId, ownerType]);
 
   useEffect(() => {
-    load().catch(() => setLoading(false));
-  }, [load]);
+    let cancelled = false;
+    api
+      .get<InventoryItem[]>(`/api/inventory?ownerId=${ownerId}&ownerType=${ownerType}`)
+      .then((data) => {
+        if (cancelled) return;
+        setItems(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ownerId, ownerType]);
 
   async function toggleEquipped(item: InventoryItem) {
     const isEquipped = !item.isEquipped;

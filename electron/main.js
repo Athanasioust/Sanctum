@@ -59,7 +59,6 @@ let serverUrl = null;
 
 function log(...args) {
   const line = `[${new Date().toISOString()}] ${args.join(" ")}`;
-  // eslint-disable-next-line no-console
   console.log(line);
   if (logStream && !loggingClosed) {
     try {
