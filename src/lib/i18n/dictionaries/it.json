@@ -203,5 +203,12 @@
   "bulk.restored": "{count} ripristinati",
   "bulk.undo": "Annulla",
   "bulk.undoFailed": "Impossibile annullare",
-  "bulk.failed": "Impossibile eliminare"
+  "bulk.failed": "Impossibile eliminare",
+  "log.copy": "Copia il registro di combattimento",
+  "log.copyShort": "Copia",
+  "log.export": "Salva il registro di combattimento",
+  "log.exportShort": "Esporta",
+  "log.plainText": "Testo semplice",
+  "log.copied": "Registro di combattimento copiato",
+  "log.failed": "Impossibile esportare il registro"
 }

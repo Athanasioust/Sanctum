@@ -82,6 +82,7 @@ import { Slider } from "@/components/ui/slider";
 import { COMBAT_LOG_ADDED_EVENT, OPEN_DICE_EVENT, rollDice } from "@/components/dice/dice-roller";
 import { COMBAT_SHORTCUTS, keyBelongsToFocus } from "@/lib/combat-shortcuts";
 import { SaveEncounterButton } from "@/components/combat/encounter-controls";
+import { CombatLogExport } from "@/components/combat/combat-log-export";
 import { api } from "@/lib/client";
 import { CONDITIONS, EXHAUSTION_EFFECTS } from "@/lib/constants";
 import {
@@ -956,6 +957,7 @@ export function CombatTracker({
           <div className="border-t border-border p-4">
             <CombatLogPanel
               encounterId={encounter.id}
+              encounterName={encounter.name}
               round={round}
               participants={parts}
               entries={logEntries}
@@ -2252,12 +2254,14 @@ function ConcentrationDialog({
 
 function CombatLogPanel({
   encounterId,
+  encounterName,
   round,
   participants,
   entries,
   onAdd,
 }: {
   encounterId: number;
+  encounterName: string;
   round: number;
   participants: CombatParticipant[];
   entries: CombatLogEntry[];
@@ -2282,6 +2286,10 @@ function CombatLogPanel({
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs text-muted-foreground">Round {round}</span>
+        <CombatLogExport encounterId={encounterId} encounterName={encounterName} entries={entries} />
+      </div>
       {/* Quick log form */}
       <div className="flex flex-col gap-2 sm:flex-row">
         <select

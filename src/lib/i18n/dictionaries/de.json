@@ -203,5 +203,12 @@
   "bulk.restored": "{count} wiederhergestellt",
   "bulk.undo": "Rückgängig",
   "bulk.undoFailed": "Rückgängig machen fehlgeschlagen",
-  "bulk.failed": "Löschen fehlgeschlagen"
+  "bulk.failed": "Löschen fehlgeschlagen",
+  "log.copy": "Kampfprotokoll kopieren",
+  "log.copyShort": "Kopieren",
+  "log.export": "Kampfprotokoll als Datei speichern",
+  "log.exportShort": "Exportieren",
+  "log.plainText": "Nur Text",
+  "log.copied": "Kampfprotokoll kopiert",
+  "log.failed": "Protokoll konnte nicht exportiert werden"
 }

@@ -25,6 +25,7 @@ import { Field } from "@/components/shared/form";
 import { EntityActions } from "@/components/shared/entity-actions";
 import { api } from "@/lib/client";
 import { announceCombatChange } from "@/lib/combat-sync";
+import { CombatLogExport } from "@/components/combat/combat-log-export";
 import type { Encounter } from "@/db/schema";
 
 export function NewEncounterButton({
@@ -130,6 +131,7 @@ export function PastEncounters({ encounters }: { encounters: Encounter[] }) {
               </p>
             </div>
             <div className="flex items-center gap-2">
+              <CombatLogExport encounterId={e.id} encounterName={e.name} size="icon" />
               <ReopenEncounterButton encounterId={e.id} />
               <EntityActions deleteEndpoint={`/api/encounters/${e.id}`} entityLabel="Encounter" />
             </div>

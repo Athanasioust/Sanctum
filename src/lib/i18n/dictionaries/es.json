@@ -203,5 +203,12 @@
   "bulk.restored": "{count} restaurados",
   "bulk.undo": "Deshacer",
   "bulk.undoFailed": "No se pudo deshacer",
-  "bulk.failed": "No se pudo eliminar"
+  "bulk.failed": "No se pudo eliminar",
+  "log.copy": "Copiar el registro de combate",
+  "log.copyShort": "Copiar",
+  "log.export": "Guardar el registro de combate",
+  "log.exportShort": "Exportar",
+  "log.plainText": "Texto sin formato",
+  "log.copied": "Registro de combate copiado",
+  "log.failed": "No se pudo exportar el registro"
 }

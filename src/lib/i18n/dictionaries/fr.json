@@ -203,5 +203,12 @@
   "bulk.restored": "{count} restauré(s)",
   "bulk.undo": "Annuler",
   "bulk.undoFailed": "Impossible d'annuler",
-  "bulk.failed": "Suppression impossible"
+  "bulk.failed": "Suppression impossible",
+  "log.copy": "Copier le journal de combat",
+  "log.copyShort": "Copier",
+  "log.export": "Enregistrer le journal de combat",
+  "log.exportShort": "Exporter",
+  "log.plainText": "Texte brut",
+  "log.copied": "Journal de combat copié",
+  "log.failed": "Impossible d'exporter le journal"
 }

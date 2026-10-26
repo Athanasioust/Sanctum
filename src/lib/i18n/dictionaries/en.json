@@ -203,5 +203,12 @@
   "bulk.restored": "Restored {count}",
   "bulk.undo": "Undo",
   "bulk.undoFailed": "Couldn't undo",
-  "bulk.failed": "Couldn't delete"
+  "bulk.failed": "Couldn't delete",
+  "log.copy": "Copy the combat log",
+  "log.copyShort": "Copy",
+  "log.export": "Save the combat log as a file",
+  "log.exportShort": "Export",
+  "log.plainText": "Plain text",
+  "log.copied": "Combat log copied",
+  "log.failed": "Couldn't export the log"
 }
