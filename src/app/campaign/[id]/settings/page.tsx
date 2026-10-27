@@ -10,6 +10,7 @@ import { BackupsManager } from "@/components/settings/backups-manager";
 import { DangerZone } from "@/components/settings/danger-zone";
 import { PlayerViewSharing } from "@/components/settings/player-view-sharing";
 import { LanguageSwitcher } from "@/components/settings/language-switcher";
+import { UpdateCheckSetting } from "@/components/settings/update-check-setting";
 import { WhatsNewButton } from "@/components/shared/whats-new";
 import { APP_VERSION } from "@/lib/changelog";
 import { getLocale } from "@/lib/i18n/server";
@@ -54,6 +55,10 @@ export default async function SettingsPage({
             </p>
           </div>
           <WhatsNewButton />
+        </section>
+
+        <section>
+          <UpdateCheckSetting />
         </section>
 
         {/* Import lives here rather than in the sidebar — it's a one-off setup

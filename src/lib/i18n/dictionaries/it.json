@@ -212,5 +212,14 @@
   "log.copied": "Registro di combattimento copiato",
   "log.failed": "Impossibile esportare il registro",
   "support.kofi": "Sostieni su Ko-fi",
-  "support.hint": "Sanctum è gratuito e senza pubblicità: una mancia su Ko-fi aiuta a mantenerlo vivo"
+  "support.hint": "Sanctum è gratuito e senza pubblicità: una mancia su Ko-fi aiuta a mantenerlo vivo",
+  "update.available": "Sanctum {version} è disponibile",
+  "update.current": "Stai usando la versione {version}.",
+  "update.download": "Scarica",
+  "update.skip": "Salta questa versione",
+  "update.settingLabel": "Controlla aggiornamenti",
+  "update.settingHint": "Se attivo, Sanctum chiede a GitHub una volta all'avvio se è uscita una versione più recente. Nessun account, e nessun dato su di te o sulle tue campagne viene mai inviato.",
+  "update.settingOn": "Controllo attivo: Sanctum verificherà al prossimo avvio",
+  "update.settingOff": "Controllo aggiornamenti disattivato",
+  "update.settingFailed": "Impossibile salvare l'impostazione"
 }

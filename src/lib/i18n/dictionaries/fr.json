@@ -212,5 +212,14 @@
   "log.copied": "Journal de combat copié",
   "log.failed": "Impossible d'exporter le journal",
   "support.kofi": "Soutenir sur Ko-fi",
-  "support.hint": "Sanctum est gratuit et sans publicité — un pourboire sur Ko-fi aide à le faire vivre"
+  "support.hint": "Sanctum est gratuit et sans publicité — un pourboire sur Ko-fi aide à le faire vivre",
+  "update.available": "Sanctum {version} est disponible",
+  "update.current": "Vous utilisez la version {version}.",
+  "update.download": "Télécharger",
+  "update.skip": "Ignorer cette version",
+  "update.settingLabel": "Rechercher les mises à jour",
+  "update.settingHint": "Si activé, Sanctum interroge GitHub une fois au lancement pour savoir si une version plus récente existe. Aucun compte, et aucune donnée sur vous ou vos campagnes n'est jamais envoyée.",
+  "update.settingOn": "Recherche activée — Sanctum vérifiera au prochain lancement",
+  "update.settingOff": "Recherche des mises à jour désactivée",
+  "update.settingFailed": "Impossible d'enregistrer le réglage"
 }

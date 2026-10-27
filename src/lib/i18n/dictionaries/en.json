@@ -212,5 +212,14 @@
   "log.copied": "Combat log copied",
   "log.failed": "Couldn't export the log",
   "support.kofi": "Support on Ko-fi",
-  "support.hint": "Sanctum is free and has no ads — a tip on Ko-fi helps keep it going"
+  "support.hint": "Sanctum is free and has no ads — a tip on Ko-fi helps keep it going",
+  "update.available": "Sanctum {version} is available",
+  "update.current": "You're on {version}.",
+  "update.download": "Download",
+  "update.skip": "Skip this version",
+  "update.settingLabel": "Check for updates",
+  "update.settingHint": "When on, Sanctum checks GitHub once on launch to see if a newer version is out. No account, no data about you or your campaigns is ever sent.",
+  "update.settingOn": "Update check on — Sanctum will look on next launch",
+  "update.settingOff": "Update check off",
+  "update.settingFailed": "Could not save the setting"
 }
