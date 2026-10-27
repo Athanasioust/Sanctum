@@ -14,6 +14,13 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.6.1",
+    date: "2026-10-27",
+    highlights: [
+      "Optional update check: turn on Settings → Check for updates and Sanctum asks GitHub once per launch whether a newer version is out. Off by default, and nothing about you or your campaigns is sent.",
+    ],
+  },
+  {
     version: "0.6.0",
     date: "2026-10-26",
     highlights: [
