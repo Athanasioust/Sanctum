@@ -14,6 +14,17 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.7.0",
+    date: "2026-10-29",
+    highlights: [
+      "World is now an interactive atlas: upload a map image and pan and zoom it like a real map, then drop markers with Markdown popups, icons and categories you can rename, recolour and extend.",
+      "Link a marker to a location, NPC, quest, shop, faction, handout or rumor and click straight through to it. Location, NPC and shop pages show which maps they appear on.",
+      "Nest maps from continent to city: a marker can be a portal into a child map, with a breadcrumb back up. Existing location maps and their pins were carried over automatically.",
+      "Reveal a map to the player view, with exploration fog you paint away as the party explores. Fogged areas and hidden markers are never sent to the players' screens.",
+      "Export a map (or a whole map tree) as one interactive HTML file that works offline in any browser, in a full DM version or a players-only version that respects the fog.",
+    ],
+  },
+  {
     version: "0.6.1",
     date: "2026-10-27",
     highlights: [

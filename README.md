@@ -22,7 +22,7 @@ A **local-first Dungeon Master's campaign manager** for Dungeons & Dragons 5e. E
 - **Handouts** — write player-facing handouts in Markdown (with images) and reveal them to the live player view.
 - **Rumors** — jot down rumors and gossip with their source, and mark them followed-up once investigated.
 - **NPC relationships** — map the web of allies, enemies, family and informants as an interactive relationship graph.
-- **World** — nested locations with image maps, pins and a tactical grid builder.
+- **World atlas** — zoomable maps (Leaflet, fully offline) with categorised markers and Markdown popups, markers linked to your locations, NPCs, quests, shops, factions, handouts and rumors, portal markers that nest maps from continent to city, exploration fog for the player view, and export to a standalone interactive HTML file.
 - **Mind map** — a free-form canvas for plotting threads: drag out nodes, link them up, colour-code them and tie them back to the campaign records they're about.
 - **Homebrew** — author your own spells, items, monsters and feats alongside the SRD content, including **2024 weapon mastery** properties.
 - **Soundpad** — an ambient audio desk with layered channels and saveable soundscapes, so a tavern, a storm or a dungeon is one click away. Your own audio files, played locally.
@@ -62,7 +62,7 @@ Prefer to run it from source? See [Getting started](#getting-started).
 - [Next.js 16](https://nextjs.org) (App Router) + React 19
 - TypeScript + Tailwind CSS v4 + shadcn/ui
 - [better-sqlite3](https://github.com/WiseLibs/better-sqlite3) + [Drizzle ORM](https://orm.drizzle.team)
-- [Konva](https://konvajs.org) for the battle map, [React Flow](https://reactflow.dev) for the mind map, [pdf.js](https://mozilla.github.io/pdf.js/) + [pdf-lib](https://pdf-lib.js.org) for reading and writing PDFs
+- [Konva](https://konvajs.org) for the battle map, [Leaflet](https://leafletjs.com) for the world atlas, [React Flow](https://reactflow.dev) for the mind map, [pdf.js](https://mozilla.github.io/pdf.js/) + [pdf-lib](https://pdf-lib.js.org) for reading and writing PDFs
 - [Electron](https://www.electronjs.org) + electron-builder for the desktop builds
 
 ## Prerequisites
