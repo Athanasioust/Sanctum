@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import { Swords, Heart, Shield, Skull, Image as ImageIcon, Grid3x3, Castle } from "lucide-react";
 import { api } from "@/lib/client";
@@ -11,6 +11,8 @@ import { renderMarkdown } from "@/lib/markdown";
 import { cn } from "@/lib/utils";
 import { useT } from "@/components/i18n/i18n-provider";
 import { ClockFace } from "@/components/clocks/clock-face";
+import { PlayerAtlas } from "@/components/screen/player-atlas";
+import { EMPTY_PLAYER_ATLAS, type PlayerAtlasState } from "@/lib/atlas/types";
 import type {
   BattleMap,
   Character,
@@ -42,6 +44,8 @@ export type ScreenState = {
   playerMoves: boolean;
   /** Progress clocks the DM has revealed. */
   clocks: Clock[];
+  /** The revealed world map, already filtered by the server. */
+  atlas: PlayerAtlasState;
 };
 
 export const EMPTY_SCREEN_STATE: ScreenState = {
@@ -57,6 +61,7 @@ export const EMPTY_SCREEN_STATE: ScreenState = {
   tokenArt: {},
   playerMoves: false,
   clocks: [],
+  atlas: EMPTY_PLAYER_ATLAS,
 };
 
 /** How long a poll may take before it's abandoned and retried on the next tick. */
@@ -80,6 +85,13 @@ export function PlayerScreen({
   const [state, setState] = useState<ScreenState>(initialState);
   const [failures, setFailures] = useState(0);
   const t = useT();
+  // A portal a player followed away from the DM's map, and which map the DM
+  // was presenting at the time — when the DM moves on, the screen follows.
+  const [follow, setFollow] = useState<{ id: number; base: number | null } | null>(null);
+  const followRef = useRef(follow);
+  useEffect(() => {
+    followRef.current = follow;
+  }, [follow]);
 
   const load = useCallback(async () => {
     // A poll that never settles used to wedge the screen forever. Abort it and
@@ -89,14 +101,26 @@ export function PlayerScreen({
     const signal = controller.signal;
 
     try {
-      const [encounters, party, allHandouts, maps, moves, allClocks] = await Promise.all([
+      const followed = followRef.current;
+      const [encounters, party, allHandouts, maps, moves, allClocks, atlas] = await Promise.all([
         api.get<Encounter[]>(`/api/encounters?campaignId=${campaignId}`, { signal }),
         api.get<Character[]>(`/api/characters?campaignId=${campaignId}`, { signal }),
         api.get<Handout[]>(`/api/handouts?campaignId=${campaignId}`, { signal }),
         api.get<BattleMap[]>(`/api/battle-maps?campaignId=${campaignId}`, { signal }),
         api.get<{ allowed: boolean }>("/api/screen/move-token", { signal }),
         api.get<Clock[]>(`/api/clocks?campaignId=${campaignId}`, { signal }),
+        api.get<PlayerAtlasState>(
+          `/api/screen/atlas?campaignId=${campaignId}${followed ? `&mapId=${followed.id}` : ""}`,
+          { signal },
+        ),
       ]);
+      // The player changed maps while this poll was in flight: its atlas is stale.
+      const atlasStale = followRef.current !== followed;
+      if (!atlasStale && followed && (atlas.currentId !== followed.base || atlas.map?.id !== followed.id)) {
+        // The DM moved on (or hid the followed map), so the screen follows the DM.
+        setFollow(null);
+        followRef.current = null;
+      }
       const clocks = allClocks.filter((c) => c.revealToPlayers);
       const playerMoves = moves.allowed;
       const handouts = allHandouts.filter((h) => h.isRevealed);
@@ -131,6 +155,7 @@ export function PlayerScreen({
         tokenArt,
         playerMoves,
         clocks,
+        atlas,
       };
       if (active && full) {
         next = {
@@ -148,9 +173,11 @@ export function PlayerScreen({
           tokenArt,
           playerMoves,
           clocks,
+          atlas,
         };
       }
-      setState(next);
+      // A portal followed while this poll was in flight wins over its answer.
+      setState((prev) => (atlasStale ? { ...next, atlas: prev.atlas } : next));
       setFailures(0);
     } catch {
       // Keep showing the last known state, but start counting — a screen that
@@ -171,6 +198,22 @@ export function PlayerScreen({
   }, [load]);
 
   const stale = failures >= STALE_AFTER_FAILURES;
+
+  // Following a portal fetches the new map straight away rather than waiting
+  // for the next poll.
+  async function followMap(mapId: number | null) {
+    const next = mapId === null ? null : { id: mapId, base: state.atlas.currentId };
+    setFollow(next);
+    followRef.current = next;
+    try {
+      const atlas = await api.get<PlayerAtlasState>(
+        `/api/screen/atlas?campaignId=${campaignId}${next ? `&mapId=${next.id}` : ""}`,
+      );
+      setState((s) => ({ ...s, atlas }));
+    } catch {
+      /* the next poll will try again */
+    }
+  }
 
   return (
     <main className="min-h-screen bg-background px-3 py-4 sm:px-8 sm:py-6">
@@ -196,6 +239,16 @@ export function PlayerScreen({
         <p className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-center text-sm text-amber-200">
           {t("player.reconnecting")}
         </p>
+      ) : null}
+
+      {/* World map — only when the DM has revealed one */}
+      {state.atlas.map ? (
+        <PlayerAtlas
+          key={state.atlas.map.id}
+          atlas={state.atlas}
+          following={follow !== null}
+          onFollow={(id) => void followMap(id)}
+        />
       ) : null}
 
       {/* Battle map — only when the DM has flagged one to show */}

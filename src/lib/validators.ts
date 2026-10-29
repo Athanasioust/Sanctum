@@ -374,6 +374,84 @@ export const locationCreateSchema = z.object({
 export const locationUpdateSchema = locationCreateSchema.partial();
 
 /* -------------------------------------------------------------------------- */
+/*  Atlas                                                                      */
+/* -------------------------------------------------------------------------- */
+
+// Kept in step with ATLAS_LINK_TYPES in the schema (validators stay free of
+// the DB module so the client can import them).
+const atlasLinkType = z.enum(["location", "npc", "quest", "shop", "faction", "handout", "rumor"]);
+const unit = z.number().min(0).max(1);
+const hexColor = z.string().trim().regex(/^#[0-9a-fA-F]{3,8}$/, "Use a hex colour");
+const atlasIcon = z.string().trim().min(1).max(40);
+
+const atlasFogOpSchema = z.discriminatedUnion("kind", [
+  z.object({
+    id: z.string().max(64),
+    mode: z.enum(["reveal", "hide"]),
+    kind: z.literal("brush"),
+    radius: z.number().min(0.0005).max(1),
+    points: z.array(z.tuple([unit, unit])).min(1).max(5000),
+  }),
+  z.object({
+    id: z.string().max(64),
+    mode: z.enum(["reveal", "hide"]),
+    kind: z.literal("rect"),
+    x: unit,
+    y: unit,
+    w: unit,
+    h: unit,
+  }),
+]);
+
+export const atlasMapCreateSchema = z.object({
+  campaignId: z.number().int(),
+  name: z.string().trim().min(1, "Name is required").max(120),
+  imageUrl: z.string().max(500).nullable().optional(),
+  width: z.number().int().min(0).max(100000).optional(),
+  height: z.number().int().min(0).max(100000).optional(),
+  parentMapId: z.number().int().nullable().optional(),
+  sourceLocationId: z.number().int().nullable().optional(),
+});
+/**
+ * `playerImageUrl` is deliberately absent: only the player-image route may set
+ * it, after the server has written the fogged render itself.
+ */
+export const atlasMapUpdateSchema = atlasMapCreateSchema
+  .omit({ campaignId: true })
+  .partial()
+  .extend({
+    revealToPlayers: z.boolean().optional(),
+    fogEnabled: z.boolean().optional(),
+    fog: z.array(atlasFogOpSchema).max(2000).optional(),
+  });
+
+export const atlasCategoryCreateSchema = z.object({
+  campaignId: z.number().int(),
+  name: z.string().trim().min(1, "Name is required").max(60),
+  color: hexColor.optional().default("#d4a017"),
+  icon: atlasIcon.optional().default("map-pin"),
+  sortOrder: z.number().int().optional().default(0),
+});
+export const atlasCategoryUpdateSchema = atlasCategoryCreateSchema.omit({ campaignId: true }).partial();
+
+export const atlasMarkerCreateSchema = z.object({
+  mapId: z.number().int(),
+  x: unit,
+  y: unit,
+  title: z.string().trim().max(120).optional().default(""),
+  description: optionalString(20000),
+  dmNotes: optionalString(20000),
+  categoryId: z.number().int().nullable().optional(),
+  icon: atlasIcon.nullable().optional(),
+  color: hexColor.nullable().optional(),
+  linkType: atlasLinkType.nullable().optional(),
+  linkId: z.number().int().nullable().optional(),
+  portalMapId: z.number().int().nullable().optional(),
+  hidden: z.boolean().optional().default(false),
+});
+export const atlasMarkerUpdateSchema = atlasMarkerCreateSchema.omit({ mapId: true }).partial();
+
+/* -------------------------------------------------------------------------- */
 /*  Battle maps                                                                */
 /* -------------------------------------------------------------------------- */
 

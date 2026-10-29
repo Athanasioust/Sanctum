@@ -4,6 +4,7 @@ import { asc, eq, or } from "drizzle-orm";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { db } from "@/db";
 import { npcs, npcRelationships } from "@/db/schema";
+import { AppearsOnMaps } from "@/components/atlas/appears-on-maps";
 import { PageContainer } from "@/components/shared/page-header";
 import { StatBlock } from "@/components/npcs/stat-block";
 import { EntityActions } from "@/components/shared/entity-actions";
@@ -71,6 +72,7 @@ export default async function NpcDetailPage({
         </div>
       </div>
 
+      <AppearsOnMaps campaignId={campaignId} linkType="npc" linkId={npc.id} />
       <StatBlock npc={npc} />
 
       <NpcRelationshipsSection

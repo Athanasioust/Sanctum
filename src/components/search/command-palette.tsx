@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Search, User, Skull, MapPin, ListTodo, Sparkles, Image, MessageCircleQuestion, X, Dices } from "lucide-react";
+import { Search, User, Skull, MapPin, Map as MapIcon, ListTodo, Sparkles, Image, MessageCircleQuestion, X, Dices } from "lucide-react";
 import { rollDice } from "@/components/dice/dice-roller";
 import { useT } from "@/components/i18n/i18n-provider";
 import type { TranslationKey } from "@/lib/i18n";
@@ -30,6 +30,7 @@ const TYPE_ICONS: Record<SearchResult["type"], React.ElementType> = {
   magic_item: Sparkles,
   handout: Image,
   rumor: MessageCircleQuestion,
+  map: MapIcon,
 };
 
 const TYPE_LABELS: Record<SearchResult["type"], string> = {
@@ -40,6 +41,7 @@ const TYPE_LABELS: Record<SearchResult["type"], string> = {
   magic_item: "Magic Item",
   handout: "Handout",
   rumor: "Rumor",
+  map: "",
 };
 
 export function CommandPalette({ campaignId }: { campaignId: number }) {
@@ -293,7 +295,7 @@ export function CommandPalette({ campaignId }: { campaignId: number }) {
                         )}
                       </div>
                       <span className="shrink-0 text-xs text-muted-foreground">
-                        {TYPE_LABELS[result.type]}
+                        {result.type === "map" ? t("atlas.searchTypeMap") : TYPE_LABELS[result.type]}
                       </span>
                     </button>
                   </li>

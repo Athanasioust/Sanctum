@@ -58,3 +58,6 @@ next-env.d.ts
 
 # generated from node_modules by scripts/copy-pdf-worker.mjs
 /public/pdf.worker.min.mjs
+
+# generated from node_modules by scripts/copy-leaflet.mjs
+/public/vendor/leaflet

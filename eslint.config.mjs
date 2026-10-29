@@ -18,6 +18,7 @@ const eslintConfig = defineConfig([
     "backups/**",
     "uploads/**",
     "public/pdf.worker*",
+    "public/vendor/**",
   ]),
   {
     // The Electron shell runs as plain CommonJS in the main process.

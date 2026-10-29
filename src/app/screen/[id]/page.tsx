@@ -17,6 +17,7 @@ import { keepGroupsTogether } from "@/lib/combat-turns";
 import { resolveTokenImages } from "@/lib/battle-map";
 import { portraitsFor } from "@/lib/portraits";
 import { readLanConfig } from "@/lib/lan";
+import { loadPlayerAtlas } from "@/lib/atlas/server";
 
 export const dynamic = "force-dynamic";
 
@@ -92,6 +93,7 @@ async function loadScreenState(campaignId: number): Promise<ScreenState> {
     : {};
 
   const lan = readLanConfig();
+  const atlas = await loadPlayerAtlas(campaignId);
   const revealedClocks = await db
     .select()
     .from(clocks)
@@ -111,6 +113,7 @@ async function loadScreenState(campaignId: number): Promise<ScreenState> {
     tokenArt,
     playerMoves: lan.enabled && lan.allowPlayerTokenMoves,
     clocks: revealedClocks,
+    atlas,
   };
 }
 

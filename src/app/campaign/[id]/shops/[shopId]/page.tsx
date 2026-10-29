@@ -4,6 +4,7 @@ import { asc, eq } from "drizzle-orm";
 import { ArrowLeft, User, MapPin } from "lucide-react";
 import { db } from "@/db";
 import { shops, shopItems, locations, npcs } from "@/db/schema";
+import { AppearsOnMaps } from "@/components/atlas/appears-on-maps";
 import { PageContainer } from "@/components/shared/page-header";
 import { EntityActions } from "@/components/shared/entity-actions";
 import { ShopItemsManager } from "@/components/shops/shop-items-manager";
@@ -70,6 +71,7 @@ export default async function ShopDetailPage({
         </div>
       ) : null}
 
+      <AppearsOnMaps campaignId={campaignId} linkType="shop" linkId={shop.id} />
       <ShopItemsManager shopId={shop.id} initialItems={items} />
     </PageContainer>
   );

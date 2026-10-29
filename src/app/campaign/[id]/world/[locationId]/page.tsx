@@ -3,14 +3,16 @@ import { notFound } from "next/navigation";
 import { and, asc, eq, or } from "drizzle-orm";
 import { ArrowLeft } from "lucide-react";
 import { db } from "@/db";
-import { characters, encounters, locations, npcs, rollTables } from "@/db/schema";
+import { atlasMaps, characters, encounters, locations, npcs, rollTables } from "@/db/schema";
+import { getTranslation } from "@/lib/i18n/server";
+import { atlasMapHref } from "@/lib/atlas/links";
 import { LocationEncounters } from "@/components/world/location-encounters";
 import { abilityModifier } from "@/lib/dnd";
 import { PageContainer } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { EntityActions } from "@/components/shared/entity-actions";
 import { LocationDialog } from "@/components/world/location-dialog";
-import { LocationMap } from "@/components/world/location-map";
+import { AppearsOnMaps } from "@/components/atlas/appears-on-maps";
 import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +30,8 @@ export default async function LocationDetailPage({
     .where(eq(locations.id, Number(locationId)));
   if (!location || location.campaignId !== campaignId) notFound();
 
-  const [parent, all, tables, monsterRows, partyRows, active] = await Promise.all([
+  const { t } = await getTranslation();
+  const [parent, all, tables, monsterRows, partyRows, active, depictedBy] = await Promise.all([
     location.parentLocationId
       ? db.select({ id: locations.id, name: locations.name }).from(locations).where(eq(locations.id, location.parentLocationId))
       : Promise.resolve([]),
@@ -50,6 +53,11 @@ export default async function LocationDetailPage({
         ),
       )
       .limit(1),
+    db
+      .select({ id: atlasMaps.id, name: atlasMaps.name })
+      .from(atlasMaps)
+      .where(eq(atlasMaps.sourceLocationId, location.id))
+      .orderBy(asc(atlasMaps.name)),
   ]);
   // Creatures a rolled result can name. A bestiary template and a placed copy
   // can share a name; the template is the canonical stat block, so it wins.
@@ -133,8 +141,22 @@ export default async function LocationDetailPage({
         activeEncounterId={active[0]?.id ?? null}
       />
 
-      <h2 className="mb-3 font-heading text-lg font-semibold">Map</h2>
-      <LocationMap location={location} />
+      {depictedBy.length > 0 ? (
+        <div className="mb-4 flex flex-wrap items-center gap-2 text-sm">
+          <span className="text-muted-foreground">{t("atlas.mapsOfPlace")}</span>
+          {depictedBy.map((m) => (
+            <Link
+              key={m.id}
+              href={atlasMapHref(campaignId, m.id)}
+              className="rounded-full border border-border px-3 py-1 hover:border-primary/50 hover:text-primary"
+            >
+              {m.name}
+            </Link>
+          ))}
+        </div>
+      ) : null}
+      <AppearsOnMaps campaignId={campaignId} linkType="location" linkId={location.id} />
+
     </PageContainer>
   );
 }

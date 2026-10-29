@@ -8,12 +8,13 @@ import {
   magicItems,
   handouts,
   rumors,
+  atlasMaps,
 } from "@/db/schema";
 import { apiRoute, json, ApiError } from "@/lib/api";
 
 export type SearchResult = {
   id: number;
-  type: "character" | "npc" | "location" | "quest" | "magic_item" | "handout" | "rumor";
+  type: "character" | "npc" | "location" | "quest" | "magic_item" | "handout" | "rumor" | "map";
   label: string;
   sublabel?: string;
   href: string;
@@ -32,7 +33,7 @@ export const GET = apiRoute(async (req) => {
   const pattern = `%${q}%`;
   const base = `/campaign/${campaignId}`;
 
-  const [chars, npcRows, locs, questRows, items, handoutRows, rumorRows] = await Promise.all([
+  const [chars, npcRows, locs, questRows, items, handoutRows, rumorRows, mapRows] = await Promise.all([
     db
       .select({ id: characters.id, name: characters.name, class: characters.class })
       .from(characters)
@@ -73,6 +74,11 @@ export const GET = apiRoute(async (req) => {
       .from(rumors)
       .where(and(eq(rumors.campaignId, campaignId), like(rumors.text, pattern)))
       .limit(5),
+    db
+      .select({ id: atlasMaps.id, name: atlasMaps.name })
+      .from(atlasMaps)
+      .where(and(eq(atlasMaps.campaignId, campaignId), like(atlasMaps.name, pattern)))
+      .limit(5),
   ]);
 
   const results: SearchResult[] = [
@@ -95,7 +101,7 @@ export const GET = apiRoute(async (req) => {
       type: "location" as const,
       label: l.name,
       sublabel: l.type || "Location",
-      href: `${base}/world`,
+      href: `${base}/world/${l.id}`,
     })),
     ...questRows.map((qt) => ({
       id: qt.id,
@@ -124,6 +130,12 @@ export const GET = apiRoute(async (req) => {
       label: r.text.length > 80 ? r.text.slice(0, 80) + "…" : r.text,
       sublabel: r.source || "Rumor",
       href: `${base}/rumors`,
+    })),
+    ...mapRows.map((m) => ({
+      id: m.id,
+      type: "map" as const,
+      label: m.name,
+      href: `${base}/world/maps/${m.id}`,
     })),
   ];
 

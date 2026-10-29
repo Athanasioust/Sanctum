@@ -35,8 +35,11 @@ import {
   homebrewFeats,
   documents,
   clocks,
+  atlasMaps,
+  atlasCategories,
+  atlasMarkers,
 } from "@/db/schema";
-import type { BattleToken, MindMapNode, SoundscapeTrack } from "@/db/schema";
+import type { AtlasLinkType, BattleToken, MindMapNode, SoundscapeTrack } from "@/db/schema";
 import { ApiError } from "@/lib/api";
 import {
   campaignCreateSchema,
@@ -71,6 +74,10 @@ import {
   homebrewFeatCreateSchema,
   documentCreateSchema,
   clockCreateSchema,
+  atlasMapCreateSchema,
+  atlasMapUpdateSchema,
+  atlasCategoryCreateSchema,
+  atlasMarkerCreateSchema,
 } from "@/lib/validators";
 
 export const EXPORT_VERSION = 1;
@@ -118,6 +125,8 @@ export async function exportCampaign(campaignId: number) {
     homebrewFeatRows,
     documentRows,
     clockRows,
+    atlasMapRows,
+    atlasCategoryRows,
   ] = await Promise.all([
     db.select().from(characters).where(eq(characters.campaignId, campaignId)),
     db.select().from(npcs).where(eq(npcs.campaignId, campaignId)),
@@ -143,6 +152,8 @@ export async function exportCampaign(campaignId: number) {
     db.select().from(homebrewFeats).where(eq(homebrewFeats.campaignId, campaignId)),
     db.select().from(documents).where(eq(documents.campaignId, campaignId)),
     db.select().from(clocks).where(eq(clocks.campaignId, campaignId)),
+    db.select().from(atlasMaps).where(eq(atlasMaps.campaignId, campaignId)),
+    db.select().from(atlasCategories).where(eq(atlasCategories.campaignId, campaignId)),
   ]);
 
   const charIds = characterRows.map((c) => c.id);
@@ -152,8 +163,9 @@ export async function exportCampaign(campaignId: number) {
   const npcSet = new Set(npcIds);
   const shopIds = shopRows.map((s) => s.id);
   const encounterIds = encounterRows.map((e) => e.id);
+  const atlasMapIds = atlasMapRows.map((m) => m.id);
 
-  const [spellRows, slotRows, inventoryRows, shopItemRows, participantRows, combatLogRows, resourceRows] = await Promise.all([
+  const [spellRows, slotRows, inventoryRows, shopItemRows, participantRows, combatLogRows, resourceRows, atlasMarkerRows] = await Promise.all([
     ownerIds.length ? db.select().from(spells).where(inArray(spells.ownerId, ownerIds)) : [],
     ownerIds.length ? db.select().from(spellSlots).where(inArray(spellSlots.ownerId, ownerIds)) : [],
     ownerIds.length ? db.select().from(inventoryItems).where(inArray(inventoryItems.ownerId, ownerIds)) : [],
@@ -161,6 +173,7 @@ export async function exportCampaign(campaignId: number) {
     encounterIds.length ? db.select().from(combatParticipants).where(inArray(combatParticipants.encounterId, encounterIds)) : [],
     encounterIds.length ? db.select().from(combatLogEntries).where(inArray(combatLogEntries.encounterId, encounterIds)) : [],
     charIds.length ? db.select().from(characterResources).where(inArray(characterResources.characterId, charIds)) : [],
+    atlasMapIds.length ? db.select().from(atlasMarkers).where(inArray(atlasMarkers.mapId, atlasMapIds)) : [],
   ]);
 
   const ownerMatch = <T extends { ownerId: number; ownerType: string }>(rows: T[]) =>
@@ -201,6 +214,9 @@ export async function exportCampaign(campaignId: number) {
     homebrewFeats: homebrewFeatRows,
     documents: documentRows,
     clocks: clockRows,
+    atlasMaps: atlasMapRows,
+    atlasCategories: atlasCategoryRows,
+    atlasMarkers: atlasMarkerRows,
   };
 }
 
@@ -284,6 +300,17 @@ const ImportSchemas = {
   homebrewFeat: homebrewFeatCreateSchema.omit({ campaignId: true }),
   document: documentCreateSchema.omit({ campaignId: true }),
   clock: clockCreateSchema.omit({ campaignId: true }),
+  atlasCategory: atlasCategoryCreateSchema.omit({ campaignId: true }),
+  // The fogged player render isn't carried over; the editor re-renders it.
+  atlasMap: atlasMapCreateSchema
+    .omit({ campaignId: true, parentMapId: true, sourceLocationId: true })
+    .extend(atlasMapUpdateSchema.pick({ revealToPlayers: true, fogEnabled: true, fog: true }).shape),
+  atlasMarker: atlasMarkerCreateSchema.omit({
+    mapId: true,
+    categoryId: true,
+    portalMapId: true,
+    linkId: true,
+  }),
 };
 
 /** Validate a bundle array, returning {raw, data} pairs for rows that pass. */
@@ -337,6 +364,8 @@ export async function importCampaign(raw: unknown): Promise<number> {
     const questMap = new Map<number, number>();
     const factionMap = new Map<number, number>();
     const soundAssetMap = new Map<number, number>();
+    const handoutMap = new Map<number, number>();
+    const rumorMap = new Map<number, number>();
 
     // Characters & NPCs
     for (const { raw: r, data } of validateRows(ImportSchemas.character, bundle.characters)) {
@@ -490,16 +519,20 @@ export async function importCampaign(raw: unknown): Promise<number> {
         characterId: charMap.get(Number(r.characterId)) ?? null,
       } as never).run();
     }
-    for (const { data } of validateRows(ImportSchemas.handout, bundle.handouts)) {
-      tx.insert(handouts).values({ ...data, campaignId } as never).run();
+    for (const { raw: r, data } of validateRows(ImportSchemas.handout, bundle.handouts)) {
+      const id = rowId(r);
+      const created = tx.insert(handouts).values({ ...data, campaignId } as never).returning().all()[0] as { id: number };
+      if (id !== null) handoutMap.set(id, created.id);
     }
     for (const { raw: r, data } of validateRows(ImportSchemas.rumor, bundle.rumors)) {
-      tx.insert(rumors).values({
+      const id = rowId(r);
+      const created = tx.insert(rumors).values({
         ...data,
         campaignId,
         sourceLocationId: locMap.get(Number(r.sourceLocationId)) ?? null,
         sourceNpcId: npcMap.get(Number(r.sourceNpcId)) ?? null,
-      } as never).run();
+      } as never).returning().all()[0] as { id: number };
+      if (id !== null) rumorMap.set(id, created.id);
     }
     for (const { raw: r, data } of validateRows(ImportSchemas.relationship, bundle.npcRelationships)) {
       const sourceNpcId = npcMap.get(Number(r.sourceNpcId));
@@ -588,6 +621,65 @@ export async function importCampaign(raw: unknown): Promise<number> {
     }
     for (const { data } of validateRows(ImportSchemas.clock, bundle.clocks)) {
       tx.insert(clocks).values({ ...data, campaignId } as never).run();
+    }
+
+    // Atlas: categories, then maps (two passes for the self-referencing
+    // parent), then markers. A marker's record link is remapped by its type; a
+    // link to something that didn't come across is dropped.
+    const atlasCategoryMap = new Map<number, number>();
+    const atlasMapMap = new Map<number, number>();
+    for (const { raw: r, data } of validateRows(ImportSchemas.atlasCategory, bundle.atlasCategories)) {
+      const id = rowId(r);
+      const created = tx.insert(atlasCategories).values({ ...data, campaignId } as never).returning().all()[0] as { id: number };
+      if (id !== null) atlasCategoryMap.set(id, created.id);
+    }
+    const atlasMapRows = validateRows(ImportSchemas.atlasMap, bundle.atlasMaps);
+    for (const { raw: r, data } of atlasMapRows) {
+      const id = rowId(r);
+      const created = tx
+        .insert(atlasMaps)
+        .values({
+          ...data,
+          campaignId,
+          parentMapId: null,
+          sourceLocationId: locMap.get(Number(r.sourceLocationId)) ?? null,
+          revealedAt: data.revealToPlayers ? new Date() : null,
+        } as never)
+        .returning()
+        .all()[0] as { id: number };
+      if (id !== null) atlasMapMap.set(id, created.id);
+    }
+    for (const { raw: r } of atlasMapRows) {
+      const id = rowId(r);
+      const parent = Number(r.parentMapId);
+      if (id !== null && atlasMapMap.has(parent)) {
+        tx.update(atlasMaps)
+          .set({ parentMapId: atlasMapMap.get(parent)! })
+          .where(eq(atlasMaps.id, atlasMapMap.get(id)!))
+          .run();
+      }
+    }
+    const atlasLinkMaps: Record<AtlasLinkType, Map<number, number>> = {
+      location: locMap,
+      npc: npcMap,
+      quest: questMap,
+      shop: shopMap,
+      faction: factionMap,
+      handout: handoutMap,
+      rumor: rumorMap,
+    };
+    for (const { raw: r, data } of validateRows(ImportSchemas.atlasMarker, bundle.atlasMarkers)) {
+      const mapId = atlasMapMap.get(Number(r.mapId));
+      if (!mapId) continue;
+      const linkId = data.linkType ? atlasLinkMaps[data.linkType].get(Number(r.linkId)) ?? null : null;
+      tx.insert(atlasMarkers).values({
+        ...data,
+        mapId,
+        categoryId: atlasCategoryMap.get(Number(r.categoryId)) ?? null,
+        portalMapId: atlasMapMap.get(Number(r.portalMapId)) ?? null,
+        linkType: linkId ? data.linkType : null,
+        linkId,
+      } as never).run();
     }
 
     return campaignId;

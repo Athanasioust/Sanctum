@@ -6,6 +6,7 @@ import {
   type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core";
 import type { ConditionEntry } from "@/lib/conditions";
+import { ATLAS_LINK_TYPES } from "../lib/atlas/link-types";
 
 /* -------------------------------------------------------------------------- */
 /*  Shared JSON shapes                                                         */
@@ -811,6 +812,120 @@ export const locations = sqliteTable("locations", {
 });
 
 /* -------------------------------------------------------------------------- */
+/*  Atlas (World maps)                                                         */
+/* -------------------------------------------------------------------------- */
+
+// Locations stay records in their own right — shops, roll tables and rumors
+// reference them — so a map never replaces a location, it only places one.
+export { ATLAS_LINK_TYPES, type AtlasLinkType } from "../lib/atlas/link-types";
+
+/**
+ * One stroke of exploration fog, in 0–1 image coordinates (x across the width,
+ * y down the height). A brush radius is a fraction of the image *width*, so a
+ * stroke stays round on a non-square map. Strokes apply in order on top of a
+ * fully hidden map: "reveal" uncovers, "hide" covers again.
+ */
+export type AtlasFogOp =
+  | {
+      id: string;
+      mode: "reveal" | "hide";
+      kind: "brush";
+      radius: number;
+      points: [number, number][];
+    }
+  | {
+      id: string;
+      mode: "reveal" | "hide";
+      kind: "rect";
+      x: number;
+      y: number;
+      w: number;
+      h: number;
+    };
+
+export const atlasMaps = sqliteTable("atlas_maps", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  campaignId: integer("campaign_id")
+    .notNull()
+    .references(() => campaigns.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  imageUrl: text("image_url"),
+  /** The image's natural size in pixels; 0 until the editor has measured it. */
+  width: integer("width").notNull().default(0),
+  height: integer("height").notNull().default(0),
+  parentMapId: integer("parent_map_id").references(
+    (): AnySQLiteColumn => atlasMaps.id,
+    { onDelete: "set null" },
+  ),
+  /** The location this map was migrated from (or depicts), if any. */
+  sourceLocationId: integer("source_location_id").references(() => locations.id, {
+    onDelete: "set null",
+  }),
+  revealToPlayers: integer("reveal_to_players", { mode: "boolean" })
+    .notNull()
+    .default(false),
+  /** When the DM last revealed it; the newest revealed map is the one on screen. */
+  revealedAt: integer("revealed_at", { mode: "timestamp_ms" }),
+  fogEnabled: integer("fog_enabled", { mode: "boolean" }).notNull().default(false),
+  fog: text("fog", { mode: "json" })
+    .notNull()
+    .$type<AtlasFogOp[]>()
+    .$defaultFn(() => []),
+  /**
+   * The base image with fogged areas burned out, rendered by the DM's browser
+   * whenever the fog changes. It is the only image the player view is ever
+   * given while fog is on, so undiscovered terrain never leaves the DM's
+   * machine. Cleared (fail closed) whenever the fog or base image changes.
+   */
+  playerImageUrl: text("player_image_url"),
+  ...timestamps,
+});
+
+/** Marker categories are per campaign and editable; a starter set is seeded. */
+export const atlasCategories = sqliteTable("atlas_categories", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  campaignId: integer("campaign_id")
+    .notNull()
+    .references(() => campaigns.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  color: text("color").notNull().default("#d4a017"),
+  icon: text("icon").notNull().default("map-pin"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  ...timestamps,
+});
+
+export const atlasMarkers = sqliteTable("atlas_markers", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  mapId: integer("map_id")
+    .notNull()
+    .references(() => atlasMaps.id, { onDelete: "cascade" }),
+  /** Position as a 0–1 fraction of the image, so it holds at every zoom and resolution. */
+  x: real("x").notNull(),
+  y: real("y").notNull(),
+  title: text("title").notNull().default(""),
+  /** Markdown popup body. Players see it when the marker is revealed. */
+  description: text("description").notNull().default(""),
+  /** Markdown for the DM only; never sent to the player view or a player export. */
+  dmNotes: text("dm_notes").notNull().default(""),
+  categoryId: integer("category_id").references(() => atlasCategories.id, {
+    onDelete: "set null",
+  }),
+  /** Per-marker overrides of the category's icon and colour. */
+  icon: text("icon"),
+  color: text("color"),
+  linkType: text("link_type", { enum: ATLAS_LINK_TYPES }),
+  linkId: integer("link_id"),
+  /** Clicking the marker opens this child map. */
+  portalMapId: integer("portal_map_id").references(
+    (): AnySQLiteColumn => atlasMaps.id,
+    { onDelete: "set null" },
+  ),
+  /** Kept off the player view even where the fog is lifted. */
+  hidden: integer("hidden", { mode: "boolean" }).notNull().default(false),
+  ...timestamps,
+});
+
+/* -------------------------------------------------------------------------- */
 /*  Story Events                                                               */
 /* -------------------------------------------------------------------------- */
 
@@ -1194,6 +1309,12 @@ export type Soundscape = typeof soundscapes.$inferSelect;
 export type NewSoundscape = typeof soundscapes.$inferInsert;
 export type Location = typeof locations.$inferSelect;
 export type NewLocation = typeof locations.$inferInsert;
+export type AtlasMap = typeof atlasMaps.$inferSelect;
+export type NewAtlasMap = typeof atlasMaps.$inferInsert;
+export type AtlasCategory = typeof atlasCategories.$inferSelect;
+export type NewAtlasCategory = typeof atlasCategories.$inferInsert;
+export type AtlasMarker = typeof atlasMarkers.$inferSelect;
+export type NewAtlasMarker = typeof atlasMarkers.$inferInsert;
 export type StoryEvent = typeof storyEvents.$inferSelect;
 export type NewStoryEvent = typeof storyEvents.$inferInsert;
 export type Faction = typeof factions.$inferSelect;
