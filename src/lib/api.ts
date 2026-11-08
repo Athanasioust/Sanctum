@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { ZodType } from "zod";
+import { markSearchStale } from "@/lib/search/stale";
 
 /** Error type that route handlers can throw to produce a clean HTTP response. */
 export class ApiError extends Error {
@@ -61,6 +62,8 @@ export function apiRoute<P = Record<string, string>>(
   fn: (req: Request, ctx: RouteCtx<P>) => Promise<Response> | Response,
 ) {
   return async (req: Request, ctx: RouteCtx<P>) => {
+    // Any write may change what global search should find.
+    if (req.method !== "GET" && req.method !== "HEAD") markSearchStale();
     try {
       return await fn(req, ctx);
     } catch (err) {

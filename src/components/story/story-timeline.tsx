@@ -114,7 +114,7 @@ export function StoryTimeline({
           {filtered.map((e) => {
             const type = STORY_EVENT_TYPES.find((t) => t.key === e.eventType);
             return (
-              <div key={e.id} className="relative rounded-xl border border-border bg-card p-4">
+              <div key={e.id} data-record={`story_event-${e.id}`} className="relative rounded-xl border border-border bg-card p-4">
                 <span className="absolute -left-[27px] top-5 size-3 rounded-full border-2 border-background bg-primary" />
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -249,7 +249,7 @@ function EventDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger ?? (
-          <Button>
+          <Button data-create-trigger>
             <Plus className="size-4" /> New Event
           </Button>
         )}

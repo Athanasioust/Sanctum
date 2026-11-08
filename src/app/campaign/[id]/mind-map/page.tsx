@@ -9,10 +9,13 @@ export const dynamic = "force-dynamic";
 
 export default async function MindMapPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const campaignId = Number((await params).id);
+  const mapParam = Number((await searchParams).map);
 
   const [maps, npcRows, locationRows, questRows, factionRows, characterRows] =
     await Promise.all([
@@ -64,7 +67,12 @@ export default async function MindMapPage({
         description="An infinite canvas for mysteries, plot threads and faction webs."
         icon={Network}
       />
-      <MindMap campaignId={campaignId} maps={maps} entities={entities} />
+      <MindMap
+        campaignId={campaignId}
+        initialActiveId={Number.isInteger(mapParam) && mapParam > 0 ? mapParam : null}
+        maps={maps}
+        entities={entities}
+      />
     </PageContainer>
   );
 }

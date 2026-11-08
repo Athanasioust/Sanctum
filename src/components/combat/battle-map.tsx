@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePlayerImageBurn } from "@/components/combat/battle-map-burn";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import {
@@ -107,15 +108,20 @@ type EncounterWithParts = Encounter & {
 export function BattleMap({
   campaignId,
   maps: initialMaps,
+  initialActiveId = null,
   encounters,
 }: {
   campaignId: number;
+  /** The map to open first (search links straight to it); else the newest. */
+  initialActiveId?: number | null;
   maps: BattleMapRow[];
   encounters: Encounter[];
 }) {
   const router = useRouter();
   const [maps, setMaps] = useState(initialMaps);
-  const [activeId, setActiveId] = useState<number | null>(initialMaps[0]?.id ?? null);
+  const [activeId, setActiveId] = useState<number | null>(
+    initialMaps.find((m) => m.id === initialActiveId)?.id ?? initialMaps[0]?.id ?? null,
+  );
   const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
   const [tool, setTool] = useState<MapTool>("select");
@@ -176,6 +182,10 @@ export function BattleMap({
     },
     [map, flush],
   );
+
+  // While this map is shown to players with fog on, keep their fog-burned copy
+  // of the image current. Runs in the background; nothing changes here.
+  usePlayerImageBurn(map, flush);
 
   /* ---------------------------------------------------------------------- */
   /*  Player-moved tokens                                                    */

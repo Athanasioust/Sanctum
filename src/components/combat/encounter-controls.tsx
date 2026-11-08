@@ -237,7 +237,7 @@ export function SavedEncounters({
       </h2>
       <div className="space-y-2">
         {saved.map((e) => (
-          <div key={e.id} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-3">
+          <div key={e.id} data-record={`encounter-${e.id}`} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-3">
             <div className="min-w-0">
               <p className="truncate font-medium">{e.name}</p>
               <p className="text-xs text-muted-foreground">

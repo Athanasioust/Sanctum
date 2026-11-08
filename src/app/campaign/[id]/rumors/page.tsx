@@ -2,6 +2,7 @@ import { asc, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { rumors, npcs, locations } from "@/db/schema";
 import { PageContainer, PageHeader } from "@/components/shared/page-header";
+import { GenerateButton } from "@/components/generators/generate-button";
 import { RumorsBoard } from "@/components/rumors/rumors-board";
 import { MessageCircleQuestion } from "lucide-react";
 
@@ -34,6 +35,7 @@ export default async function RumorsPage({
         icon={MessageCircleQuestion}
         title="Rumors"
         description="Collect rumors and gossip the party hears — mark them as followed up once investigated."
+        actions={<GenerateButton campaignId={id} generatorId="rumor" size="sm" />}
       />
       <RumorsBoard
         campaignId={id}

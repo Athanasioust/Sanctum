@@ -218,7 +218,7 @@ export function RumorsBoard({
             locations={locations}
             onSaved={upsert}
             trigger={
-              <Button size="sm">
+              <Button data-create-trigger size="sm">
                 <Plus className="size-4" /> Add Rumor
               </Button>
             }
@@ -240,6 +240,7 @@ export function RumorsBoard({
             return (
               <li
                 key={rumor.id}
+                data-record={`rumor-${rumor.id}`}
                 className={`relative rounded-xl border bg-card p-4 transition-colors ${
                   rumor.isFollowedUp ? "border-border opacity-60" : "border-border"
                 }`}

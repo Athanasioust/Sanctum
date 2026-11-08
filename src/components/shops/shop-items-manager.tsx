@@ -87,7 +87,7 @@ export function ShopItemsManager({
             </TableHeader>
             <TableBody>
               {items.map((item) => (
-                <TableRow key={item.id}>
+                <TableRow key={item.id} data-record={`shop_item-${item.id}`}>
                   <TableCell>
                     <p className="font-medium">{item.name}</p>
                     {item.description ? <p className="text-xs text-muted-foreground">{item.description}</p> : null}

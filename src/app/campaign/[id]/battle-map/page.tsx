@@ -10,10 +10,13 @@ export const dynamic = "force-dynamic";
 
 export default async function BattleMapPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const campaignId = Number((await params).id);
+  const mapParam = Number((await searchParams).map);
 
   const [maps, allEncounters] = await Promise.all([
     db
@@ -44,6 +47,7 @@ export default async function BattleMapPage({
       />
       <BattleMap
         campaignId={campaignId}
+        initialActiveId={Number.isInteger(mapParam) && mapParam > 0 ? mapParam : null}
         maps={maps}
         encounters={allEncounters}
       />

@@ -67,7 +67,7 @@ export function FactionsBoard({
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {factions.map((f) => (
-            <div key={f.id} className="rounded-xl border border-border bg-card p-5">
+            <div key={f.id} data-record={`faction-${f.id}`} className="rounded-xl border border-border bg-card p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h3 className="font-heading text-lg font-semibold">{f.name}</h3>
@@ -184,7 +184,7 @@ function FactionDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger ?? (
-          <Button>
+          <Button data-create-trigger>
             <Plus className="size-4" /> New Faction
           </Button>
         )}

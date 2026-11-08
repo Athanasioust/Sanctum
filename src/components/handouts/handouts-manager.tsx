@@ -167,7 +167,7 @@ function HandoutCard({
   }
 
   return (
-    <div className={`rounded-xl border bg-card transition-colors ${handout.isRevealed ? "border-primary/30" : "border-border"}`}>
+    <div data-record={`handout-${handout.id}`} className={`rounded-xl border bg-card transition-colors ${handout.isRevealed ? "border-primary/30" : "border-border"}`}>
       <div className="flex items-start gap-3 p-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -279,7 +279,7 @@ export function HandoutsManager({
           campaignId={campaignId}
           onSaved={upsert}
           trigger={
-            <Button size="sm">
+            <Button data-create-trigger size="sm">
               <Plus className="size-4" /> New Handout
             </Button>
           }

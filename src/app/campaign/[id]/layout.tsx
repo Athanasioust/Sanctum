@@ -7,7 +7,9 @@ import {
   MobileNavBar,
 } from "@/components/layout/campaign-nav";
 import { CampaignOptionsProvider } from "@/components/campaigns/campaign-options-context";
+import { Suspense } from "react";
 import { CommandPalette } from "@/components/search/command-palette";
+import { RecordFocus } from "@/components/search/record-focus";
 import { RulesReference } from "@/components/shared/rules-reference";
 import { DiceRoller } from "@/components/dice/dice-roller";
 import { SoundpadProvider } from "@/components/soundpad/soundpad-context";
@@ -87,6 +89,9 @@ export default async function CampaignLayout({
             <main className="flex-1">{children}</main>
           </div>
           <CommandPalette campaignId={campaign.id} />
+          <Suspense fallback={null}>
+            <RecordFocus />
+          </Suspense>
           <div className="fixed bottom-4 right-4 z-40 flex items-center gap-1 rounded-lg border border-border bg-card/90 p-0.5 shadow-lg backdrop-blur">
             <DiceRoller campaignId={campaign.id} />
             <SoundpadButton campaignId={campaign.id} />

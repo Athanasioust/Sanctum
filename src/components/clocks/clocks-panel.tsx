@@ -106,7 +106,7 @@ export function ClocksPanel({
         <h2 className="flex items-center gap-2 text-sm font-semibold">
           <Hourglass className="size-4 text-primary" /> {t("clocks.title")}
         </h2>
-        <Button size="sm" variant="outline" onClick={() => openEditor("new")}>
+        <Button data-create-trigger size="sm" variant="outline" onClick={() => openEditor("new")}>
           <Plus className="size-4" /> {t("clocks.new")}
         </Button>
       </div>
@@ -118,6 +118,7 @@ export function ClocksPanel({
           {items.map((clock) => (
             <li
               key={clock.id}
+              data-record={`clock-${clock.id}`}
               className="flex items-center gap-3 rounded-lg border border-border bg-background/40 p-3"
             >
               <ClockFace

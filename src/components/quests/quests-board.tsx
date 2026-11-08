@@ -201,7 +201,7 @@ function QuestCard({
   }
 
   return (
-    <div className="relative rounded-xl border border-border bg-card">
+    <div data-record={`quest-${quest.id}`} className="relative rounded-xl border border-border bg-card">
       <SelectOverlay selection={selection} id={quest.id} label={quest.title} />
       <div className="flex items-start gap-3 p-4">
         <div className="min-w-0 flex-1">
@@ -335,7 +335,7 @@ export function QuestsBoard({
             campaignId={campaignId}
             onSaved={upsert}
             trigger={
-              <Button size="sm">
+              <Button data-create-trigger size="sm">
                 <Plus className="size-4" /> New Quest
               </Button>
             }

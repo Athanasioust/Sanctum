@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { InfoCallout } from "@/components/shared/info-callout";
 import { TabLinks } from "@/components/shared/tab-links";
 import { NpcGrid } from "@/components/npcs/npc-grid";
-import { GenerateNpcButton } from "@/components/npcs/generate-npc-button";
+import { GenerateButton } from "@/components/generators/generate-button";
 import { SeedBestiaryButton } from "@/components/npcs/seed-bestiary-button";
 import { RelationsGraph } from "@/components/relations/relations-graph";
 import { CreateHomebrewButton } from "@/components/homebrew/create-homebrew-button";
@@ -79,7 +79,7 @@ async function CastTab({ campaignId }: { campaignId: number }) {
           list.length > 0 ? (
             <div className="flex flex-wrap items-center gap-2">
               <CreateHomebrewButton campaignId={campaignId} />
-              <GenerateNpcButton campaignId={campaignId} />
+              <GenerateButton campaignId={campaignId} generatorId="npc" />
               <Button asChild>
                 <Link href={`/campaign/${campaignId}/npcs/new`}>
                   <Plus className="size-4" /> New NPC / Monster
@@ -105,7 +105,7 @@ async function CastTab({ campaignId }: { campaignId: number }) {
           description="Create NPCs and monsters with full 5e stat blocks, or generate a random one to improvise on the spot."
           action={
             <div className="flex flex-wrap items-center justify-center gap-2">
-              <GenerateNpcButton campaignId={campaignId} variant="default" />
+              <GenerateButton campaignId={campaignId} generatorId="npc" variant="default" />
               <Button variant="outline" asChild>
                 <Link href={`/campaign/${campaignId}/npcs/new`}>
                   <Plus className="size-4" /> New NPC / Monster

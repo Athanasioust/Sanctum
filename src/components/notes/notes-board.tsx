@@ -99,6 +99,7 @@ export function NotesBoard({
           {sorted.map((note) => (
             <div
               key={note.id}
+              data-record={`note-${note.id}`}
               className={cn(
                 "group relative break-inside-avoid rounded-xl border p-4",
                 noteColorClasses(note.color),
@@ -209,7 +210,7 @@ function NoteDialog({
     >
       <DialogTrigger asChild>
         {trigger ?? (
-          <Button>
+          <Button data-create-trigger>
             <Plus className="size-4" /> New Note
           </Button>
         )}

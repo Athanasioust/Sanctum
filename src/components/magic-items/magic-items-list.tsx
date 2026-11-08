@@ -279,7 +279,7 @@ export function MagicItemsList({
             characters={characters}
             onSaved={upsert}
             trigger={
-              <Button size="sm">
+              <Button data-create-trigger size="sm">
                 <Plus className="size-4" /> New Item
               </Button>
             }
@@ -302,7 +302,7 @@ export function MagicItemsList({
           render={(item) => {
             const holder = characters.find((c) => c.id === item.characterId);
             return (
-              <div key={item.id} className="relative rounded-xl border border-border bg-card p-4">
+              <div key={item.id} data-record={`magic_item-${item.id}`} className="relative rounded-xl border border-border bg-card p-4">
                 <SelectOverlay selection={selection} id={item.id} label={item.name} />
                 <div className="mb-2 flex items-start justify-between gap-2">
                   <div className="min-w-0">

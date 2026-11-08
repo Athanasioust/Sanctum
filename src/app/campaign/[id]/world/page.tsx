@@ -4,6 +4,7 @@ import { Eye, Map as MapIcon, MapPin } from "lucide-react";
 import { db } from "@/db";
 import { atlasMaps, atlasMarkers, locations, type AtlasMap } from "@/db/schema";
 import { PageContainer, PageHeader } from "@/components/shared/page-header";
+import { GenerateButton } from "@/components/generators/generate-button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { LocationTree } from "@/components/world/location-tree";
 import { LocationDialog } from "@/components/world/location-dialog";
@@ -92,7 +93,12 @@ export default async function WorldPage({
         title={t("nav.world")}
         description={t("atlas.worldDescription")}
         icon={MapIcon}
-        actions={maps.length > 0 ? <MapDialog campaignId={campaignId} maps={mapOptions} places={placeOptions} /> : null}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <GenerateButton campaignId={campaignId} generatorId="settlement" />
+            {maps.length > 0 ? <MapDialog campaignId={campaignId} maps={mapOptions} places={placeOptions} /> : null}
+          </div>
+        }
       />
 
       <section className="mb-10">

@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { quests } from "@/db/schema";
 import { PageContainer, PageHeader } from "@/components/shared/page-header";
+import { GenerateButton } from "@/components/generators/generate-button";
 import { QuestsBoard } from "@/components/quests/quests-board";
 import { ListTodo } from "lucide-react";
 
@@ -25,6 +26,7 @@ export default async function QuestsPage({
         icon={ListTodo}
         title="Quests"
         description="Track your party's active quests, objectives, and rewards."
+        actions={<GenerateButton campaignId={id} generatorId="quest" size="sm" />}
       />
       <QuestsBoard campaignId={id} initialQuests={allQuests} />
     </PageContainer>

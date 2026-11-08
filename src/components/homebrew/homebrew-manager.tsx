@@ -56,11 +56,11 @@ export function HomebrewManager({
   return (
     <Tabs defaultValue="spells">
       <TabsList className="mb-4">
-        <TabsTrigger value="spells">
+        <TabsTrigger value="spells" data-focus-tab="homebrew_spell">
           <Wand2 className="size-4" /> Spells
           {spells.length > 0 && <Badge variant="secondary" className="ml-1.5">{spells.length}</Badge>}
         </TabsTrigger>
-        <TabsTrigger value="feats">
+        <TabsTrigger value="feats" data-focus-tab="homebrew_feat">
           <Award className="size-4" /> Feats
           {feats.length > 0 && <Badge variant="secondary" className="ml-1.5">{feats.length}</Badge>}
         </TabsTrigger>
@@ -99,6 +99,7 @@ export function HomebrewManager({
             {spells.map((spell) => (
               <li
                 key={spell.id}
+                data-record={`homebrew_spell-${spell.id}`}
                 className="flex flex-wrap items-start gap-3 rounded-xl border border-border bg-card p-3"
               >
                 <div className="min-w-0 flex-1">
@@ -177,6 +178,7 @@ export function HomebrewManager({
             {feats.map((feat) => (
               <li
                 key={feat.id}
+                data-record={`homebrew_feat-${feat.id}`}
                 className="flex flex-wrap items-start gap-3 rounded-xl border border-border bg-card p-3"
               >
                 <div className="min-w-0 flex-1">

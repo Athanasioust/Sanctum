@@ -11,10 +11,13 @@ export const dynamic = "force-dynamic";
 
 export default async function AtlasMapPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string; mapId: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { id, mapId } = await params;
+  const markerParam = Number((await searchParams).marker);
   const campaignId = Number(id);
   const [map] = await db.select().from(atlasMaps).where(eq(atlasMaps.id, Number(mapId)));
   if (!map || map.campaignId !== campaignId) notFound();
@@ -48,6 +51,7 @@ export default async function AtlasMapPage({
         maps={maps}
         places={places}
         records={records}
+        initialMarkerId={Number.isInteger(markerParam) && markerParam > 0 ? markerParam : null}
       />
     </PageContainer>
   );

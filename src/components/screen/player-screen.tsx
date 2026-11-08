@@ -4,8 +4,8 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import dynamic from "next/dynamic";
 import { Swords, Heart, Shield, Skull, Image as ImageIcon, Grid3x3, Castle } from "lucide-react";
 import { api } from "@/lib/client";
-import { fogForGrid, resolveTokenImages, tokenVisibleToPlayers } from "@/lib/battle-map";
-import { currentSlotIndex, keepGroupsTogether, turnSlots } from "@/lib/combat-turns";
+import { fogForGrid, tokenVisibleToPlayers } from "@/lib/battle-map";
+import { currentSlotIndex, turnSlots } from "@/lib/combat-turns";
 import { hpBarColor } from "@/lib/ui";
 import { renderMarkdown } from "@/lib/markdown";
 import { cn } from "@/lib/utils";
@@ -14,36 +14,24 @@ import { ClockFace } from "@/components/clocks/clock-face";
 import { PlayerAtlas } from "@/components/screen/player-atlas";
 import { EMPTY_PLAYER_ATLAS, type PlayerAtlasState } from "@/lib/atlas/types";
 import type {
-  BattleMap,
-  Character,
-  Clock,
-  CombatParticipant,
-  Encounter,
-  Handout,
-} from "@/db/schema";
+  HealthBand,
+  PlayerBattleMap as PlayerMap,
+  PlayerCombatant,
+  PlayerHandout,
+  PlayerPartyMember,
+  PlayerScreenState,
+} from "@/lib/screen/types";
 
 const BattleMapCanvas = dynamic(() => import("@/components/combat/battle-map-canvas"), {
   ssr: false,
 });
 
-export type ScreenState = {
-  active: boolean;
-  encounterName: string;
-  round: number;
-  turnIndex: number;
-  /** Initiative is on the lair's count-20 row rather than a creature. */
-  lairActive: boolean;
-  participants: CombatParticipant[];
-  party: Character[];
-  handouts: Handout[];
-  /** The battle map the DM is currently showing, if any. */
-  battleMap: BattleMap | null;
-  /** Art for the map's tokens, by token id (hidden tokens are never drawn). */
-  tokenArt: Record<string, string>;
-  /** The DM lets players drag the tokens handed to them. */
-  playerMoves: boolean;
-  /** Progress clocks the DM has revealed. */
-  clocks: Clock[];
+/**
+ * Everything the player screen shows. All of it comes from the server already
+ * filtered for players (`/api/screen/state` and `/api/screen/atlas`); nothing
+ * DM-only is ever fetched here and hidden in the browser.
+ */
+export type ScreenState = PlayerScreenState & {
   /** The revealed world map, already filtered by the server. */
   atlas: PlayerAtlasState;
 };
@@ -102,13 +90,8 @@ export function PlayerScreen({
 
     try {
       const followed = followRef.current;
-      const [encounters, party, allHandouts, maps, moves, allClocks, atlas] = await Promise.all([
-        api.get<Encounter[]>(`/api/encounters?campaignId=${campaignId}`, { signal }),
-        api.get<Character[]>(`/api/characters?campaignId=${campaignId}`, { signal }),
-        api.get<Handout[]>(`/api/handouts?campaignId=${campaignId}`, { signal }),
-        api.get<BattleMap[]>(`/api/battle-maps?campaignId=${campaignId}`, { signal }),
-        api.get<{ allowed: boolean }>("/api/screen/move-token", { signal }),
-        api.get<Clock[]>(`/api/clocks?campaignId=${campaignId}`, { signal }),
+      const [screen, atlas] = await Promise.all([
+        api.get<PlayerScreenState>(`/api/screen/state?campaignId=${campaignId}`, { signal }),
         api.get<PlayerAtlasState>(
           `/api/screen/atlas?campaignId=${campaignId}${followed ? `&mapId=${followed.id}` : ""}`,
           { signal },
@@ -121,61 +104,7 @@ export function PlayerScreen({
         setFollow(null);
         followRef.current = null;
       }
-      const clocks = allClocks.filter((c) => c.revealToPlayers);
-      const playerMoves = moves.allowed;
-      const handouts = allHandouts.filter((h) => h.isRevealed);
-      // Maps come back newest-updated first, so the most recently touched map
-      // wins if the DM left more than one flagged.
-      const battleMap = maps.find((m) => m.revealToPlayers) ?? null;
-      const active = encounters.find((e) => e.status === "active") ?? null;
-      type FullEncounter = Encounter & {
-        participants: CombatParticipant[];
-        portraits?: Record<string, string>;
-      };
-      // Token art comes from the encounter the map is linked to, which is
-      // usually — but not necessarily — the one being fought.
-      const mapEncounterId = battleMap?.encounterId ?? null;
-      const [full, linked] = await Promise.all([
-        active
-          ? api.get<FullEncounter>(`/api/encounters/${active.id}`, { signal })
-          : Promise.resolve(null),
-        mapEncounterId && mapEncounterId !== active?.id
-          ? api.get<FullEncounter>(`/api/encounters/${mapEncounterId}`, { signal }).catch(() => null)
-          : Promise.resolve(null),
-      ]);
-      const art = linked ?? full;
-      const tokenArt = battleMap
-        ? resolveTokenImages(battleMap.tokens, art?.participants ?? [], art?.portraits ?? {})
-        : {};
-      let next: ScreenState = {
-        ...EMPTY_SCREEN_STATE,
-        party,
-        handouts,
-        battleMap,
-        tokenArt,
-        playerMoves,
-        clocks,
-        atlas,
-      };
-      if (active && full) {
-        next = {
-          active: true,
-          encounterName: full.name,
-          round: full.roundNumber,
-          turnIndex: full.currentTurnIndex,
-          lairActive: full.lairTurnActive,
-          participants: keepGroupsTogether(
-            [...full.participants].sort((a, b) => a.turnOrder - b.turnOrder),
-          ),
-          party,
-          handouts,
-          battleMap,
-          tokenArt,
-          playerMoves,
-          clocks,
-          atlas,
-        };
-      }
+      const next: ScreenState = { ...screen, atlas };
       // A portal followed while this poll was in flight wins over its answer.
       setState((prev) => (atlasStale ? { ...next, atlas: prev.atlas } : next));
       setFailures(0);
@@ -389,7 +318,7 @@ function PlayerBattleMap({
   playerMoves,
 }: {
   campaignId: number;
-  map: BattleMap;
+  map: PlayerMap;
   tokenArt: Record<string, string>;
   playerMoves: boolean;
 }) {
@@ -397,7 +326,7 @@ function PlayerBattleMap({
   const player = useSyncExternalStore(subscribePlayer, readPlayer, () => "");
   // A drag shows at once; it's tied to the map snapshot it was made on, so
   // the next poll (which already carries the move) simply replaces it.
-  const [pending, setPending] = useState<{ map: BattleMap; id: string; x: number; y: number } | null>(null);
+  const [pending, setPending] = useState<{ map: PlayerMap; id: string; x: number; y: number } | null>(null);
   const [error, setError] = useState("");
 
   const fog = fogForGrid(map.fog, map.gridCols, map.gridRows);
@@ -463,6 +392,9 @@ function PlayerBattleMap({
             <span className="text-xs text-muted-foreground">{t("player.dragHint")}</span>
           ) : null}
         </div>
+      ) : null}
+      {map.imagePending ? (
+        <p className="text-xs text-muted-foreground">{t("player.mapImagePending")}</p>
       ) : null}
       <div className="overflow-hidden rounded-xl border border-border bg-[#0b0b0c]">
         <BattleMapCanvas
@@ -543,12 +475,12 @@ function GroupInitiativeRow({
   members,
   current,
 }: {
-  members: CombatParticipant[];
+  members: PlayerCombatant[];
   current: boolean;
 }) {
   const t = useT();
   const lead = members[0];
-  const down = members.filter((m) => m.hpCurrent <= 0).length;
+  const down = members.filter((m) => m.band === "down").length;
   return (
     <div
       className={cn(
@@ -579,10 +511,9 @@ function GroupInitiativeRow({
   );
 }
 
-function InitiativeRow({ p, current }: { p: CombatParticipant; current: boolean }) {
+function InitiativeRow({ p, current }: { p: PlayerCombatant; current: boolean }) {
   const t = useT();
-  const isPc = p.entityType === "character";
-  const down = p.hpCurrent <= 0;
+  const down = p.band === "down";
   return (
     <div
       className={cn(
@@ -597,15 +528,15 @@ function InitiativeRow({ p, current }: { p: CombatParticipant; current: boolean 
       <div className="min-w-0 flex-1">
         <p className={cn("truncate text-base font-medium sm:text-lg", down && "line-through")}>{p.name}</p>
         {/* PCs show real HP; monsters show only a status so players can't metagame. */}
-        {isPc ? (
+        {p.isPc && p.hp ? (
           <div className="mt-1 h-2 w-full max-w-xs overflow-hidden rounded-full bg-muted">
             <div
-              className={cn("h-full rounded-full", hpBarColor(p.hpMax > 0 ? p.hpCurrent / p.hpMax : 0))}
-              style={{ width: `${p.hpMax > 0 ? Math.max(0, Math.min(100, (p.hpCurrent / p.hpMax) * 100)) : 0}%` }}
+              className={cn("h-full rounded-full", hpBarColor(p.hp.max > 0 ? p.hp.current / p.hp.max : 0))}
+              style={{ width: `${p.hp.max > 0 ? Math.max(0, Math.min(100, (p.hp.current / p.hp.max) * 100)) : 0}%` }}
             />
           </div>
         ) : (
-          <MonsterStatus current={p.hpCurrent} max={p.hpMax} />
+          <MonsterStatus band={p.band} />
         )}
       </div>
       {current ? (
@@ -617,27 +548,27 @@ function InitiativeRow({ p, current }: { p: CombatParticipant; current: boolean 
   );
 }
 
-function MonsterStatus({ current, max }: { current: number; max: number }) {
+/** A monster's health as the server's band — the player view never gets the numbers. */
+function MonsterStatus({ band }: { band: HealthBand }) {
   const t = useT();
-  const ratio = max > 0 ? current / max : 0;
   let label = t("player.healthy");
   let tone = "text-success";
-  if (current <= 0) {
+  if (band === "down") {
     label = t("player.down");
     tone = "text-destructive";
-  } else if (ratio <= 0.5) {
+  } else if (band === "bloodied") {
     label = t("player.bloodied");
     tone = "text-orange-400";
   }
   return (
     <p className={cn("mt-0.5 flex items-center gap-1.5 text-sm font-medium", tone)}>
-      {current <= 0 ? <Skull className="size-3.5" /> : <Heart className="size-3.5" />}
+      {band === "down" ? <Skull className="size-3.5" /> : <Heart className="size-3.5" />}
       {label}
     </p>
   );
 }
 
-function HandoutCard({ handout }: { handout: Handout }) {
+function HandoutCard({ handout }: { handout: PlayerHandout }) {
   return (
     <div className="rounded-xl border border-border bg-card p-4">
       <h3 className="mb-2 font-semibold">{handout.title}</h3>
@@ -659,7 +590,7 @@ function HandoutCard({ handout }: { handout: Handout }) {
   );
 }
 
-function PartyRow({ c }: { c: Character }) {
+function PartyRow({ c }: { c: PlayerPartyMember }) {
   const ratio = c.hpMax > 0 ? c.hpCurrent / c.hpMax : 0;
   return (
     <div className="rounded-xl border border-border bg-card p-3">

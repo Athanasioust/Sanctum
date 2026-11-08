@@ -320,3 +320,14 @@
   font-size: 0.75rem;
 }
 .atlas-tooltip.leaflet-tooltip-top::before { border-top-color: var(--border); }
+
+/* A record opened from global search: a brief ring so the eye finds it. */
+@keyframes record-focus-ring {
+  0%, 60% { outline-color: var(--primary); }
+  100% { outline-color: transparent; }
+}
+.record-focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+  animation: record-focus-ring 2.4s ease-out forwards;
+}

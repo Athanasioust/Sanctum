@@ -72,6 +72,7 @@ export function AtlasEditor({
   maps,
   places,
   records,
+  initialMarkerId = null,
 }: {
   campaignId: number;
   initialMap: AtlasMap;
@@ -80,20 +81,25 @@ export function AtlasEditor({
   maps: MapOption[];
   places: { id: number; name: string }[];
   records: AtlasLinkable[];
+  /** A marker to open on arrival (a search result links straight to it). */
+  initialMarkerId?: number | null;
 }) {
   const t = useT();
   const router = useRouter();
   const [map, setMap] = useState(initialMap);
   const [markers, setMarkers] = useState(initialMarkers);
   const [categories, setCategories] = useState(initialCategories);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const startMarker = initialMarkers.some((m) => m.id === initialMarkerId) ? initialMarkerId : null;
+  const [selectedId, setSelectedId] = useState<number | null>(startMarker);
   const [mode, setMode] = useState<"edit" | "play">("edit");
   const [tool, setTool] = useState<AtlasTool>("select");
   const [brush, setBrush] = useState(0.03);
   const [hiddenCats, setHiddenCats] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState("");
-  const [focus, setFocus] = useState<{ id: number; nonce: number } | null>(null);
-  const [tab, setTab] = useState("markers");
+  const [focus, setFocus] = useState<{ id: number; nonce: number } | null>(
+    startMarker !== null ? { id: startMarker, nonce: 1 } : null,
+  );
+  const [tab, setTab] = useState(startMarker !== null ? "marker" : "markers");
   const [uploading, setUploading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [rendering, setRendering] = useState(false);

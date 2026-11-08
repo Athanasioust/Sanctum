@@ -54,7 +54,7 @@ export function ShopsLootClient({
         <TabsTrigger value="shops">
           <Store className="size-4" /> Shops
         </TabsTrigger>
-        <TabsTrigger value="tables">
+        <TabsTrigger value="tables" data-focus-tab="roll_table">
           <Dices className="size-4" /> Roll Tables
         </TabsTrigger>
       </TabsList>
@@ -140,7 +140,7 @@ function RollTableCard({
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5">
+    <div data-record={`roll_table-${table.id}`} className="rounded-xl border border-border bg-card p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="font-heading text-lg font-semibold">{table.name}</h3>

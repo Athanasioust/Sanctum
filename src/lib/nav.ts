@@ -23,6 +23,7 @@ import {
   FlaskConical,
   FileText,
   Upload,
+  WandSparkles,
   type LucideIcon,
 } from "lucide-react";
 
@@ -93,6 +94,14 @@ export const CAMPAIGN_NAV: NavItem[] = [
     href: (id) => `/campaign/${id}/soundpad`,
     icon: Music,
     segment: "soundpad",
+    group: "run",
+  },
+  {
+    label: "Generators",
+    labelKey: "nav.generators",
+    href: (id) => `/campaign/${id}/generators`,
+    icon: WandSparkles,
+    segment: "generators",
     group: "run",
   },
 

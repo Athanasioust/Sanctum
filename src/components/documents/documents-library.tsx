@@ -137,6 +137,7 @@ export function DocumentsLibrary({
           {documents.map((doc) => (
             <li
               key={doc.id}
+              data-record={`document-${doc.id}`}
               className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-3"
             >
               <FileText className="size-5 shrink-0 text-primary" />

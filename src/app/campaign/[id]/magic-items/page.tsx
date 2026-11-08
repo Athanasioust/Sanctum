@@ -6,7 +6,7 @@ import { PageContainer, PageHeader } from "@/components/shared/page-header";
 import { TabLinks } from "@/components/shared/tab-links";
 import { MagicItemsList } from "@/components/magic-items/magic-items-list";
 import { ShopsLootClient } from "@/components/shops/shops-loot-client";
-import { TreasureGeneratorButton } from "@/components/shops/treasure-generator-button";
+import { GenerateButton } from "@/components/generators/generate-button";
 import { CreateHomebrewButton } from "@/components/homebrew/create-homebrew-button";
 
 export const dynamic = "force-dynamic";
@@ -100,7 +100,12 @@ async function ShopsTabContent({ campaignId }: { campaignId: number }) {
         title="Shops & Loot"
         description="Stock shops and roll on weighted loot tables."
         icon={Coins}
-        actions={<TreasureGeneratorButton />}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <GenerateButton campaignId={campaignId} generatorId="tavern" />
+            <GenerateButton campaignId={campaignId} generatorId="treasure" />
+          </div>
+        }
       />
       <ShopsLootClient
         campaignId={campaignId}

@@ -16,7 +16,7 @@ export const ATLAS_LINK_LABEL_KEYS: Record<AtlasLinkType, TranslationKey> = {
 
 /**
  * Where a linked record lives. Locations, NPCs and shops have their own pages;
- * the rest are boards, so the link opens the board.
+ * the rest are boards, so the link opens the board on that record's card.
  */
 export function atlasLinkHref(campaignId: number, type: AtlasLinkType, id: number): string {
   const base = `/campaign/${campaignId}`;
@@ -28,13 +28,13 @@ export function atlasLinkHref(campaignId: number, type: AtlasLinkType, id: numbe
     case "shop":
       return `${base}/shops/${id}`;
     case "quest":
-      return `${base}/quests`;
+      return `${base}/quests?focus=quest-${id}`;
     case "faction":
-      return `${base}/factions`;
+      return `${base}/factions?focus=faction-${id}`;
     case "handout":
-      return `${base}/handouts`;
+      return `${base}/handouts?focus=handout-${id}`;
     case "rumor":
-      return `${base}/rumors`;
+      return `${base}/rumors?focus=rumor-${id}`;
   }
 }
 

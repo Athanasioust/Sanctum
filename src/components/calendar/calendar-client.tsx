@@ -408,7 +408,7 @@ function MonthEventList({
       {events.map((e) => {
         const type = CALENDAR_EVENT_TYPES.find((t) => t.key === e.eventType);
         return (
-          <div key={e.id} className="flex items-center justify-between rounded-lg border border-border bg-card p-3">
+          <div key={e.id} data-record={`calendar_event-${e.id}`} className="flex items-center justify-between rounded-lg border border-border bg-card p-3">
             <button className="min-w-0 text-left" onClick={() => onEventClick(e)}>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-medium">{e.title}</span>

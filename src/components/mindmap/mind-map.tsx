@@ -51,14 +51,19 @@ const MAX_HISTORY = 60;
 export function MindMap({
   campaignId,
   maps: initialMaps,
+  initialActiveId = null,
   entities,
 }: {
   campaignId: number;
+  /** The map to open first (search links straight to it); else the newest. */
+  initialActiveId?: number | null;
   maps: MindMapRow[];
   entities: LinkableEntity[];
 }) {
   const [maps, setMaps] = useState(initialMaps);
-  const [activeId, setActiveId] = useState<number | null>(initialMaps[0]?.id ?? null);
+  const [activeId, setActiveId] = useState<number | null>(
+    initialMaps.find((m) => m.id === initialActiveId)?.id ?? initialMaps[0]?.id ?? null,
+  );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
