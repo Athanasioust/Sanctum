@@ -29,7 +29,7 @@ export function GeneratorsClient({
 
   return (
     <div className="grid gap-5 md:grid-cols-[14rem_1fr]">
-      <nav aria-label={t("gen.listLabel")} className="flex gap-1 overflow-x-auto md:flex-col">
+      <nav data-tour="generators" aria-label={t("gen.listLabel")} className="flex gap-1 overflow-x-auto md:flex-col">
         {GENERATORS.map((g) => (
           <button
             key={g.id}

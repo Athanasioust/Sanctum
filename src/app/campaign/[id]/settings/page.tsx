@@ -13,7 +13,8 @@ import { LanguageSwitcher } from "@/components/settings/language-switcher";
 import { UpdateCheckSetting } from "@/components/settings/update-check-setting";
 import { WhatsNewButton } from "@/components/shared/whats-new";
 import { APP_VERSION } from "@/lib/changelog";
-import { getLocale } from "@/lib/i18n/server";
+import { getTranslation } from "@/lib/i18n/server";
+import { TakeTourButton } from "@/components/tour/help-menu";
 import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +25,7 @@ export default async function SettingsPage({
   params: Promise<{ id: string }>;
 }) {
   const campaignId = Number((await params).id);
-  const locale = await getLocale();
+  const { locale, t } = await getTranslation();
   const [campaign] = await db.select().from(campaigns).where(eq(campaigns.id, campaignId));
   if (!campaign) notFound();
 
@@ -55,6 +56,14 @@ export default async function SettingsPage({
             </p>
           </div>
           <WhatsNewButton />
+        </section>
+
+        <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-5">
+          <div>
+            <h2 className="font-heading text-lg font-semibold">{t("help.tourSettingTitle")}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{t("help.tourSettingBody")}</p>
+          </div>
+          <TakeTourButton />
         </section>
 
         <section>

@@ -512,7 +512,7 @@ export function AtlasEditor({
           />
         </label>
       ) : (
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_340px]">
+        <div data-tour="atlas-map" className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_340px]">
           <div className="min-w-0 space-y-2">
             {mode === "edit" ? (
               <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-border bg-card p-2">

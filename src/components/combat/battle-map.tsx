@@ -818,6 +818,7 @@ export function BattleMap({
                 update({ revealToPlayers: !map.revealToPlayers }, { immediate: true })
               }
               title="Show this map on the player view"
+              data-tour="battle-map-reveal"
             >
               <Monitor className="size-3.5" />
               {map.revealToPlayers ? "Showing to players" : "Show to players"}

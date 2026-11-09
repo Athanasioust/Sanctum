@@ -2,7 +2,7 @@
   "version": 1,
   "exportedAt": "2026-10-26T00:00:00.000Z",
   "campaign": {
-    "name": "The Lost Souls (Sample)",
+    "name": "The Lost Souls — Sample Campaign (you can delete this)",
     "setting": "Dark fantasy",
     "description": "A small sample campaign to explore Sanctum with: a party of four, a crypt full of restless dead and a fight already in progress. Change anything you like, or delete it from Settings → Danger zone when you're done.",
     "inWorldCalendarType": "real",
@@ -1104,7 +1104,8 @@
           "text": "Defeat the Warden of Souls",
           "checked": false
         }
-      ]
+      ],
+      "id": 1
     },
     {
       "title": "The Missing Bell-ringer",
@@ -1121,7 +1122,8 @@
           "text": "Search the bell tower",
           "checked": false
         }
-      ]
+      ],
+      "id": 2
     }
   ],
   "magicItems": [
@@ -1134,6 +1136,14 @@
       "charges": 3,
       "chargesMax": 3,
       "rechargeCondition": "Dawn"
+    },
+    {
+      "name": "Bellringer's Ward",
+      "itemType": "ring",
+      "rarity": "rare",
+      "requiresAttunement": true,
+      "description": "While attuned, you can't be frightened by undead. Once per dawn, when an undead within 30 ft. hits you, you can use your reaction to ring a ghostly bell and halve the damage.",
+      "notes": "Found on the missing bell-ringer's body."
     }
   ],
   "handouts": [
@@ -1161,6 +1171,177 @@
       "color": "#7c3aed",
       "revealToPlayers": true,
       "note": "Fills each night the binding is fed. When full, the souls are lost for good."
+    }
+  ],
+  "shops": [
+    {
+      "id": 1,
+      "name": "The Candle & Coffin",
+      "description": "A cramped chandlery off Duskmere's square that sells candles, holy water and grave goods — no questions asked.",
+      "locationId": 1,
+      "notes": "The owner pays well for anything taken from the crypt."
+    }
+  ],
+  "shopItems": [
+    {
+      "shopId": 1,
+      "name": "Holy water (flask)",
+      "price": "25 gp",
+      "quantity": 6,
+      "itemType": "adventuring gear",
+      "rarity": "common"
+    },
+    {
+      "shopId": 1,
+      "name": "Potion of Healing",
+      "price": "50 gp",
+      "quantity": 3,
+      "itemType": "potion",
+      "rarity": "common"
+    },
+    {
+      "shopId": 1,
+      "name": "Silvered dagger",
+      "price": "102 gp",
+      "quantity": 1,
+      "itemType": "weapon",
+      "rarity": "common"
+    },
+    {
+      "shopId": 1,
+      "name": "Candles (bundle of 10)",
+      "price": "1 gp",
+      "quantity": 12,
+      "itemType": "adventuring gear",
+      "rarity": "common"
+    }
+  ],
+  "atlasCategories": [
+    {
+      "id": 1,
+      "name": "Town",
+      "color": "#a16207",
+      "icon": "house",
+      "sortOrder": 0
+    },
+    {
+      "id": 2,
+      "name": "Dungeon",
+      "color": "#7c3aed",
+      "icon": "door-open",
+      "sortOrder": 1
+    },
+    {
+      "id": 3,
+      "name": "Landmark",
+      "color": "#0891b2",
+      "icon": "landmark",
+      "sortOrder": 2
+    },
+    {
+      "id": 4,
+      "name": "Quest",
+      "color": "#16a34a",
+      "icon": "scroll-text",
+      "sortOrder": 3
+    },
+    {
+      "id": 5,
+      "name": "Danger",
+      "color": "#dc2626",
+      "icon": "skull",
+      "sortOrder": 4
+    }
+  ],
+  "atlasMaps": [
+    {
+      "id": 1,
+      "name": "The Duskmere Vale",
+      "imageUrl": "/sample/duskmere-vale.svg",
+      "width": 1600,
+      "height": 1100,
+      "revealToPlayers": false,
+      "fogEnabled": false,
+      "fog": []
+    }
+  ],
+  "atlasMarkers": [
+    {
+      "mapId": 1,
+      "hidden": false,
+      "x": 0.3,
+      "y": 0.58,
+      "title": "Duskmere",
+      "description": "A grey market town on the edge of the moors. **The Candle & Coffin** is on the square.",
+      "categoryId": 1,
+      "linkType": "location",
+      "linkId": 1
+    },
+    {
+      "mapId": 1,
+      "hidden": false,
+      "x": 0.36,
+      "y": 0.63,
+      "title": "The Candle & Coffin",
+      "description": "Holy water, candles and grave goods.",
+      "categoryId": 1,
+      "icon": "store",
+      "linkType": "shop",
+      "linkId": 1
+    },
+    {
+      "mapId": 1,
+      "hidden": false,
+      "x": 0.62,
+      "y": 0.34,
+      "title": "The Weeping Abbey",
+      "description": "Ruined abbey where Seraphine was raised.",
+      "categoryId": 3,
+      "linkType": "location",
+      "linkId": 2
+    },
+    {
+      "mapId": 1,
+      "hidden": false,
+      "x": 0.7,
+      "y": 0.28,
+      "title": "Crypt of the Lost",
+      "description": "Beneath the abbey. The fight is already under way.",
+      "categoryId": 2,
+      "linkType": "location",
+      "linkId": 3
+    },
+    {
+      "mapId": 1,
+      "hidden": false,
+      "x": 0.66,
+      "y": 0.4,
+      "title": "Free the Lost Souls",
+      "description": "The main quest starts here.",
+      "categoryId": 4,
+      "linkType": "quest",
+      "linkId": 1
+    },
+    {
+      "mapId": 1,
+      "hidden": false,
+      "x": 0.2,
+      "y": 0.3,
+      "title": "Bell tower ruins",
+      "description": "Last place the bell-ringer was seen.",
+      "categoryId": 4,
+      "linkType": "quest",
+      "linkId": 2
+    },
+    {
+      "mapId": 1,
+      "hidden": true,
+      "x": 0.82,
+      "y": 0.7,
+      "title": "Hollow Choir camp",
+      "description": "Cultists gather here at night.",
+      "dmNotes": "Players have not found this yet.",
+      "categoryId": 5
     }
   ]
 }

@@ -781,7 +781,7 @@ export function CombatTracker({
     <PortraitsContext.Provider value={portraits}>
     <div className="space-y-5">
       {/* Control bar */}
-      <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div data-tour="combat-tracker" className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <div className="text-center">
             <p className="text-xs uppercase text-muted-foreground">Round</p>

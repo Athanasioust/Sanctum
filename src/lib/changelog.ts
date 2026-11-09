@@ -14,6 +14,15 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.9.0",
+    date: "2026-11-09",
+    highlights: [
+      "A guided tour: seven short stops through Sanctum's highlights — character sheets, the combat tracker, the battle map, the world atlas, generators and ⌘K search. Start it any time from the new Help button (bottom right) or Settings. It only points at things, so it never changes your data.",
+      "The tour runs on the Sample Campaign, which now includes a world atlas with linked markers, a shop and a second magic item. Loading it again reopens the same copy instead of making another, and it never touches your own campaigns.",
+      "New installs get a one-time welcome that offers the tour or goes straight to creating your first campaign. If you already have campaigns, nothing pops up.",
+    ],
+  },
+  {
     version: "0.8.0",
     date: "2026-11-08",
     highlights: [

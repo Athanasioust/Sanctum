@@ -72,6 +72,7 @@ function SearchTrigger({ onNavigate }: { onNavigate?: () => void }) {
         onNavigate?.();
         openCommandPalette();
       }}
+      data-tour="search"
       className="flex w-full items-center gap-2 rounded-lg border border-sidebar-border bg-sidebar-accent/40 px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
     >
       <Search className="size-4 shrink-0" />
@@ -304,6 +305,7 @@ export function DesktopSidebar(props: Props) {
               variant="ghost"
               onClick={() => openCommandPalette()}
               title={t("nav.search")}
+              data-tour="search"
               aria-label={t("nav.search")}
             >
               <Search className="size-4" />
@@ -365,6 +367,7 @@ export function MobileNavBar(props: Props) {
         className="ml-auto"
         aria-label="Search"
         onClick={() => openCommandPalette()}
+        data-tour="search"
       >
         <Search className="size-5" />
       </Button>

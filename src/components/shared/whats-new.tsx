@@ -72,7 +72,7 @@ export function WhatsNewButton() {
   );
 }
 
-function WhatsNewDialog({
+export function WhatsNewDialog({
   open,
   entries,
   onOpenChange,

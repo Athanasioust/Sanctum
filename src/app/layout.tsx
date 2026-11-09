@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Cinzel } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { I18nProvider } from "@/components/i18n/i18n-provider";
-import { WhatsNewOnLaunch } from "@/components/shared/whats-new";
+import { LaunchDialogs } from "@/components/tour/welcome-dialog";
+import { TourProvider } from "@/components/tour/tour-provider";
 import { UpdateNoticeOnLaunch } from "@/components/shared/update-notice";
 import { getLocale } from "@/lib/i18n/server";
 import "./globals.css";
@@ -42,9 +43,11 @@ export default async function RootLayout({
     >
       <body className="min-h-full bg-background text-foreground">
         <I18nProvider locale={locale}>
-          {children}
-          <WhatsNewOnLaunch />
-          <UpdateNoticeOnLaunch />
+          <TourProvider>
+            {children}
+            <LaunchDialogs />
+            <UpdateNoticeOnLaunch />
+          </TourProvider>
         </I18nProvider>
         <Toaster richColors position="bottom-right" />
       </body>

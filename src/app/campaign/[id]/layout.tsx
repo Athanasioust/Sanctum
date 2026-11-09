@@ -11,6 +11,7 @@ import { Suspense } from "react";
 import { CommandPalette } from "@/components/search/command-palette";
 import { RecordFocus } from "@/components/search/record-focus";
 import { RulesReference } from "@/components/shared/rules-reference";
+import { HelpMenu } from "@/components/tour/help-menu";
 import { DiceRoller } from "@/components/dice/dice-roller";
 import { SoundpadProvider } from "@/components/soundpad/soundpad-context";
 import { SoundpadButton } from "@/components/soundpad/soundpad-button";
@@ -96,6 +97,7 @@ export default async function CampaignLayout({
             <DiceRoller campaignId={campaign.id} />
             <SoundpadButton campaignId={campaign.id} />
             <RulesReference />
+            <HelpMenu />
           </div>
         </div>
         </SoundpadProvider>

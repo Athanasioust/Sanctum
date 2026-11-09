@@ -1,38 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { BookOpen } from "lucide-react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { api } from "@/lib/client";
+import { useT } from "@/components/i18n/i18n-provider";
+import { useTour } from "@/components/tour/tour-provider";
 
-/** Loads the bundled sample campaign and opens it. */
+/** Loads the bundled sample campaign (or reopens the one already loaded). */
 export function SampleCampaignButton({
   variant = "outline",
 }: {
   variant?: "default" | "outline" | "ghost";
 }) {
-  const router = useRouter();
-  const [pending, setPending] = useState(false);
-
-  async function load() {
-    setPending(true);
-    try {
-      const { id } = await api.post<{ id: number }>("/api/campaigns/sample");
-      toast.success("Sample campaign loaded — delete it from Settings whenever you like");
-      router.push(`/campaign/${id}`);
-      router.refresh();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't load the sample campaign");
-      setPending(false);
-    }
-  }
-
+  const t = useT();
+  const { openSample, starting } = useTour();
   return (
-    <Button variant={variant} onClick={load} disabled={pending}>
+    <Button variant={variant} onClick={() => void openSample()} disabled={starting}>
       <BookOpen className="size-4" />
-      {pending ? "Loading…" : "Load the sample campaign"}
+      {starting ? t("common.loading") : t("sample.load")}
     </Button>
   );
 }

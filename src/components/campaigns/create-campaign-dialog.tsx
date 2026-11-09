@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -29,6 +29,9 @@ import { DEFAULT_CUSTOM_CALENDAR } from "@/lib/constants";
 
 type Campaign = { id: number };
 
+/** Dispatch on `window` to open the new-campaign dialog from elsewhere. */
+export const OPEN_CREATE_CAMPAIGN_EVENT = "sanctum:create-campaign";
+
 export function CreateCampaignDialog({ trigger }: { trigger?: React.ReactNode }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -38,6 +41,13 @@ export function CreateCampaignDialog({ trigger }: { trigger?: React.ReactNode })
   const [setting, setSetting] = useState("");
   const [calendarType, setCalendarType] = useState<"real" | "custom">("real");
   const [error, setError] = useState<string | null>(null);
+
+  // The first-run welcome's "Start my own campaign" opens this dialog.
+  useEffect(() => {
+    const openDialog = () => setOpen(true);
+    window.addEventListener(OPEN_CREATE_CAMPAIGN_EVENT, openDialog);
+    return () => window.removeEventListener(OPEN_CREATE_CAMPAIGN_EVENT, openDialog);
+  }, []);
 
   function reset() {
     setName("");

@@ -1,14 +1,13 @@
 import { apiRoute, json } from "@/lib/api";
-import { importCampaign } from "@/lib/campaign-data";
-import sample from "@/lib/sample-campaign.json";
+import { ensureSampleCampaign } from "@/lib/sample-campaign";
 
 /**
- * Create "The Lost Souls (Sample)" from the bundle shipped with the app, so a
- * first launch lands in a populated campaign instead of an empty screen. It
- * goes through the ordinary import path, so it is a normal campaign the DM can
- * change or delete like any other.
+ * Create the sample campaign from the bundle shipped with the app, or return
+ * the one this install already created. It goes through the ordinary import
+ * path, so it is a normal campaign the DM can change or delete like any other
+ * (deleting it means the next request seeds a fresh copy).
  */
 export const POST = apiRoute(async () => {
-  const id = await importCampaign(sample);
-  return json({ id }, 201);
+  const sample = await ensureSampleCampaign();
+  return json(sample, sample.created ? 201 : 200);
 });
