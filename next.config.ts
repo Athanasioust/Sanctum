@@ -2,6 +2,13 @@ import fs from "node:fs";
 import path from "node:path";
 import type { NextConfig } from "next";
 
+// The local-network guard: requests from other devices reach only the player
+// view, and only with the share token (see scripts/lan-guard.cjs). Loading it
+// here covers `next start` and `next dev`; the desktop app loads it before the
+// standalone server instead, which this config file never runs in.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+require(path.join(process.cwd(), "scripts", "lan-guard.cjs"));
+
 // Baked into the build so the app knows which version it is (the "What's new"
 // dialog compares it with the last version the DM saw).
 const { version } = JSON.parse(

@@ -567,5 +567,13 @@
   "combat.actedHint": "Marked automatically when its turn ends; cleared each new round. Click to toggle.",
   "combat.actedCount": "{acted} of {total} acted",
   "combat.lairNow": "Initiative 20: time for a lair action.",
-  "combat.lairCallout": "Lair action!"
+  "combat.lairCallout": "Lair action!",
+  "sharing.regenerate": "Regenerate link",
+  "sharing.regenerateHint": "Makes a new link and QR code. Every old link, and every device already connected, stops working until it scans the new one.",
+  "sharing.regenerated": "New link ready. Old links no longer work.",
+  "sharing.regenerateFailed": "Could not make a new link",
+  "sharing.onlyPlayerView": "Other devices on your network can open only the player view, and only through this link. The rest of Sanctum stays on this computer.",
+  "sharing.listeningButOff": "This server is listening on your network, but other devices are turned away until sharing is on.",
+  "screen.linkExpired.title": "This link no longer works",
+  "screen.linkExpired.body": "Ask your DM for the current player-view link or QR code, then open it again."
 }

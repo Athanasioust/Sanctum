@@ -567,5 +567,13 @@
   "combat.actedHint": "Se marca solo al terminar su turno y se borra en cada ronda nueva. Haz clic para cambiarlo.",
   "combat.actedCount": "{acted} de {total} actuaron",
   "combat.lairNow": "Iniciativa 20: hora de una acción de guarida.",
-  "combat.lairCallout": "¡Acción de guarida!"
+  "combat.lairCallout": "¡Acción de guarida!",
+  "sharing.regenerate": "Regenerar enlace",
+  "sharing.regenerateHint": "Crea un enlace y un código QR nuevos. Los enlaces antiguos, y los dispositivos ya conectados, dejan de funcionar hasta que escaneen el nuevo.",
+  "sharing.regenerated": "Nuevo enlace listo. Los antiguos ya no funcionan.",
+  "sharing.regenerateFailed": "No se pudo crear un enlace nuevo",
+  "sharing.onlyPlayerView": "Los demás dispositivos de tu red solo pueden abrir la vista de jugadores, y solo con este enlace. El resto de Sanctum se queda en este ordenador.",
+  "sharing.listeningButOff": "Este servidor escucha en tu red, pero los demás dispositivos se rechazan hasta que actives el uso compartido.",
+  "screen.linkExpired.title": "Este enlace ya no funciona",
+  "screen.linkExpired.body": "Pide a tu DM el enlace o código QR actual de la vista de jugadores y vuelve a abrirlo."
 }

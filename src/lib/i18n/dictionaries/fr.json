@@ -567,5 +567,13 @@
   "combat.actedHint": "Coché automatiquement à la fin de son tour, effacé à chaque nouveau round. Cliquez pour basculer.",
   "combat.actedCount": "{acted} sur {total} ont agi",
   "combat.lairNow": "Initiative 20 : place à une action d'antre.",
-  "combat.lairCallout": "Action d'antre !"
+  "combat.lairCallout": "Action d'antre !",
+  "sharing.regenerate": "Régénérer le lien",
+  "sharing.regenerateHint": "Crée un nouveau lien et un nouveau QR code. Les anciens liens, et les appareils déjà connectés, ne fonctionnent plus tant qu'ils n'ont pas scanné le nouveau.",
+  "sharing.regenerated": "Nouveau lien prêt. Les anciens liens ne fonctionnent plus.",
+  "sharing.regenerateFailed": "Impossible de créer un nouveau lien",
+  "sharing.onlyPlayerView": "Les autres appareils de votre réseau ne peuvent ouvrir que la vue joueurs, et seulement via ce lien. Le reste de Sanctum reste sur cet ordinateur.",
+  "sharing.listeningButOff": "Ce serveur écoute sur votre réseau, mais les autres appareils sont refusés tant que le partage est désactivé.",
+  "screen.linkExpired.title": "Ce lien ne fonctionne plus",
+  "screen.linkExpired.body": "Demandez au MJ le lien ou le QR code actuel de la vue joueurs, puis ouvrez-le à nouveau."
 }

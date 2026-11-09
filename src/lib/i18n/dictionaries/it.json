@@ -567,5 +567,13 @@
   "combat.actedHint": "Segnato automaticamente a fine turno, azzerato a ogni nuovo round. Clicca per cambiarlo.",
   "combat.actedCount": "{acted} su {total} hanno agito",
   "combat.lairNow": "Iniziativa 20: è il momento di un'azione di tana.",
-  "combat.lairCallout": "Azione di tana!"
+  "combat.lairCallout": "Azione di tana!",
+  "sharing.regenerate": "Rigenera link",
+  "sharing.regenerateHint": "Crea un nuovo link e un nuovo codice QR. I vecchi link, e i dispositivi già collegati, smettono di funzionare finché non scansionano quello nuovo.",
+  "sharing.regenerated": "Nuovo link pronto. I vecchi link non funzionano più.",
+  "sharing.regenerateFailed": "Impossibile creare un nuovo link",
+  "sharing.onlyPlayerView": "Gli altri dispositivi della rete possono aprire solo la vista giocatori, e solo tramite questo link. Il resto di Sanctum resta su questo computer.",
+  "sharing.listeningButOff": "Questo server è in ascolto sulla rete, ma gli altri dispositivi vengono respinti finché la condivisione è disattivata.",
+  "screen.linkExpired.title": "Questo link non funziona più",
+  "screen.linkExpired.body": "Chiedi al tuo DM il link o il codice QR attuale della vista giocatori, poi aprilo di nuovo."
 }

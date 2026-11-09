@@ -154,6 +154,13 @@ copyDir(path.join(root, ".next", "static"), path.join(standalone, ".next", "stat
 copyDir(path.join(root, "public"), path.join(standalone, "public"));
 copyDir(path.join(root, "drizzle"), path.join(standalone, "drizzle"));
 
+// The LAN guard and the entry point that loads it ahead of server.js. The
+// Electron shell starts sanctum-server.cjs, so no request is ever served
+// before the guard is in place (see scripts/lan-guard.cjs).
+for (const file of ["lan-guard.cjs", "sanctum-server.cjs"]) {
+  fs.copyFileSync(path.join(root, "scripts", file), path.join(standalone, file));
+}
+
 // Next's Turbopack standalone trace omits some compiled next-server runtimes
 // (notably app-route-turbo.runtime.prod.js), which breaks API routes at runtime.
 // Copy the full set so every route type works.

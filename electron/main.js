@@ -168,10 +168,15 @@ function waitForServer(port, timeoutMs = 60000) {
 function startServer(port) {
   const bindHost = lanSharingEnabled() ? "0.0.0.0" : HOST;
   const standaloneDir = path.join(process.resourcesPath, "standalone");
-  const serverEntry = path.join(standaloneDir, "server.js");
-
-  if (!fs.existsSync(serverEntry)) {
-    throw new Error(`Bundled server not found at ${serverEntry}`);
+  // sanctum-server.cjs loads the LAN guard, then Next's server.js. All three
+  // must be there: starting server.js on its own would serve the DM's whole
+  // app to the network unguarded, so a missing guard is a failed start.
+  const serverEntry = path.join(standaloneDir, "sanctum-server.cjs");
+  for (const required of ["sanctum-server.cjs", "lan-guard.cjs", "server.js"]) {
+    const file = path.join(standaloneDir, required);
+    if (!fs.existsSync(file)) {
+      throw new Error(`Bundled server not found at ${file}`);
+    }
   }
 
   const env = {

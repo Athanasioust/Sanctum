@@ -567,5 +567,13 @@
   "combat.actedHint": "Wird am Ende des Zugs automatisch gesetzt und zu Beginn jeder Runde zurückgesetzt. Zum Umschalten klicken.",
   "combat.actedCount": "{acted} von {total} gehandelt",
   "combat.lairNow": "Initiative 20: Zeit für eine Hortaktion.",
-  "combat.lairCallout": "Hortaktion!"
+  "combat.lairCallout": "Hortaktion!",
+  "sharing.regenerate": "Link neu erzeugen",
+  "sharing.regenerateHint": "Erzeugt einen neuen Link und QR-Code. Alle alten Links und bereits verbundenen Geräte funktionieren erst wieder mit dem neuen Code.",
+  "sharing.regenerated": "Neuer Link bereit. Alte Links funktionieren nicht mehr.",
+  "sharing.regenerateFailed": "Neuer Link konnte nicht erzeugt werden",
+  "sharing.onlyPlayerView": "Andere Geräte in deinem Netzwerk können nur die Spieleransicht öffnen, und nur über diesen Link. Der Rest von Sanctum bleibt auf diesem Computer.",
+  "sharing.listeningButOff": "Dieser Server lauscht in deinem Netzwerk, aber andere Geräte werden abgewiesen, bis das Teilen aktiviert ist.",
+  "screen.linkExpired.title": "Dieser Link funktioniert nicht mehr",
+  "screen.linkExpired.body": "Bitte deine Spielleitung um den aktuellen Link oder QR-Code zur Spieleransicht und öffne ihn erneut."
 }

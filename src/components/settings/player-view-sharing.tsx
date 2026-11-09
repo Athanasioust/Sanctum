@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   Check,
   Copy,
+  KeyRound,
   Monitor,
   RefreshCw,
   ShieldCheck,
@@ -23,11 +24,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/client";
+import { useT } from "@/components/i18n/i18n-provider";
 
 type FirewallState = "allowed" | "unknown" | "unsupported";
 
 type LanState = {
   enabled: boolean;
+  /** Secret in the player link; null while sharing is off. */
+  shareToken: string | null;
   addresses: string[];
   port: number;
   /** The running server is bound to the network, not just to loopback. */
@@ -39,11 +43,13 @@ type LanState = {
  * Local-network sharing for the player view: players open the read-only screen
  * on their own phones over the same Wi-Fi, with nothing leaving the LAN.
  *
- * Off by default and explicit about why — enabling it binds the whole app to
- * every network interface, not just `/screen`.
+ * Off by default. With it on, other devices reach only the player view, and
+ * only through a link carrying the share token (scripts/lan-guard.cjs).
  */
 export function PlayerViewSharing({ campaignId }: { campaignId: number }) {
+  const t = useT();
   const [state, setState] = useState<LanState | null>(null);
+  const [regenerating, setRegenerating] = useState(false);
   const [address, setAddress] = useState<string>("");
   // Keyed by the URL it encodes, so a stale code is never shown next to a new
   // address while the replacement renders.
@@ -74,10 +80,12 @@ export function PlayerViewSharing({ campaignId }: { campaignId: number }) {
   // Only offered once the server is really listening on the network. Handing
   // out a QR code that cannot resolve is what made this look broken: the phone
   // spins on a blank page and then says the site can't be reached.
-  const reachable = state?.active === true;
+  // Other devices are refused while sharing is off, whatever the server binds
+  // to, so a link only exists once it's on and has a token.
+  const reachable = state?.active === true && state.enabled && !!state.shareToken;
   const url =
-    reachable && address && state
-      ? `http://${address}:${state.port}/screen/${campaignId}`
+    reachable && address && state?.shareToken
+      ? `http://${address}:${state.port}/screen/${campaignId}?token=${encodeURIComponent(state.shareToken)}`
       : "";
 
   // Render the QR locally with the bundled library — no image service involved.
@@ -106,8 +114,8 @@ export function PlayerViewSharing({ campaignId }: { campaignId: number }) {
   async function toggle(enabled: boolean) {
     setSaving(true);
     try {
-      await api.put("/api/lan", { enabled });
-      setState((s) => (s ? { ...s, enabled } : s));
+      const res = await api.put<{ shareToken: string | null }>("/api/lan", { enabled });
+      setState((s) => (s ? { ...s, enabled, shareToken: res.shareToken } : s));
       toast.success(
         enabled
           ? "Sharing enabled — restart Sanctum to apply"
@@ -132,6 +140,21 @@ export function PlayerViewSharing({ campaignId }: { campaignId: number }) {
       toast.error(err instanceof Error ? err.message : "Could not change the firewall");
     } finally {
       setAllowing(false);
+    }
+  }
+
+  async function regenerate() {
+    setRegenerating(true);
+    try {
+      const res = await api.put<{ shareToken: string | null }>("/api/lan", {
+        regenerateToken: true,
+      });
+      setState((s) => (s ? { ...s, shareToken: res.shareToken } : s));
+      toast.success(t("sharing.regenerated"));
+    } catch {
+      toast.error(t("sharing.regenerateFailed"));
+    } finally {
+      setRegenerating(false);
     }
   }
 
@@ -182,8 +205,7 @@ export function PlayerViewSharing({ campaignId }: { campaignId: number }) {
       {state && !state.enabled && state.active && (
         <p className="mt-4 flex items-start gap-2 rounded-lg border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
           <Wifi className="mt-0.5 size-4 shrink-0" />
-          This server is already listening on your network, so the link below works
-          even with the switch off.
+          {t("sharing.listeningButOff")}
         </p>
       )}
 
@@ -233,8 +255,7 @@ export function PlayerViewSharing({ campaignId }: { campaignId: number }) {
       {state?.enabled && (
         <p className="mt-3 flex items-start gap-2 text-xs text-muted-foreground">
           <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
-          While this is on, anyone on the same network can reach Sanctum, not only the
-          player view. Leave it off on public Wi-Fi.
+          {t("sharing.onlyPlayerView")}
         </p>
       )}
 
@@ -294,6 +315,19 @@ export function PlayerViewSharing({ campaignId }: { campaignId: number }) {
                   </a>
                 </Button>
               </div>
+            </div>
+
+            <div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={regenerate}
+                disabled={regenerating}
+                data-testid="regenerate-share-token"
+              >
+                <KeyRound className="size-3.5" /> {t("sharing.regenerate")}
+              </Button>
+              <p className="mt-1 text-xs text-muted-foreground">{t("sharing.regenerateHint")}</p>
             </div>
 
             <p className="text-sm text-muted-foreground">

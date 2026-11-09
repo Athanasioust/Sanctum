@@ -567,5 +567,13 @@
   "combat.actedHint": "Marcado automaticamente quando o turno termina; limpo em cada nova ronda. Clique para alternar.",
   "combat.actedCount": "{acted} de {total} agiram",
   "combat.lairNow": "Iniciativa 20: hora de uma ação de covil.",
-  "combat.lairCallout": "Ação de covil!"
+  "combat.lairCallout": "Ação de covil!",
+  "sharing.regenerate": "Gerar novo link",
+  "sharing.regenerateHint": "Cria um novo link e código QR. Os links antigos, e os dispositivos já ligados, deixam de funcionar até lerem o novo.",
+  "sharing.regenerated": "Novo link pronto. Os links antigos já não funcionam.",
+  "sharing.regenerateFailed": "Não foi possível criar um novo link",
+  "sharing.onlyPlayerView": "Os outros dispositivos da rede só podem abrir a vista dos jogadores, e apenas através deste link. O resto do Sanctum fica neste computador.",
+  "sharing.listeningButOff": "Este servidor está à escuta na rede, mas os outros dispositivos são recusados até a partilha estar ativa.",
+  "screen.linkExpired.title": "Este link já não funciona",
+  "screen.linkExpired.body": "Pede ao teu DM o link ou código QR atual da vista dos jogadores e abre-o de novo."
 }

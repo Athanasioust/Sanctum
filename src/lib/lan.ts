@@ -1,5 +1,6 @@
 import "server-only";
 import { execFileSync, spawnSync } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -13,11 +14,13 @@ import { DATA_ROOT_DIR } from "@/lib/paths";
  * players can open the read-only player view on their phones over the same
  * Wi-Fi — no account, no cloud, nothing leaving the LAN.
  *
- * It is deliberately **opt-in**. Binding to 0.0.0.0 exposes the whole app, not
- * just `/screen`, to every device on the network — fine on a home network,
- * not something to switch on silently in a café. The setting lives in a small
- * file next to the database because the Electron shell has to read it before
- * the server starts, and it only takes effect on restart.
+ * It is deliberately **opt-in**. The setting lives in a small file next to the
+ * database because the Electron shell has to read it before the server starts,
+ * and binding only changes on restart.
+ *
+ * Binding to 0.0.0.0 does not open the DM's app to the network: every request
+ * from another device goes through `scripts/lan-guard.cjs` first, which lets it
+ * reach only the player view, and only with the share token below.
  */
 
 const CONFIG_PATH = path.join(DATA_ROOT_DIR, "lan.json");
@@ -30,9 +33,24 @@ export type LanConfig = {
    * Separate from `enabled` and off by default; unlike it, it applies at once.
    */
   allowPlayerTokenMoves: boolean;
+  /**
+   * The secret in the player link (`/screen/<id>?token=…`). Random, carries no
+   * personal data, and never leaves this machine except in the link the DM
+   * hands out. Regenerating it cuts off every old link and cookie at once.
+   * Null until sharing is first turned on.
+   */
+  shareToken: string | null;
 };
 
-const DEFAULT: LanConfig = { enabled: false, allowPlayerTokenMoves: false };
+const DEFAULT: LanConfig = { enabled: false, allowPlayerTokenMoves: false, shareToken: null };
+
+/** What a token must look like; the guard refuses anything else. */
+const TOKEN_PATTERN = /^[A-Za-z0-9_-]{22,128}$/;
+
+/** A fresh 128-bit token, URL-safe. */
+export function newShareToken(): string {
+  return randomBytes(16).toString("base64url");
+}
 
 export function readLanConfig(): LanConfig {
   try {
@@ -41,6 +59,10 @@ export function readLanConfig(): LanConfig {
     return {
       enabled: parsed.enabled === true,
       allowPlayerTokenMoves: parsed.allowPlayerTokenMoves === true,
+      shareToken:
+        typeof parsed.shareToken === "string" && TOKEN_PATTERN.test(parsed.shareToken)
+          ? parsed.shareToken
+          : null,
     };
   } catch {
     // Missing or unreadable config means the safe default: loopback only.
@@ -51,6 +73,20 @@ export function readLanConfig(): LanConfig {
 export function writeLanConfig(config: LanConfig): void {
   fs.mkdirSync(DATA_ROOT_DIR, { recursive: true });
   fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2), "utf8");
+}
+
+/**
+ * The config, with a share token minted if sharing is on and has none yet —
+ * which is the case for anyone who turned sharing on before tokens existed.
+ */
+export function readLanConfigWithToken(): LanConfig {
+  const config = readLanConfig();
+  if (config.enabled && !config.shareToken) {
+    const next = { ...config, shareToken: newShareToken() };
+    writeLanConfig(next);
+    return next;
+  }
+  return config;
 }
 
 /**

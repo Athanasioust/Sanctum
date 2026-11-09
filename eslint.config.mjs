@@ -21,8 +21,9 @@ const eslintConfig = defineConfig([
     "public/vendor/**",
   ]),
   {
-    // The Electron shell runs as plain CommonJS in the main process.
-    files: ["electron/**/*.js"],
+    // The Electron shell, and the server entry + LAN guard it loads ahead of
+    // Next, run as plain CommonJS.
+    files: ["electron/**/*.js", "scripts/**/*.cjs"],
     rules: { "@typescript-eslint/no-require-imports": "off" },
   },
   {
