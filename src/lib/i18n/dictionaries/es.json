@@ -560,5 +560,12 @@
   "sample.loaded": "Campaña de ejemplo cargada; bórrala desde Ajustes cuando quieras",
   "sample.loadFailed": "No se pudo cargar la campaña de ejemplo",
   "dice.rollsAs": "Se tira como",
-  "dice.customFormula": "Fórmula personalizada — cambiar los dados, el dado o el modificador la sustituye."
+  "dice.customFormula": "Fórmula personalizada — cambiar los dados, el dado o el modificador la sustituye.",
+  "combat.acted": "Actuó",
+  "combat.actedMark": "Ya actuó esta ronda",
+  "combat.notActedMark": "Aún no ha actuado",
+  "combat.actedHint": "Se marca solo al terminar su turno y se borra en cada ronda nueva. Haz clic para cambiarlo.",
+  "combat.actedCount": "{acted} de {total} actuaron",
+  "combat.lairNow": "Iniciativa 20: hora de una acción de guarida.",
+  "combat.lairCallout": "¡Acción de guarida!"
 }

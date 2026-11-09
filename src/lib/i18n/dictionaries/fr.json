@@ -560,5 +560,12 @@
   "sample.loaded": "Campagne d'exemple chargée – supprimez-la depuis les Paramètres quand vous voulez",
   "sample.loadFailed": "Impossible de charger la campagne d'exemple",
   "dice.rollsAs": "Lancé comme",
-  "dice.customFormula": "Formule personnalisée — modifier le nombre de dés, le dé ou le modificateur la remplace."
+  "dice.customFormula": "Formule personnalisée — modifier le nombre de dés, le dé ou le modificateur la remplace.",
+  "combat.acted": "A agi",
+  "combat.actedMark": "A agi ce round",
+  "combat.notActedMark": "N'a pas encore agi",
+  "combat.actedHint": "Coché automatiquement à la fin de son tour, effacé à chaque nouveau round. Cliquez pour basculer.",
+  "combat.actedCount": "{acted} sur {total} ont agi",
+  "combat.lairNow": "Initiative 20 : place à une action d'antre.",
+  "combat.lairCallout": "Action d'antre !"
 }

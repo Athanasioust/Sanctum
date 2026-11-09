@@ -1,0 +1,1 @@
+ALTER TABLE `combat_participants` ADD `has_acted` integer DEFAULT false NOT NULL;

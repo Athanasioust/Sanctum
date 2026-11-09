@@ -560,5 +560,12 @@
   "sample.loaded": "Beispielkampagne geladen – du kannst sie jederzeit in den Einstellungen löschen",
   "sample.loadFailed": "Die Beispielkampagne konnte nicht geladen werden",
   "dice.rollsAs": "Wird gewürfelt als",
-  "dice.customFormula": "Eigene Formel — eine Änderung an Würfelanzahl, Würfel oder Modifikator ersetzt sie."
+  "dice.customFormula": "Eigene Formel — eine Änderung an Würfelanzahl, Würfel oder Modifikator ersetzt sie.",
+  "combat.acted": "Gehandelt",
+  "combat.actedMark": "Hat diese Runde gehandelt",
+  "combat.notActedMark": "Hat noch nicht gehandelt",
+  "combat.actedHint": "Wird am Ende des Zugs automatisch gesetzt und zu Beginn jeder Runde zurückgesetzt. Zum Umschalten klicken.",
+  "combat.actedCount": "{acted} von {total} gehandelt",
+  "combat.lairNow": "Initiative 20: Zeit für eine Hortaktion.",
+  "combat.lairCallout": "Hortaktion!"
 }

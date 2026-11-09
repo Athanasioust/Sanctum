@@ -560,5 +560,12 @@
   "sample.loaded": "Sample campaign loaded — delete it from Settings whenever you like",
   "sample.loadFailed": "Couldn't load the sample campaign",
   "dice.rollsAs": "Rolls as",
-  "dice.customFormula": "Custom formula — changing the dice, die or modifier replaces it."
+  "dice.customFormula": "Custom formula — changing the dice, die or modifier replaces it.",
+  "combat.acted": "Acted",
+  "combat.actedMark": "Has acted this round",
+  "combat.notActedMark": "Hasn't acted yet",
+  "combat.actedHint": "Marked automatically when its turn ends; cleared each new round. Click to toggle.",
+  "combat.actedCount": "{acted} of {total} acted",
+  "combat.lairNow": "Initiative 20: time for a lair action.",
+  "combat.lairCallout": "Lair action!"
 }

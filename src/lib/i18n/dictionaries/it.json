@@ -560,5 +560,12 @@
   "sample.loaded": "Campagna di esempio caricata: eliminala dalle Impostazioni quando vuoi",
   "sample.loadFailed": "Impossibile caricare la campagna di esempio",
   "dice.rollsAs": "Si tira come",
-  "dice.customFormula": "Formula personalizzata — cambiare i dadi, il dado o il modificatore la sostituisce."
+  "dice.customFormula": "Formula personalizzata — cambiare i dadi, il dado o il modificatore la sostituisce.",
+  "combat.acted": "Ha agito",
+  "combat.actedMark": "Ha agito in questo round",
+  "combat.notActedMark": "Non ha ancora agito",
+  "combat.actedHint": "Segnato automaticamente a fine turno, azzerato a ogni nuovo round. Clicca per cambiarlo.",
+  "combat.actedCount": "{acted} su {total} hanno agito",
+  "combat.lairNow": "Iniziativa 20: è il momento di un'azione di tana.",
+  "combat.lairCallout": "Azione di tana!"
 }

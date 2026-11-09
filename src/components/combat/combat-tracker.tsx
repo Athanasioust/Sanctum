@@ -46,6 +46,8 @@ import {
   Undo2,
   Ungroup,
   Keyboard,
+  CircleCheck,
+  Circle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -96,6 +98,7 @@ import { rollDie } from "@/lib/dnd";
 import { cn } from "@/lib/utils";
 import { rateEncounter, difficultyKey, DIFFICULTY_STYLES } from "@/lib/encounter";
 import {
+  actedProgress,
   currentSlotIndex,
   keepGroupsTogether,
   pointerForSlot,
@@ -532,7 +535,7 @@ export function CombatTracker({
         }
         return { ...p, initiativeRoll: roll, initiativeTotal: roll + p.initiativeMod };
       }),
-    ).map((p, i) => ({ ...p, turnOrder: i }));
+    ).map((p, i) => ({ ...p, turnOrder: i, hasActed: false }));
     setParts(rolled);
     // Round one starts at the top of the new order — which is the lair row
     // when every creature rolled under 20.
@@ -546,6 +549,7 @@ export function CombatTracker({
           initiativeRoll: p.initiativeRoll,
           initiativeTotal: p.initiativeTotal,
           turnOrder: p.turnOrder,
+          hasActed: false,
         }),
       ),
     )
@@ -583,6 +587,23 @@ export function CombatTracker({
 
   const slots = turnSlots(parts);
   const currentSlot = currentSlotIndex(slots, turnIndex, lairActive);
+  const progress = actedProgress(slots, parts);
+
+  /** Mark these creatures (one combatant, or a whole group) acted or not. */
+  function setActed(ids: number[], hasActed: boolean) {
+    for (const id of ids) {
+      const p = partsRef.current.find((x) => x.id === id);
+      if (p && p.hasActed !== hasActed) savePart(id, { hasActed });
+    }
+  }
+
+  /** A new round: everyone gets to act again. */
+  function clearActed() {
+    setActed(
+      partsRef.current.map((p) => p.id),
+      false,
+    );
+  }
 
   /**
    * Count down timed conditions at the start or end of these creatures' turn,
@@ -634,8 +655,13 @@ export function CombatTracker({
     }
     const leaving = slots[currentSlot];
     if (leaving?.kind === "creatures") tickTimers(leaving.ids, "endOfTurn");
+    // Whoever's turn just ended has acted, unless that ended the round, when
+    // everyone is cleared for the new one instead.
+    if (r !== round) clearActed();
+    else if (leaving?.kind === "creatures") setActed(leaving.ids, true);
     const slot = slots[next];
     if (slot.kind === "creatures") startTurnFor(slot.ids);
+    else toast(t("combat.lairNow"), { icon: <Castle className="size-4" /> });
     goToSlot(next, r);
   }
 
@@ -766,6 +792,10 @@ export function CombatTracker({
     onSpendLegendary: spendLegendary,
     onRefundLegendary: refundLegendary,
     onToggleReaction: toggleReaction,
+    onToggleActed: (id: number) => {
+      const p = partsRef.current.find((x) => x.id === id);
+      if (p) setActed([id], !p.hasActed);
+    },
   };
 
   async function endEncounter() {
@@ -786,6 +816,17 @@ export function CombatTracker({
           <div className="text-center">
             <p className="text-xs uppercase text-muted-foreground">Round</p>
             <p className="font-heading text-2xl font-semibold tabular-nums">{round}</p>
+            {progress.total > 0 ? (
+              <p
+                className="text-[11px] tabular-nums text-muted-foreground"
+                data-testid="acted-progress"
+                title={t("combat.actedHint")}
+              >
+                {t("combat.actedCount")
+                  .replace("{acted}", String(progress.acted))
+                  .replace("{total}", String(progress.total))}
+              </p>
+            ) : null}
           </div>
           <div className="flex items-center gap-1">
             <Button size="icon" variant="outline" onClick={prevTurn} aria-label="Previous turn">
@@ -879,6 +920,12 @@ export function CombatTracker({
                         slot.ids.forEach((id) => setInitiativeMod(id, mod))
                       }
                       onUngroup={() => ungroup(p.groupId!)}
+                      onToggleActed={() => {
+                        const members = slot.ids
+                          .map((id) => parts.find((x) => x.id === id))
+                          .filter((x): x is CombatParticipant => !!x);
+                        setActed(slot.ids, !members.every((m) => m.hasActed));
+                      }}
                       rowHandlers={rowHandlers}
                       selectedId={selectedId !== null ? focusId : null}
                     />
@@ -1027,6 +1074,7 @@ type RowHandlers = {
   onSpendLegendary: (id: number) => void;
   onRefundLegendary: (id: number) => void;
   onToggleReaction: (id: number) => void;
+  onToggleActed: (id: number) => void;
 };
 
 /**
@@ -1041,6 +1089,7 @@ function GroupRow({
   onSetInitiative,
   onSetInitiativeMod,
   onUngroup,
+  onToggleActed,
   rowHandlers,
   selectedId,
 }: {
@@ -1050,6 +1099,7 @@ function GroupRow({
   onSetInitiative: (id: number, total: number) => void;
   onSetInitiativeMod: (mod: number) => void;
   onUngroup: () => void;
+  onToggleActed: () => void;
   rowHandlers: RowHandlers;
   /** The keyboard-selected combatant, which may be one of these members. */
   selectedId: number | null;
@@ -1065,6 +1115,7 @@ function GroupRow({
   const hpMax = members.reduce((n, m) => n + m.hpMax, 0);
   const label = lead.groupLabel || lead.name;
   const memberSelected = members.some((m) => m.id === selectedId);
+  const groupActed = members.every((m) => m.hasActed);
 
   return (
     <div
@@ -1077,7 +1128,9 @@ function GroupRow({
         memberSelected && !expanded && "outline-2 outline-offset-2 outline-sky-400",
         isDragging && "opacity-60",
         up === 0 && "opacity-70",
+        groupActed && !isCurrent && "opacity-55",
       )}
+      data-acted={groupActed || undefined}
     >
       <div className="flex items-center gap-3">
         <button
@@ -1137,6 +1190,8 @@ function GroupRow({
             </span>
           </span>
         </button>
+        {/* Outside the expand button: a button can't sit inside another. */}
+        <ActedToggle acted={groupActed} onToggle={onToggleActed} />
         <div className="hidden w-44 sm:block">
           <HpBar current={hpNow} max={hpMax} />
         </div>
@@ -1183,9 +1238,11 @@ function ParticipantRow({
   onSpendLegendary,
   onRefundLegendary,
   onToggleReaction,
+  onToggleActed,
 }: {
   participant: CombatParticipant;
   isCurrent: boolean;
+  onToggleActed: (id: number) => void;
   onSave: (id: number, patch: Partial<CombatParticipant>) => void;
   onAdjustHp: (id: number, delta: number) => void;
   onSetHpCurrent: (id: number, value: number) => void;
@@ -1221,7 +1278,10 @@ function ParticipantRow({
         isSelected && "outline-2 outline-offset-2 outline-sky-400",
         isDragging && "opacity-60",
         isDown && "opacity-90",
+        // A group member's acted state is the group's, shown on the group row.
+        !nested && p.hasActed && !isCurrent && "opacity-55",
       )}
+      data-acted={(!nested && p.hasActed) || undefined}
     >
       <div className="flex items-center gap-3">
         {nested ? null : (
@@ -1269,6 +1329,9 @@ function ParticipantRow({
           <div className="flex flex-wrap items-center gap-2">
             <EditableName participant={p} isDown={isDown} onSave={onSave} />
             {isCurrent ? <Badge className="bg-primary text-primary-foreground">Turn</Badge> : null}
+            {nested ? null : (
+              <ActedToggle acted={p.hasActed} onToggle={() => onToggleActed(p.id)} />
+            )}
             {isDown ? (
               <Badge variant="destructive" className="gap-1">
                 <Skull className="size-3" /> Down
@@ -1393,25 +1456,58 @@ function LairRow({ isCurrent, onUse }: { isCurrent: boolean; onUse: () => void }
   const t = useT();
   return (
     <div
+      data-testid="lair-row"
+      data-current={isCurrent || undefined}
       className={cn(
-        "flex items-center gap-3 rounded-xl border border-dashed bg-card/60 px-3 py-2.5",
-        isCurrent ? "border-primary ring-1 ring-primary/40" : "border-border",
+        "flex items-center gap-3 rounded-xl border border-dashed px-3 py-2.5 transition-colors",
+        isCurrent
+          ? "border-solid border-amber-400 bg-amber-400/10 ring-2 ring-amber-400/50"
+          : "border-border bg-card/60",
       )}
     >
       <div className="flex w-12 flex-col items-center">
         <span className="text-[10px] uppercase text-muted-foreground">Init</span>
         <span className="text-sm tabular-nums">20</span>
       </div>
-      <Castle className="size-4 text-primary" />
+      <Castle className={cn("size-4", isCurrent ? "animate-pulse text-amber-400" : "text-primary")} />
       <div className="min-w-0 flex-1">
         <p className="font-medium">{t("combat.lairRow")}</p>
-        <p className="text-xs text-muted-foreground">{t("combat.lairHint")}</p>
+        <p className="text-xs text-muted-foreground">
+          {isCurrent ? t("combat.lairNow") : t("combat.lairHint")}
+        </p>
       </div>
-      {isCurrent ? <Badge className="bg-primary text-primary-foreground">Turn</Badge> : null}
-      <Button size="sm" variant="outline" onClick={onUse}>
+      {isCurrent ? (
+        <Badge className="bg-amber-400 text-amber-950">{t("combat.lairCallout")}</Badge>
+      ) : null}
+      <Button size="sm" variant={isCurrent ? "default" : "outline"} onClick={onUse}>
         {t("combat.lairUse")}
       </Button>
     </div>
+  );
+}
+
+/** Whether this combatant (or group) has taken its turn this round. */
+function ActedToggle({ acted, onToggle }: { acted: boolean; onToggle: () => void }) {
+  const t = useT();
+  const label = acted ? t("combat.actedMark") : t("combat.notActedMark");
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={acted}
+      aria-label={label}
+      title={`${label} · ${t("combat.actedHint")}`}
+      data-testid="acted-toggle"
+      className={cn(
+        "flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[11px] leading-none transition-colors",
+        acted
+          ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+          : "border-border text-muted-foreground hover:bg-muted",
+      )}
+    >
+      {acted ? <CircleCheck className="size-3" /> : <Circle className="size-3" />}
+      {t("combat.acted")}
+    </button>
   );
 }
 

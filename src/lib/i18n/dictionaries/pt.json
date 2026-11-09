@@ -560,5 +560,12 @@
   "sample.loaded": "Campanha de exemplo carregada — apague-a nas Definições quando quiser",
   "sample.loadFailed": "Não foi possível carregar a campanha de exemplo",
   "dice.rollsAs": "Rola como",
-  "dice.customFormula": "Fórmula personalizada — alterar os dados, o dado ou o modificador substitui-a."
+  "dice.customFormula": "Fórmula personalizada — alterar os dados, o dado ou o modificador substitui-a.",
+  "combat.acted": "Agiu",
+  "combat.actedMark": "Já agiu nesta ronda",
+  "combat.notActedMark": "Ainda não agiu",
+  "combat.actedHint": "Marcado automaticamente quando o turno termina; limpo em cada nova ronda. Clique para alternar.",
+  "combat.actedCount": "{acted} de {total} agiram",
+  "combat.lairNow": "Iniciativa 20: hora de uma ação de covil.",
+  "combat.lairCallout": "Ação de covil!"
 }

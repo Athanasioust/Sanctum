@@ -118,6 +118,46 @@ export function pointerForSlot(
   return { currentTurnIndex: 0, lairTurnActive: true };
 }
 
+export type ActedPart = {
+  id: number;
+  hasActed: boolean;
+  hpCurrent: number;
+  entityType: "character" | "npc" | null;
+};
+
+/**
+ * Out of the fight for turn-counting purposes: a monster or NPC at 0 HP. A
+ * player character at 0 HP still takes turns (death saves), so still counts.
+ */
+function isOut(p: ActedPart): boolean {
+  return p.hpCurrent <= 0 && p.entityType !== "character";
+}
+
+/**
+ * "X of Y acted" for the round header. Counts turns, not bodies: a minion group
+ * is one turn, and the lair row isn't counted. A slot whose creatures are all
+ * out doesn't count; one that's still in counts as acted once every member
+ * still in has acted.
+ */
+export function actedProgress(
+  slots: TurnSlot[],
+  parts: ActedPart[],
+): { acted: number; total: number } {
+  const byId = new Map(parts.map((p) => [p.id, p]));
+  let acted = 0;
+  let total = 0;
+  for (const slot of slots) {
+    if (slot.kind !== "creatures") continue;
+    const inPlay = slot.ids
+      .map((id) => byId.get(id))
+      .filter((p): p is ActedPart => !!p && !isOut(p));
+    if (inPlay.length === 0) continue;
+    total += 1;
+    if (inPlay.every((p) => p.hasActed)) acted += 1;
+  }
+  return { acted, total };
+}
+
 /**
  * Legendary-action and lair defaults for a stat block, used to prefill a
  * monster when it joins a fight. The SRD phrases the count as "can take 3

@@ -559,6 +559,11 @@ export const combatParticipants = sqliteTable("combat_participants", {
     .notNull()
     .default(true),
   /**
+   * Whether this combatant has taken its turn this round. Set when initiative
+   * moves past it (or by hand), cleared when a new round starts.
+   */
+  hasActed: integer("has_acted", { mode: "boolean" }).notNull().default(false),
+  /**
    * Minion groups: members share an id here (and one initiative), so the
    * tracker shows them as a single "5× Goblin" row that takes one turn.
    */
