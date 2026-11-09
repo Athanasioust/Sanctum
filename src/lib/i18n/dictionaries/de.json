@@ -558,5 +558,7 @@
   "help.tourSettingBody": "Ein zweiminütiger Rundgang durch die Highlights von Sanctum, anhand der Beispielkampagne.",
   "sample.load": "Beispielkampagne laden",
   "sample.loaded": "Beispielkampagne geladen – du kannst sie jederzeit in den Einstellungen löschen",
-  "sample.loadFailed": "Die Beispielkampagne konnte nicht geladen werden"
+  "sample.loadFailed": "Die Beispielkampagne konnte nicht geladen werden",
+  "dice.rollsAs": "Wird gewürfelt als",
+  "dice.customFormula": "Eigene Formel — eine Änderung an Würfelanzahl, Würfel oder Modifikator ersetzt sie."
 }

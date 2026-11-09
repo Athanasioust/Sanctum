@@ -14,15 +14,21 @@ import {
 } from "@/components/ui/sheet";
 import { api } from "@/lib/client";
 import {
+  CONTROL_LIMITS,
   DIE_SIDES,
   DiceError,
+  composeFormula,
+  effectiveFormula,
   formulaError,
   modeSuffix,
   modifierSuffix,
+  parseSimpleFormula,
   roll,
   type RollMode,
   type RollResult,
+  type SimpleFormula,
 } from "@/lib/dice";
+import { useT } from "@/components/i18n/i18n-provider";
 import { cn } from "@/lib/utils";
 import type { Encounter } from "@/db/schema";
 
@@ -67,10 +73,21 @@ let nextEntryId = 1;
 
 export function DiceRoller({ campaignId }: { campaignId: number }) {
   const [open, setOpen] = useState(false);
+  const t = useT();
   const [formula, setFormula] = useState("1d20");
   const [count, setCount] = useState(1);
+  const [sides, setSides] = useState(20);
   const [modifier, setModifier] = useState(0);
   const [mode, setMode] = useState<RollMode>("normal");
+  /**
+   * Who owns the FORMULA field. The structured controls (dice, die, modifier)
+   * own it until the DM types something they can't represent (`4d6kh3`, `d%`);
+   * from then on it's "custom" and only a control change takes it back. Typing
+   * something they *can* represent (`3d8+2`) just moves the controls to match.
+   * Roll mode never touches the text: it's applied on top at roll time, to
+   * custom formulas too, and shown as "rolls as 2d20kh1 + 3" underneath.
+   */
+  const [custom, setCustom] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
 
   // Read inside the event handler, which is registered once — refs keep it from
@@ -142,19 +159,37 @@ export function DiceRoller({ campaignId }: { campaignId: number }) {
     [logToCombat],
   );
 
+  /**
+   * Take a formula from outside the controls (typed, or sent by a sheet's roll
+   * button): the controls follow it when they can express it, otherwise the
+   * field becomes custom and is left alone.
+   */
+  const adoptFormula = useCallback((next: string) => {
+    setFormula(next);
+    const simple = parseSimpleFormula(next);
+    if (simple) {
+      setCount(simple.count);
+      setSides(simple.sides);
+      setModifier(simple.modifier);
+      setCustom(false);
+    } else {
+      setCustom(true);
+    }
+  }, []);
+
   // Contextual rolls dispatched from sheets and stat blocks.
   useEffect(() => {
     function onRollRequest(event: Event) {
       const detail = (event as CustomEvent<DiceRequest>).detail;
       if (!detail?.formula) return;
       const rollMode = detail.mode ?? modeRef.current;
-      setFormula(detail.formula);
+      adoptFormula(detail.formula);
       setOpen(true);
       performRoll(detail.formula, rollMode, detail.label, detail.actorName);
     }
     window.addEventListener(ROLL_DICE_EVENT, onRollRequest);
     return () => window.removeEventListener(ROLL_DICE_EVENT, onRollRequest);
-  }, [performRoll]);
+  }, [performRoll, adoptFormula]);
 
   useEffect(() => {
     const openPanel = () => setOpen(true);
@@ -165,10 +200,21 @@ export function DiceRoller({ campaignId }: { campaignId: number }) {
   const inputError = formulaError(formula);
   const latest = history[0];
 
-  function rollQuickDie(sides: number) {
-    const next = `${count}d${sides}${modifierSuffix(modifier)}`;
+  const effective = effectiveFormula(formula, mode);
+
+  /** A structured control changed: it (re)takes the formula and rewrites it. */
+  function setControls(patch: Partial<SimpleFormula>): string {
+    const next = composeFormula({ count, sides, modifier, ...patch });
+    if (patch.count !== undefined) setCount(patch.count);
+    if (patch.sides !== undefined) setSides(patch.sides);
+    if (patch.modifier !== undefined) setModifier(patch.modifier);
     setFormula(next);
-    performRoll(next, mode);
+    setCustom(false);
+    return next;
+  }
+
+  function rollQuickDie(die: number) {
+    performRoll(setControls({ sides: die }), mode);
   }
 
   return (
@@ -192,14 +238,15 @@ export function DiceRoller({ campaignId }: { campaignId: number }) {
               Quick roll
             </p>
             <div className="grid grid-cols-4 gap-1.5">
-              {DIE_SIDES.map((sides) => (
+              {DIE_SIDES.map((die) => (
                 <Button
-                  key={sides}
-                  variant="outline"
-                  onClick={() => rollQuickDie(sides)}
-                  title={`Roll ${count}d${sides}${modifierSuffix(modifier)}`}
+                  key={die}
+                  variant={!custom && die === sides ? "default" : "outline"}
+                  aria-pressed={!custom && die === sides}
+                  onClick={() => rollQuickDie(die)}
+                  title={`Roll ${count}d${die}${modifierSuffix(modifier)}`}
                 >
-                  d{sides}
+                  d{die}
                 </Button>
               ))}
             </div>
@@ -210,17 +257,17 @@ export function DiceRoller({ campaignId }: { campaignId: number }) {
             <Stepper
               label="Dice"
               value={count}
-              min={1}
-              max={20}
-              onChange={setCount}
+              min={CONTROL_LIMITS.count.min}
+              max={CONTROL_LIMITS.count.max}
+              onChange={(v) => setControls({ count: v })}
               format={(v) => `${v}`}
             />
             <Stepper
               label="Modifier"
               value={modifier}
-              min={-20}
-              max={20}
-              onChange={setModifier}
+              min={CONTROL_LIMITS.modifier.min}
+              max={CONTROL_LIMITS.modifier.max}
+              onChange={(v) => setControls({ modifier: v })}
               format={(v) => (v > 0 ? `+${v}` : `${v}`)}
             />
           </div>
@@ -257,7 +304,7 @@ export function DiceRoller({ campaignId }: { campaignId: number }) {
             <div className="flex gap-2">
               <Input
                 value={formula}
-                onChange={(e) => setFormula(e.target.value)}
+                onChange={(e) => adoptFormula(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !inputError) performRoll(formula, mode);
                 }}
@@ -276,6 +323,16 @@ export function DiceRoller({ campaignId }: { campaignId: number }) {
                 "Supports 2d6+3, 1d20-1, 4d6kh3, d%."
               )}
             </p>
+            {!inputError && effective && (
+              <p className="mt-1 text-xs text-muted-foreground" data-testid="dice-effective">
+                {t("dice.rollsAs")} <span className="font-mono">{effective}</span>
+              </p>
+            )}
+            {!inputError && custom && (
+              <p className="mt-1 text-xs text-muted-foreground" data-testid="dice-custom">
+                {t("dice.customFormula")}
+              </p>
+            )}
           </div>
 
           {/* Latest result */}

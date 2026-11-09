@@ -226,6 +226,57 @@ export function modifierSuffix(modifier: number): string {
   return modifier > 0 ? `+${modifier}` : `${modifier}`;
 }
 
+/** Bounds of the dice roller's structured controls (the DICE and MODIFIER steppers). */
+export const CONTROL_LIMITS = {
+  count: { min: 1, max: 20 },
+  modifier: { min: -20, max: 20 },
+} as const;
+
+/** What the dice roller's structured controls can express: `NdX±M`. */
+export type SimpleFormula = { count: number; sides: number; modifier: number };
+
+/** The formula the structured controls stand for, e.g. `3d8+2`. */
+export function composeFormula({ count, sides, modifier }: SimpleFormula): string {
+  return `${count}d${sides}${modifierSuffix(modifier)}`;
+}
+
+/**
+ * Read a formula back into the structured controls, or null if they can't
+ * represent it: anything with keep/drop (`4d6kh3`), `d%`, a die that isn't a
+ * quick-roll die, several dice groups, or values outside the steppers' range.
+ */
+export function parseSimpleFormula(formula: string): SimpleFormula | null {
+  const m = /^(\d*)d(\d+)(?:([+-])(\d+))?$/i.exec(formula.replace(/\s+/g, ""));
+  if (!m) return null;
+  const count = m[1] === "" ? 1 : Number(m[1]);
+  const sides = Number(m[2]);
+  const modifier = m[3] ? (m[3] === "-" ? -1 : 1) * Number(m[4]) : 0;
+  if (!(DIE_SIDES as readonly number[]).includes(sides)) return null;
+  if (count < CONTROL_LIMITS.count.min || count > CONTROL_LIMITS.count.max) return null;
+  if (modifier < CONTROL_LIMITS.modifier.min || modifier > CONTROL_LIMITS.modifier.max) {
+    return null;
+  }
+  return { count, sides, modifier };
+}
+
+/**
+ * What a formula actually rolls under a mode, e.g. `1d20+3` with advantage is
+ * `2d20kh1 + 3`. Null for an unreadable formula or when the mode changes
+ * nothing (normal mode, or no d20 to apply it to).
+ */
+export function effectiveFormula(formula: string, mode: RollMode): string | null {
+  if (mode === "normal") return null;
+  try {
+    const terms = parse(formula);
+    const applied = applyMode(terms, mode);
+    const before = formatTerms(terms);
+    const after = formatTerms(applied);
+    return after === before ? null : after;
+  } catch {
+    return null;
+  }
+}
+
 /** Build a `1d20+N` check formula from a bonus. */
 export function checkFormula(bonus: number): string {
   return `1d20${modifierSuffix(bonus)}`;

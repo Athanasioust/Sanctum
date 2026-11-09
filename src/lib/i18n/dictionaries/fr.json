@@ -558,5 +558,7 @@
   "help.tourSettingBody": "Deux minutes pour découvrir l'essentiel de Sanctum, sur la campagne d'exemple.",
   "sample.load": "Charger la campagne d'exemple",
   "sample.loaded": "Campagne d'exemple chargée – supprimez-la depuis les Paramètres quand vous voulez",
-  "sample.loadFailed": "Impossible de charger la campagne d'exemple"
+  "sample.loadFailed": "Impossible de charger la campagne d'exemple",
+  "dice.rollsAs": "Lancé comme",
+  "dice.customFormula": "Formule personnalisée — modifier le nombre de dés, le dé ou le modificateur la remplace."
 }

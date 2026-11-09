@@ -558,5 +558,7 @@
   "help.tourSettingBody": "Due minuti tra i punti forti di Sanctum, sulla campagna di esempio.",
   "sample.load": "Carica la campagna di esempio",
   "sample.loaded": "Campagna di esempio caricata: eliminala dalle Impostazioni quando vuoi",
-  "sample.loadFailed": "Impossibile caricare la campagna di esempio"
+  "sample.loadFailed": "Impossibile caricare la campagna di esempio",
+  "dice.rollsAs": "Si tira come",
+  "dice.customFormula": "Formula personalizzata — cambiare i dadi, il dado o il modificatore la sostituisce."
 }

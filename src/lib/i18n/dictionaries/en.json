@@ -558,5 +558,7 @@
   "help.tourSettingBody": "A two-minute walk through Sanctum's highlights, on the Sample Campaign.",
   "sample.load": "Load the sample campaign",
   "sample.loaded": "Sample campaign loaded — delete it from Settings whenever you like",
-  "sample.loadFailed": "Couldn't load the sample campaign"
+  "sample.loadFailed": "Couldn't load the sample campaign",
+  "dice.rollsAs": "Rolls as",
+  "dice.customFormula": "Custom formula — changing the dice, die or modifier replaces it."
 }

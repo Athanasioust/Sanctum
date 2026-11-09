@@ -558,5 +558,7 @@
   "help.tourSettingBody": "Un paseo de dos minutos por lo mejor de Sanctum, sobre la campaña de ejemplo.",
   "sample.load": "Cargar la campaña de ejemplo",
   "sample.loaded": "Campaña de ejemplo cargada; bórrala desde Ajustes cuando quieras",
-  "sample.loadFailed": "No se pudo cargar la campaña de ejemplo"
+  "sample.loadFailed": "No se pudo cargar la campaña de ejemplo",
+  "dice.rollsAs": "Se tira como",
+  "dice.customFormula": "Fórmula personalizada — cambiar los dados, el dado o el modificador la sustituye."
 }
