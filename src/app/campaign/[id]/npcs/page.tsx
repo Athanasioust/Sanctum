@@ -11,7 +11,6 @@ import { NpcGrid } from "@/components/npcs/npc-grid";
 import { GenerateButton } from "@/components/generators/generate-button";
 import { SeedBestiaryButton } from "@/components/npcs/seed-bestiary-button";
 import { RelationsGraph } from "@/components/relations/relations-graph";
-import { CreateHomebrewButton } from "@/components/homebrew/create-homebrew-button";
 import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
@@ -78,7 +77,6 @@ async function CastTab({ campaignId }: { campaignId: number }) {
         actions={
           list.length > 0 ? (
             <div className="flex flex-wrap items-center gap-2">
-              <CreateHomebrewButton campaignId={campaignId} />
               <GenerateButton campaignId={campaignId} generatorId="npc" />
               <Button asChild>
                 <Link href={`/campaign/${campaignId}/npcs/new`}>
@@ -138,7 +136,6 @@ async function BestiaryTab({ campaignId }: { campaignId: number }) {
         actions={
           list.length > 0 ? (
             <div className="flex flex-wrap items-center gap-2">
-              <CreateHomebrewButton campaignId={campaignId} />
               <SeedBestiaryButton campaignId={campaignId} />
               <Button asChild>
                 <Link href={`/campaign/${campaignId}/bestiary/new`}>

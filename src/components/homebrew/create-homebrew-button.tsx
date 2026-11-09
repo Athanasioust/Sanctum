@@ -3,11 +3,9 @@ import { FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 /**
- * Entry point to the homebrew tools from the places you'd actually want them —
- * the bestiary, the magic items list, the spell picker.
- *
- * Homebrew isn't a sidebar entry any more; it's reached from the content it
- * creates. The page itself is unchanged and still routed at /homebrew.
+ * A contextual shortcut to the homebrew tools. Homebrew has its own sidebar
+ * entry (Resources), so this is only used where leaving for it mid-task is the
+ * point — the character spell picker's "Write your own".
  */
 export function CreateHomebrewButton({
   campaignId,

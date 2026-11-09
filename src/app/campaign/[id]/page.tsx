@@ -100,7 +100,7 @@ export default async function DashboardPage({
   ];
 
   // Built from every destination, not just the sidebar, so the pages that moved
-  // into tabs (Bestiary, Relations, Shops) or out of the nav (Homebrew, Import)
+  // into tabs (Bestiary, Relations, Shops) or out of the nav (Import)
   // still have a tile here — pointing at their new URLs. Ordered by sidebar
   // group so the moved ones sit next to their siblings rather than at the end.
   const groupOrder = new Map(NAV_GROUPS.map((g, index) => [g.id, index]));

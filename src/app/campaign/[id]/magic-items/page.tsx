@@ -7,7 +7,6 @@ import { TabLinks } from "@/components/shared/tab-links";
 import { MagicItemsList } from "@/components/magic-items/magic-items-list";
 import { ShopsLootClient } from "@/components/shops/shops-loot-client";
 import { GenerateButton } from "@/components/generators/generate-button";
-import { CreateHomebrewButton } from "@/components/homebrew/create-homebrew-button";
 
 export const dynamic = "force-dynamic";
 
@@ -71,7 +70,6 @@ async function ItemsTabContent({ campaignId }: { campaignId: number }) {
         icon={Sparkles}
         title="Magic Items"
         description="Track the party's magic items, attunement slots, and charges."
-        actions={<CreateHomebrewButton campaignId={campaignId} />}
       />
       <MagicItemsList
         campaignId={campaignId}

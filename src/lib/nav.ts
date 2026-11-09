@@ -57,7 +57,7 @@ export type NavItem = {
  * Dashboard and Settings are pinned (`group: null`) at the top and bottom;
  * everything else lives in a collapsible group. A handful of pages are
  * deliberately *not* here — Bestiary, Relations and Shops & Loot are tabs of
- * other pages, and Homebrew and Import are reached from context. They are all
+ * other pages, and Import is reached from context. They are all
  * still routes, and all still listed in `ALL_DESTINATIONS` below so the command
  * palette can find them.
  */
@@ -201,6 +201,14 @@ export const CAMPAIGN_NAV: NavItem[] = [
     group: "resources",
   },
   {
+    label: "Homebrew",
+    labelKey: "nav.homebrew",
+    href: (id) => `/campaign/${id}/homebrew`,
+    icon: FlaskConical,
+    segment: "homebrew",
+    group: "resources",
+  },
+  {
     label: "Handouts",
     labelKey: "nav.handouts",
     href: (id) => `/campaign/${id}/handouts`,
@@ -237,7 +245,7 @@ export const CAMPAIGN_NAV: NavItem[] = [
 
 /**
  * Pages that exist but aren't sidebar entries: three that became tabs of
- * another page, and two utilities reached from context. They keep their own
+ * another page, and one utility reached from context. They keep their own
  * routes (the old ones redirect to the tabbed URLs), and listing them here is
  * what keeps them findable from the command palette and the dashboard.
  */
@@ -264,14 +272,6 @@ export const OFF_SIDEBAR_NAV: NavItem[] = [
     href: (id) => `/campaign/${id}/magic-items?tab=shops`,
     icon: Coins,
     segment: "magic-items",
-    group: "resources",
-  },
-  {
-    label: "Homebrew",
-    labelKey: "nav.homebrew",
-    href: (id) => `/campaign/${id}/homebrew`,
-    icon: FlaskConical,
-    segment: "homebrew",
     group: "resources",
   },
   {
