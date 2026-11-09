@@ -148,6 +148,44 @@ if (!fs.existsSync(path.join(standalone, "server.js"))) {
   );
 }
 
+// Next's file tracer pulls the whole project directory into the standalone
+// bundle, so anything sitting in the working copy can end up inside the app.
+// The DM's own uploads, personal notes kept beside the repo, the docs and the
+// sources must never ship; they're excluded in next.config.ts. This checks the
+// result against an allowlist of what the bundle may hold at the top level, so
+// anything else (a renamed folder, a new one, a changed trace) stops the build
+// instead of ending up inside an installer.
+const MAY_SHIP = new Set([
+  ".gitignore",
+  ".next",
+  "node_modules",
+  "public",
+  "server.js",
+  "package.json",
+  "package-lock.json",
+  "LICENSE",
+  "README.md",
+  // Config and helper files the tracer pulls in; small and not personal.
+  "components.json",
+  "drizzle.config.ts",
+  "electron",
+  "electron-builder.yml",
+  "eslint.config.mjs",
+  "next.config.ts",
+  "postcss.config.mjs",
+  "scripts",
+  "tsconfig.json",
+  "tsconfig.tsbuildinfo",
+]);
+const unexpected = fs.readdirSync(standalone).filter((entry) => !MAY_SHIP.has(entry));
+if (unexpected.length > 0) {
+  throw new Error(
+    `The standalone bundle contains ${unexpected.map((e) => `"${e}"`).join(", ")}, which ` +
+      "must not ship. Exclude it in outputFileTracingExcludes (next.config.ts), or add it " +
+      "to MAY_SHIP in scripts/build-desktop.mjs if it really belongs in the app.",
+  );
+}
+
 // --- 2. Assemble the standalone bundle ------------------------------------
 console.log("\nAssembling standalone bundle...");
 copyDir(path.join(root, ".next", "static"), path.join(standalone, ".next", "static"));

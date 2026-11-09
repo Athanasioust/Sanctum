@@ -51,6 +51,10 @@ next-env.d.ts
 /data
 /backups
 /public/uploads
+# uploads made by `next dev` / `next start` land here (see src/lib/paths.ts)
+/uploads
+# personal notes kept beside the repo
+/* outputs/
 *.db
 *.db-shm
 *.db-wal

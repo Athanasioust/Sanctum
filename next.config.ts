@@ -43,6 +43,19 @@ const nextConfig: NextConfig = {
       "public/uploads/**",
       ".next/cache/**",
       "drizzle/**",
+      // The DM's own files and the project's sources must never ship inside
+      // the app: a local uploads/ folder (campaign images), personal notes
+      // kept beside the repo, the docs and the TypeScript sources (the server
+      // runs the compiled .next output, never src/), and the repository and
+      // tool folders. scripts/build-desktop.mjs fails the build if anything
+      // outside its allowlist still reaches the bundle.
+      ".git/**",
+      ".github/**",
+      ".claude/**",
+      "uploads/**",
+      "* outputs/**",
+      "docs/**",
+      "src/**",
       // sharp is traced in as an optional dependency of Next's image optimizer,
       // which Sanctum never uses (nothing imports next/image). It drags in a
       // platform-specific @img/sharp-<platform>-<arch> binary, so leaving it in
