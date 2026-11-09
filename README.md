@@ -11,12 +11,13 @@ A **local-first Dungeon Master's campaign manager** for Dungeons & Dragons 5e. E
 - **Combat tracker** — initiative order, drag-to-reorder turns, conditions, death saves, quick **+/- HP buttons** (tap for 1, hold to fly through 5 at a time), **concentration tracking** with automatic save-DC prompts on damage, and a per-round **combat log** you can copy or export as Markdown or text.
   - **Boss fights:** legendary-action pips that refresh on the creature's turn, a **Lair Actions** row at initiative 20, and a reaction marker per combatant.
   - **Minion groups:** add a pack as one "5× Goblin" initiative row that takes one turn, then expand it to hit any member individually.
+  - **Who has acted:** an "Acted" marker per combatant (or group) that ticks itself when their turn ends, can be flipped by hand, and clears each new round, with an "X of Y acted" count under the round number. The Lair Actions row is called out when initiative reaches 20.
   - **Timed conditions** ("Stunned, 1 round, ends at the end of its turn") drop off by themselves.
   - **Encounter difficulty:** the encounter builder and the live tracker rate the fight Easy → Deadly against your party (2014 DMG XP budget), and the builder hints which monsters fit.
   - **Saved encounters** to run again later, and **random encounters** rolled from a location's own table straight into a fight.
   - **Keyboard control** (Space/arrows for turns, +/- for HP, ? for the cheat-sheet) and a **pop-out window** for a second monitor.
 - **Battle map** — a grid map with drag-and-drop tokens wired straight to the initiative order, so HP and conditions show on the token. Includes a **measuring tape and AoE templates** (circle, cone, line, cube) that respect your diagonal rule, freehand drawing, arrows and labels, and **fog of war** you paint by hand. Reveal a map to the player view and the players see only what the fog allows — hidden tokens, anything standing in the dark and the unexplored parts of the map image are never even sent to their devices. Tokens show **portrait art** clipped to a circle, and dropping a fireball template lets you **apply its damage to everyone under it**, with save-for-half. Optionally, players can **drag their own tokens** from their phones.
-- **Dice roller** — roll from anywhere, with contextual rolls off a character's own modifiers (attacks, saves, skills, hit dice), advantage/disadvantage, and results dropped into the combat log.
+- **Dice roller** — roll from anywhere, with contextual rolls off a character's own modifiers (attacks, saves, skills, hit dice), advantage/disadvantage, and results dropped into the combat log. The dice, die and modifier controls write the formula for you; type your own (`4d6kh3`, `d%`) and it's kept until you change a control.
 - **Quests** — track active/on-hold/completed/failed quests with checkable sub-objectives and rewards.
 - **Magic items** — catalogue items by rarity and type, track attunement, charges (with recharge conditions) and cursed status, and assign them to characters.
 - **Handouts** — write player-facing handouts in Markdown (with images) and reveal them to the live player view.
@@ -24,7 +25,7 @@ A **local-first Dungeon Master's campaign manager** for Dungeons & Dragons 5e. E
 - **NPC relationships** — map the web of allies, enemies, family and informants as an interactive relationship graph.
 - **World atlas** — zoomable maps (Leaflet, fully offline) with categorised markers and Markdown popups, markers linked to your locations, NPCs, quests, shops, factions, handouts and rumors, portal markers that nest maps from continent to city, exploration fog for the player view, and export to a standalone interactive HTML file.
 - **Mind map** — a free-form canvas for plotting threads: drag out nodes, link them up, colour-code them and tie them back to the campaign records they're about.
-- **Homebrew** — author your own spells, items, monsters and feats alongside the SRD content, including **2024 weapon mastery** properties.
+- **Homebrew** — author your own spells, items, monsters and feats alongside the SRD content, including **2024 weapon mastery** properties. It has its own entry in the sidebar, under Resources.
 - **Soundpad** — an ambient audio desk with layered channels and saveable soundscapes, so a tavern, a storm or a dungeon is one click away. Your own audio files, played locally.
 - **Story & sessions** — a timeline of events/plot threads/milestones, plus per-session prep with plot points and planned encounters.
 - **Calendar** — real-world calendar (driven by your system clock) or a fully custom in-world calendar with its own months and weekdays.
@@ -33,7 +34,7 @@ A **local-first Dungeon Master's campaign manager** for Dungeons & Dragons 5e. E
 - **Search everything** — a **⌘K / Ctrl+K command palette** that finds any record in the campaign (characters, NPCs, locations, maps and markers, quests, magic items, handouts, rumors, shops and their stock, factions, notes, documents, sessions, story and calendar events, clocks, mind maps, roll tables, homebrew, encounters and battle maps) by its name **or the text inside it**, and opens the record itself. It also runs quick commands — new quest, roll a d20, open the player view, jump to a generator, reveal a handout.
 - **Generators** — offline, no-AI generators for **NPCs, taverns, settlements, treasure, quest hooks, rumors, names and weather**. Reroll or lock any field, then save the result straight into the campaign as an NPC (optionally with an SRD stat block), shop, location, quest or rumor, add treasure to a shop's stock, or drop it onto an Atlas map as a linked marker. Generated text is in English; the word lists are original and bundled.
 - **Rules reference** — a built-in D&D 5e quick-reference panel (conditions, combat actions, exhaustion, rests, proficiency) always a click away.
-- **Player view** — a live, auto-refreshing second screen showing initiative, party status, revealed handouts and clocks, and the battle map you're currently showing. The server decides what players may see: hidden content is never sent to their devices, and monsters show only Healthy / Bloodied / Down. Put it on a TV, or turn on **local-network sharing** and your players open it on their own phones over the same Wi-Fi — scan the QR code in Settings and they're in. It's read-only — the one exception is letting a player drag the token you've handed them, which is off unless you switch it on — and nothing leaves your network.
+- **Player view** — a live, auto-refreshing second screen showing initiative, party status, revealed handouts and clocks, and the battle map you're currently showing. The server decides what players may see: hidden content is never sent to their devices, and monsters show only Healthy / Bloodied / Down. Put it on a TV, or turn on **local-network sharing** and your players open it on their own phones over the same Wi-Fi — scan the QR code in Settings and they're in. It's read-only — the one exception is letting a player drag the token you've handed them, which is off unless you switch it on — and nothing leaves your network. Other devices can reach **only** the player view, and only through the Settings link, which carries a random key; **Regenerate link** cuts off every old link at once. See [Local-network sharing](#local-network-sharing).
 - **Languages** — the interface is available in **English, German, French, Spanish, Italian and Portuguese** (rules text stays in English).
 - **Welcome, guided tour & sample campaign** — a fresh install shows a one-time welcome that offers a short guided tour or goes straight to creating your first campaign. The tour runs on a ready-made Sample Campaign, *The Lost Souls* (a party of four, a fight in progress, a battle map with fog, a world atlas, quests, a shop and more), and spotlights seven highlights: character sheets, the combat tracker, the battle map, the atlas, generators and ⌘K search. It only points at things and never changes data. Retake it any time from the **Help** button (bottom right) or Settings. The sample is a normal campaign you can delete, and loading it again reopens the same copy. Its content is in English. A "What's new" dialog shows the highlights after each update; it never appears alongside the welcome.
 - **Built-in PDF viewer** — open rulebooks, adventures and any other PDF you keep with the campaign without leaving the app.
@@ -117,6 +118,34 @@ In the packaged desktop app these live in a per-user directory instead:
 | Linux    | `~/.config/Sanctum`                          |
 
 To back up or move your whole setup, copy the `data/` folder. To share a single campaign, use **Settings → Export** in the app.
+
+## Local-network sharing
+
+Turn it on in **Settings → Play together on your Wi-Fi** (the desktop app needs a
+restart to start listening on the network). Requests are judged by where they
+actually come from, never by headers a client could fake:
+
+- **This computer** (localhost) gets the whole app, exactly as with sharing off.
+- **Other devices** get the player view (`/screen/…`, `/api/screen/…`) and the
+  images it shows, and only with the share key from the Settings link or QR
+  code. The key is 128 random bits stored in `lan.json` next to your data. It
+  contains nothing personal and is never sent anywhere. The first visit swaps
+  it for a cookie and drops it from the address bar. Every other page and API
+  is refused, and with sharing off, other devices get nothing at all.
+- **Regenerate link** in Settings makes a new key. Old links and devices stop
+  working until they scan the new code.
+
+Things to know:
+
+- A second device can't run the full DM app over the network. It gets the
+  player view, like any player.
+- One key covers the player view of every campaign on this machine.
+- Opening the share link on your own computer through its network address
+  (e.g. `http://192.168.1.2:…`) counts as another device, so it needs the key
+  too. `http://localhost:…` doesn't.
+- The desktop app loads the guard before the server starts. With `npm start`
+  or `npm run dev` it loads with the Next config, so requests in the first
+  moment of startup aren't covered. Use the desktop app if that matters.
 
 ## Available scripts
 

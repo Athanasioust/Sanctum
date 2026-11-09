@@ -14,12 +14,15 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
-    version: "0.9.0",
+    version: "1.0.0",
     date: "2026-11-09",
     highlights: [
       "A guided tour: seven short stops through Sanctum's highlights — character sheets, the combat tracker, the battle map, the world atlas, generators and ⌘K search. Start it any time from the new Help button (bottom right) or Settings. It only points at things, so it never changes your data.",
-      "The tour runs on the Sample Campaign, which now includes a world atlas with linked markers, a shop and a second magic item. Loading it again reopens the same copy instead of making another, and it never touches your own campaigns.",
-      "New installs get a one-time welcome that offers the tour or goes straight to creating your first campaign. If you already have campaigns, nothing pops up.",
+      "The tour runs on the Sample Campaign, which now includes a world atlas with linked markers, a shop and a second magic item. Loading it again reopens the same copy instead of making another, and it never touches your own campaigns. New installs get a one-time welcome that offers the tour or goes straight to creating your first campaign.",
+      "Safer local-network sharing: other devices on your Wi-Fi can now open only the player view, and only through the link or QR code in Settings, which carries a secret key. The rest of Sanctum stays on your computer. Regenerate the link in Settings to cut off every old one at once.",
+      "Combat: an \"Acted\" marker on each combatant (or minion group) that ticks itself when their turn ends and clears each new round, with an \"X of Y acted\" count under the round number. The Lair Actions row now stands out when initiative reaches 20.",
+      "Homebrew has its own place in the sidebar, under Resources.",
+      "Dice roller fix: changing the dice count, the die or the modifier now updates the formula, so a roll never uses a stale one. A formula you type by hand, like 4d6kh3, is kept until you change a control.",
     ],
   },
   {
