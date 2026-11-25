@@ -22,6 +22,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import { renderMarkdown } from "@/lib/markdown";
 import type { MindMapEdge, MindMapNode } from "@/db/schema";
+import { useThemeColors } from "@/components/shared/use-theme-colors";
 
 /** The graph as the rest of the app stores it. */
 export type Graph = { nodes: MindMapNode[]; edges: MindMapEdge[] };
@@ -46,7 +47,7 @@ function MindMapNodeCard({ data, selected }: NodeProps<FlowNode>) {
   return (
     <div
       className="min-w-40 max-w-64 rounded-xl border-2 bg-card px-3 py-2 shadow-lg"
-      style={{ borderColor: selected ? "#ffffff" : data.color }}
+      style={{ borderColor: selected ? "var(--foreground)" : data.color }}
     >
       <Handle type="target" position={Position.Top} className="!size-2 !bg-muted-foreground" />
       <Handle type="target" position={Position.Left} className="!size-2 !bg-muted-foreground" />
@@ -109,8 +110,8 @@ function toFlowEdge(edge: MindMapEdge): Edge {
     type: "default", // bezier
     animated: false,
     style: { stroke: edge.color ?? "#71717a", strokeWidth: 2 },
-    labelStyle: { fill: "#e4e4e7", fontSize: 11 },
-    labelBgStyle: { fill: "#18181b" },
+    labelStyle: { fill: "var(--foreground)", fontSize: 11 },
+    labelBgStyle: { fill: "var(--card)" },
     labelBgPadding: [4, 2] as [number, number],
     labelBgBorderRadius: 4,
   };
@@ -129,6 +130,7 @@ export default function MindMapFlow({
   /** Turn a node's entity link into an href and a label. */
   resolveLink: ResolveLink;
 }) {
+  const { mode } = useThemeColors();
   /*
    * React Flow keeps its own copy of the nodes, and the parent keeps the
    * semantic graph. That split is deliberate rather than tidy-minded.
@@ -235,7 +237,7 @@ export default function MindMapFlow({
   );
 
   return (
-    <div className="h-[70vh] w-full overflow-hidden rounded-xl border border-border bg-[#0b0b0c]">
+    <div className="h-[70vh] w-full overflow-hidden rounded-xl border border-border bg-[var(--map-surface)]">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -245,7 +247,7 @@ export default function MindMapFlow({
         onConnect={handleConnect}
         onNodeClick={(_, node) => onSelect(node.id)}
         onPaneClick={() => onSelect(null)}
-        colorMode="dark"
+        colorMode={mode}
         fitView
         minZoom={0.1}
         maxZoom={2.5}
@@ -255,14 +257,14 @@ export default function MindMapFlow({
         deleteKeyCode={["Backspace", "Delete"]}
         proOptions={{ hideAttribution: true }}
       >
-        <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#3f3f46" />
+        <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="var(--border)" />
         <Controls showInteractive={false} />
         <MiniMap
           pannable
           zoomable
           nodeColor={(n) => (n.data as NodeData).color}
           maskColor="rgba(0,0,0,0.6)"
-          style={{ backgroundColor: "#18181b" }}
+          style={{ backgroundColor: "var(--card)" }}
         />
       </ReactFlow>
     </div>

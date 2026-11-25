@@ -306,7 +306,7 @@ export function PdfViewer({ url, name }: { url: string; name: string }) {
       </div>
 
       {/* Page */}
-      <div className="flex min-h-96 justify-center overflow-auto rounded-xl border border-border bg-[#0b0b0c] p-4">
+      <div className="flex min-h-96 justify-center overflow-auto rounded-xl border border-border bg-[var(--map-surface)] p-4">
         {loading && (
           <p className="flex items-center gap-2 self-center text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" /> Opening {name}…

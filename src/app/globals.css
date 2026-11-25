@@ -2,7 +2,17 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+/* Dark-mode utilities follow the theme's mode (see the theme blocks below). */
+@custom-variant dark {
+  &:where([data-mode="dark"], [data-mode="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where([data-mode="system"], [data-mode="system"] *) {
+      @slot;
+    }
+  }
+}
 
 @theme inline {
   --color-background: var(--background);
@@ -52,55 +62,49 @@
 }
 
 /*
- * Sanctum design system — modern dark UI.
- * Background very dark (#0f0f0f). Primary deep purple (#7c3aed),
- * danger dark red (#991b1b), success dark green (#166534).
- * The app is dark-only; the dark palette lives in :root and is mirrored
- * onto .dark (forced on <html>) so shadcn `dark:` variants also resolve.
+ * Sanctum colour themes. Every theme sets the same variables; the root layout
+ * picks one with data-theme on <html> (see src/lib/themes.ts) and says whether
+ * it is dark, light or follows the system with data-mode.
+ *
+ * Besides the shadcn tokens, each theme sets:
+ *   --map-surface  the backdrop behind battle maps and atlas maps
+ *   --map-grid     the battle-map grid lines
+ *
+ * Candlelight is the original look and the default, so it is also :root.
  */
-:root {
+:root,
+[data-theme="candlelight"] {
+  color-scheme: dark;
   --radius: 0.625rem;
 
   --background: #0f0f0f;
   --foreground: #e8e8ec;
-
   --card: #161618;
   --card-foreground: #e8e8ec;
-
   --popover: #161618;
   --popover-foreground: #e8e8ec;
-
   --primary: #7c3aed;
   --primary-foreground: #faf5ff;
-
   --secondary: #232327;
   --secondary-foreground: #e8e8ec;
-
   --muted: #1b1b1e;
   --muted-foreground: #9b9ba4;
-
   --accent: #2a2a31;
   --accent-foreground: #f4f4f5;
-
   --destructive: #991b1b;
   --destructive-foreground: #fef2f2;
-
   --success: #166534;
   --success-foreground: #f0fdf4;
-
   --warning: #a16207;
   --warning-foreground: #fffbeb;
-
   --border: #29292f;
   --input: #29292f;
   --ring: #7c3aed;
-
   --chart-1: #7c3aed;
   --chart-2: #a855f7;
   --chart-3: #2563eb;
   --chart-4: #16a34a;
   --chart-5: #dc2626;
-
   --sidebar: #0b0b0c;
   --sidebar-foreground: #c9c9d1;
   --sidebar-primary: #7c3aed;
@@ -109,45 +113,319 @@
   --sidebar-accent-foreground: #f4f4f5;
   --sidebar-border: #1f1f24;
   --sidebar-ring: #7c3aed;
+  --map-surface: #0b0b0c;
+  --map-grid: rgba(255, 255, 255, 0.12);
 }
 
-.dark {
-  --background: #0f0f0f;
-  --foreground: #e8e8ec;
-  --card: #161618;
-  --card-foreground: #e8e8ec;
-  --popover: #161618;
-  --popover-foreground: #e8e8ec;
-  --primary: #7c3aed;
-  --primary-foreground: #faf5ff;
-  --secondary: #232327;
-  --secondary-foreground: #e8e8ec;
-  --muted: #1b1b1e;
-  --muted-foreground: #9b9ba4;
-  --accent: #2a2a31;
-  --accent-foreground: #f4f4f5;
-  --destructive: #991b1b;
-  --destructive-foreground: #fef2f2;
+/* Parchment: warm and light, like paper. */
+[data-theme="parchment"] {
+  color-scheme: light;
+  --background: #f4ecd8;
+  --foreground: #2b2118;
+  --card: #fbf6ea;
+  --card-foreground: #2b2118;
+  --popover: #fbf6ea;
+  --popover-foreground: #2b2118;
+  --primary: #8a3b12;
+  --primary-foreground: #fff8ef;
+  --secondary: #e8dcc0;
+  --secondary-foreground: #2b2118;
+  --muted: #ece2ca;
+  --muted-foreground: #65543f;
+  --accent: #e3d4b2;
+  --accent-foreground: #2b2118;
+  --destructive: #a3261d;
+  --destructive-foreground: #fff5f3;
+  --success: #2f6b2a;
+  --success-foreground: #f3fbef;
+  --warning: #8a5a00;
+  --warning-foreground: #fffaf0;
+  --border: #d6c6a3;
+  --input: #c9b68d;
+  --ring: #8a3b12;
+  --chart-1: #8a3b12;
+  --chart-2: #b45309;
+  --chart-3: #1d4ed8;
+  --chart-4: #2f6b2a;
+  --chart-5: #a3261d;
+  --sidebar: #ebe0c6;
+  --sidebar-foreground: #3a2e22;
+  --sidebar-primary: #8a3b12;
+  --sidebar-primary-foreground: #fff8ef;
+  --sidebar-accent: #dfd0ad;
+  --sidebar-accent-foreground: #2b2118;
+  --sidebar-border: #d6c6a3;
+  --sidebar-ring: #8a3b12;
+  --map-surface: #e6dbc0;
+  --map-grid: rgba(60, 40, 20, 0.3);
+}
+
+/* Arcane: deep blue and violet. */
+[data-theme="arcane"] {
+  color-scheme: dark;
+  --background: #0d0f1e;
+  --foreground: #e6e8f7;
+  --card: #141731;
+  --card-foreground: #e6e8f7;
+  --popover: #141731;
+  --popover-foreground: #e6e8f7;
+  --primary: #8b7cf6;
+  --primary-foreground: #0b0c1a;
+  --secondary: #1c2042;
+  --secondary-foreground: #e6e8f7;
+  --muted: #171a36;
+  --muted-foreground: #a2a7cc;
+  --accent: #262b55;
+  --accent-foreground: #eef0ff;
+  --destructive: #b4232c;
+  --destructive-foreground: #fff1f2;
+  --success: #17703f;
+  --success-foreground: #effdf4;
+  --warning: #a16207;
+  --warning-foreground: #fffbeb;
+  --border: #272b50;
+  --input: #2c3159;
+  --ring: #8b7cf6;
+  --chart-1: #8b7cf6;
+  --chart-2: #38bdf8;
+  --chart-3: #c084fc;
+  --chart-4: #34d399;
+  --chart-5: #f87171;
+  --sidebar: #0a0c19;
+  --sidebar-foreground: #c8cbe6;
+  --sidebar-primary: #8b7cf6;
+  --sidebar-primary-foreground: #0b0c1a;
+  --sidebar-accent: #171a36;
+  --sidebar-accent-foreground: #eef0ff;
+  --sidebar-border: #1d2142;
+  --sidebar-ring: #8b7cf6;
+  --map-surface: #090b17;
+  --map-grid: rgba(200, 205, 255, 0.13);
+}
+
+/* Forest: deep greens. */
+[data-theme="forest"] {
+  color-scheme: dark;
+  --background: #0c120e;
+  --foreground: #e4eee6;
+  --card: #131c16;
+  --card-foreground: #e4eee6;
+  --popover: #131c16;
+  --popover-foreground: #e4eee6;
+  --primary: #4fae6a;
+  --primary-foreground: #06110a;
+  --secondary: #1b2820;
+  --secondary-foreground: #e4eee6;
+  --muted: #16211a;
+  --muted-foreground: #9db5a4;
+  --accent: #22332a;
+  --accent-foreground: #eef6f0;
+  --destructive: #a8322a;
+  --destructive-foreground: #fff3f1;
+  --success: #1f7a3d;
+  --success-foreground: #f0fdf4;
+  --warning: #a16207;
+  --warning-foreground: #fffbeb;
+  --border: #243429;
+  --input: #2a3c30;
+  --ring: #4fae6a;
+  --chart-1: #4fae6a;
+  --chart-2: #a3e635;
+  --chart-3: #2dd4bf;
+  --chart-4: #facc15;
+  --chart-5: #f87171;
+  --sidebar: #090e0b;
+  --sidebar-foreground: #c5d6ca;
+  --sidebar-primary: #4fae6a;
+  --sidebar-primary-foreground: #06110a;
+  --sidebar-accent: #16211a;
+  --sidebar-accent-foreground: #eef6f0;
+  --sidebar-border: #1c2a21;
+  --sidebar-ring: #4fae6a;
+  --map-surface: #080d0a;
+  --map-grid: rgba(210, 255, 220, 0.12);
+}
+
+/* Crimson: dark, with blood-red highlights. Destructive is burnt orange so it stays distinct. */
+[data-theme="crimson"] {
+  color-scheme: dark;
+  --background: #120c0d;
+  --foreground: #f0e6e7;
+  --card: #1b1213;
+  --card-foreground: #f0e6e7;
+  --popover: #1b1213;
+  --popover-foreground: #f0e6e7;
+  --primary: #e05561;
+  --primary-foreground: #1a0709;
+  --secondary: #2a1a1c;
+  --secondary-foreground: #f0e6e7;
+  --muted: #221517;
+  --muted-foreground: #bba3a6;
+  --accent: #33201f;
+  --accent-foreground: #fbeff0;
+  --destructive: #c2410c;
+  --destructive-foreground: #fff7ed;
   --success: #166534;
   --success-foreground: #f0fdf4;
   --warning: #a16207;
   --warning-foreground: #fffbeb;
-  --border: #29292f;
-  --input: #29292f;
-  --ring: #7c3aed;
-  --chart-1: #7c3aed;
-  --chart-2: #a855f7;
-  --chart-3: #2563eb;
-  --chart-4: #16a34a;
-  --chart-5: #dc2626;
-  --sidebar: #0b0b0c;
-  --sidebar-foreground: #c9c9d1;
-  --sidebar-primary: #7c3aed;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1b1b1e;
-  --sidebar-accent-foreground: #f4f4f5;
-  --sidebar-border: #1f1f24;
-  --sidebar-ring: #7c3aed;
+  --border: #3a2427;
+  --input: #43292c;
+  --ring: #e05561;
+  --chart-1: #e05561;
+  --chart-2: #fb923c;
+  --chart-3: #f472b6;
+  --chart-4: #4ade80;
+  --chart-5: #fbbf24;
+  --sidebar: #0d0809;
+  --sidebar-foreground: #dccbcd;
+  --sidebar-primary: #e05561;
+  --sidebar-primary-foreground: #1a0709;
+  --sidebar-accent: #221517;
+  --sidebar-accent-foreground: #fbeff0;
+  --sidebar-border: #2a1a1c;
+  --sidebar-ring: #e05561;
+  --map-surface: #0c0708;
+  --map-grid: rgba(255, 220, 220, 0.12);
+}
+
+/*
+ * High Contrast: pure black and white with a bright accent, strong borders and
+ * no faded text. Dark by default; light when the system asks for light.
+ */
+[data-theme="high-contrast"] {
+  color-scheme: dark;
+  --background: #000000;
+  --foreground: #ffffff;
+  --card: #0a0a0a;
+  --card-foreground: #ffffff;
+  --popover: #0a0a0a;
+  --popover-foreground: #ffffff;
+  --primary: #ffd60a;
+  --primary-foreground: #000000;
+  --secondary: #1a1a1a;
+  --secondary-foreground: #ffffff;
+  --muted: #141414;
+  --muted-foreground: #e0e0e0;
+  --accent: #262626;
+  --accent-foreground: #ffffff;
+  --destructive: #ff5c5c;
+  --destructive-foreground: #000000;
+  --success: #00c853;
+  --success-foreground: #000000;
+  --warning: #ffab00;
+  --warning-foreground: #000000;
+  --border: #9a9a9a;
+  --input: #bdbdbd;
+  --ring: #ffd60a;
+  --chart-1: #ffd60a;
+  --chart-2: #40c4ff;
+  --chart-3: #ff80ab;
+  --chart-4: #00e676;
+  --chart-5: #ff5c5c;
+  --sidebar: #000000;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #ffd60a;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #1f1f1f;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #9a9a9a;
+  --sidebar-ring: #ffd60a;
+  --map-surface: #000000;
+  --map-grid: rgba(255, 255, 255, 0.35);
+}
+@media (prefers-color-scheme: light) {
+  [data-theme="high-contrast"] {
+    color-scheme: light;
+    --background: #ffffff;
+    --foreground: #000000;
+    --card: #ffffff;
+    --card-foreground: #000000;
+    --popover: #ffffff;
+    --popover-foreground: #000000;
+    --primary: #0033cc;
+    --primary-foreground: #ffffff;
+    --secondary: #ebebeb;
+    --secondary-foreground: #000000;
+    --muted: #f2f2f2;
+    --muted-foreground: #1f1f1f;
+    --accent: #e0e0e0;
+    --accent-foreground: #000000;
+    --destructive: #b00000;
+    --destructive-foreground: #ffffff;
+    --success: #006b1f;
+    --success-foreground: #ffffff;
+    --warning: #7a4a00;
+    --warning-foreground: #ffffff;
+    --border: #4d4d4d;
+    --input: #333333;
+    --ring: #0033cc;
+    --chart-1: #0033cc;
+    --chart-2: #b00000;
+    --chart-3: #006b1f;
+    --chart-4: #7a4a00;
+    --chart-5: #6a1b9a;
+    --sidebar: #f5f5f5;
+    --sidebar-foreground: #000000;
+    --sidebar-primary: #0033cc;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #e0e0e0;
+    --sidebar-accent-foreground: #000000;
+    --sidebar-border: #4d4d4d;
+    --sidebar-ring: #0033cc;
+    --map-surface: #ffffff;
+    --map-grid: rgba(0, 0, 0, 0.4);
+  }
+}
+
+/*
+ * Light themes: a few components use Tailwind's pale tints (text-amber-300,
+ * text-blue-300…) as text on the dark UI. On a light page those would be
+ * unreadable, so in light mode the pale shades map to deep ones.
+ */
+[data-mode="light"] {
+  --color-red-200: oklch(44.4% 0.177 26.899) /* red-800 */;
+  --color-red-300: oklch(50.5% 0.213 27.518) /* red-700 */;
+  --color-red-400: oklch(50.5% 0.213 27.518) /* red-700 */;
+  --color-orange-300: oklch(47% 0.157 37.304) /* orange-800 */;
+  --color-orange-400: oklch(55.3% 0.195 38.402) /* orange-700 */;
+  --color-amber-200: oklch(47.3% 0.137 46.201) /* amber-800 */;
+  --color-amber-300: oklch(47.3% 0.137 46.201) /* amber-800 */;
+  --color-amber-400: oklch(55.5% 0.163 48.998) /* amber-700 */;
+  --color-yellow-400: oklch(55.4% 0.135 66.442) /* yellow-700 */;
+  --color-green-300: oklch(44.8% 0.119 151.328) /* green-800 */;
+  --color-green-400: oklch(52.7% 0.154 150.069) /* green-700 */;
+  --color-emerald-300: oklch(43.2% 0.095 166.913) /* emerald-800 */;
+  --color-emerald-400: oklch(50.8% 0.118 165.612) /* emerald-700 */;
+  --color-sky-400: oklch(50% 0.134 242.749) /* sky-700 */;
+  --color-blue-300: oklch(42.4% 0.199 265.638) /* blue-800 */;
+  --color-blue-400: oklch(48.8% 0.243 264.376) /* blue-700 */;
+  --color-purple-300: oklch(43.8% 0.218 303.724) /* purple-800 */;
+  --color-purple-400: oklch(49.6% 0.265 301.924) /* purple-700 */;
+  --color-slate-300: oklch(44.6% 0.043 257.281) /* slate-600 */;
+}
+@media (prefers-color-scheme: light) {
+  [data-mode="system"] {
+    --color-red-200: oklch(44.4% 0.177 26.899) /* red-800 */;
+    --color-red-300: oklch(50.5% 0.213 27.518) /* red-700 */;
+    --color-red-400: oklch(50.5% 0.213 27.518) /* red-700 */;
+    --color-orange-300: oklch(47% 0.157 37.304) /* orange-800 */;
+    --color-orange-400: oklch(55.3% 0.195 38.402) /* orange-700 */;
+    --color-amber-200: oklch(47.3% 0.137 46.201) /* amber-800 */;
+    --color-amber-300: oklch(47.3% 0.137 46.201) /* amber-800 */;
+    --color-amber-400: oklch(55.5% 0.163 48.998) /* amber-700 */;
+    --color-yellow-400: oklch(55.4% 0.135 66.442) /* yellow-700 */;
+    --color-green-300: oklch(44.8% 0.119 151.328) /* green-800 */;
+    --color-green-400: oklch(52.7% 0.154 150.069) /* green-700 */;
+    --color-emerald-300: oklch(43.2% 0.095 166.913) /* emerald-800 */;
+    --color-emerald-400: oklch(50.8% 0.118 165.612) /* emerald-700 */;
+    --color-sky-400: oklch(50% 0.134 242.749) /* sky-700 */;
+    --color-blue-300: oklch(42.4% 0.199 265.638) /* blue-800 */;
+    --color-blue-400: oklch(48.8% 0.243 264.376) /* blue-700 */;
+    --color-purple-300: oklch(43.8% 0.218 303.724) /* purple-800 */;
+    --color-purple-400: oklch(49.6% 0.265 301.924) /* purple-700 */;
+    --color-slate-300: oklch(44.6% 0.043 257.281) /* slate-600 */;
+  }
 }
 
 @layer base {
@@ -232,7 +510,7 @@
 /*  wins over leaflet.css whichever order the chunks load in.                  */
 /* -------------------------------------------------------------------------- */
 .atlas-map.leaflet-container {
-  background: #0b0b0c;
+  background: var(--map-surface);
   border-radius: var(--radius-xl, 0.75rem);
   border: 1px solid var(--border);
   font-family: inherit;

@@ -396,7 +396,7 @@ function PlayerBattleMap({
       {map.imagePending ? (
         <p className="text-xs text-muted-foreground">{t("player.mapImagePending")}</p>
       ) : null}
-      <div className="overflow-hidden rounded-xl border border-border bg-[#0b0b0c]">
+      <div className="overflow-hidden rounded-xl border border-border bg-[var(--map-surface)]">
         <BattleMapCanvas
           map={{
             imageUrl: map.imageUrl,

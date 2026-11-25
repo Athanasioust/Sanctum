@@ -10,6 +10,8 @@ import { BackupsManager } from "@/components/settings/backups-manager";
 import { DangerZone } from "@/components/settings/danger-zone";
 import { PlayerViewSharing } from "@/components/settings/player-view-sharing";
 import { LanguageSwitcher } from "@/components/settings/language-switcher";
+import { ThemePicker } from "@/components/settings/theme-picker";
+import { getTheme } from "@/lib/theme-server";
 import { UpdateCheckSetting } from "@/components/settings/update-check-setting";
 import { WhatsNewButton } from "@/components/shared/whats-new";
 import { APP_VERSION } from "@/lib/changelog";
@@ -25,7 +27,7 @@ export default async function SettingsPage({
   params: Promise<{ id: string }>;
 }) {
   const campaignId = Number((await params).id);
-  const { locale, t } = await getTranslation();
+  const [{ locale, t }, theme] = await Promise.all([getTranslation(), getTheme()]);
   const [campaign] = await db.select().from(campaigns).where(eq(campaigns.id, campaignId));
   if (!campaign) notFound();
 
@@ -44,8 +46,9 @@ export default async function SettingsPage({
           <PlayerViewSharing campaignId={campaignId} />
         </section>
 
-        <section>
+        <section className="space-y-4">
           <LanguageSwitcher current={locale} />
+          <ThemePicker current={theme.id} />
         </section>
 
         <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-5">

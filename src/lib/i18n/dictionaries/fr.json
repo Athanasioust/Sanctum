@@ -586,5 +586,20 @@
   "location.notesHint": "Notes sur ce lieu : ce qu'on y trouve, qui s'y trouve, ses secrets. Préparez la rencontre ou le donjon d'une séance dans Séances, et suivez l'intrigue en cours dans Intrigue.",
   "sessions.encountersHint": "Une rencontre ou un donjon prévu pour cette séance se note ici ; les notes sur le lieu lui-même vont sur sa fiche de lieu.",
   "sessions.prepNotesHint": "Le plan de cette séance : secrets, rappels, texte à lire. L'intrigue en cours se trouve dans Intrigue.",
-  "story.whereHint": "L'intrigue en cours se trouve ici. Les notes sur un lieu vont sur ce lieu, et les rencontres prévues d'une séance dans Séances."
+  "story.whereHint": "L'intrigue en cours se trouve ici. Les notes sur un lieu vont sur ce lieu, et les rencontres prévues d'une séance dans Séances.",
+  "settings.theme": "Thème",
+  "settings.themeHint": "Choisissez un thème de couleurs. Il s'applique à toutes les pages, à la carte de combat, à l'atlas et à la vue joueurs sur cet ordinateur.",
+  "settings.themeSaved": "Thème modifié",
+  "theme.candlelight": "Chandelle",
+  "theme.candlelight.desc": "L'apparence d'origine de Sanctum. Sombre.",
+  "theme.parchment": "Parchemin",
+  "theme.parchment.desc": "Chaud et clair, comme du papier.",
+  "theme.arcane": "Arcane",
+  "theme.arcane.desc": "Bleu profond et violet. Sombre.",
+  "theme.forest": "Forêt",
+  "theme.forest.desc": "Verts profonds. Sombre.",
+  "theme.crimson": "Cramoisi",
+  "theme.crimson.desc": "Touches rouge sang. Sombre.",
+  "theme.highContrast": "Contraste élevé",
+  "theme.highContrast.desc": "Lisibilité maximale. Suit le réglage clair ou sombre de votre système."
 }

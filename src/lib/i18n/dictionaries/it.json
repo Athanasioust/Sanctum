@@ -586,5 +586,20 @@
   "location.notesHint": "Note su questo luogo: cosa c'è, chi c'è, i suoi segreti. Prepara l'incontro o il dungeon di una sessione in Sessioni e segui la trama in corso in Storia.",
   "sessions.encountersHint": "Un incontro o un dungeon previsto per questa sessione va qui; le note sul luogo in sé vanno nella sua scheda luogo.",
   "sessions.prepNotesHint": "Il piano di questa sessione: segreti, promemoria, testo da leggere ad alta voce. La trama in corso sta in Storia.",
-  "story.whereHint": "La trama in corso sta qui. Le note su un luogo vanno in quel luogo, e gli incontri previsti di una sessione in Sessioni."
+  "story.whereHint": "La trama in corso sta qui. Le note su un luogo vanno in quel luogo, e gli incontri previsti di una sessione in Sessioni.",
+  "settings.theme": "Tema",
+  "settings.themeHint": "Scegli un tema di colori. Vale per ogni pagina, la mappa di battaglia, l'atlante e la vista giocatori su questo computer.",
+  "settings.themeSaved": "Tema cambiato",
+  "theme.candlelight": "Lume di candela",
+  "theme.candlelight.desc": "L'aspetto originale di Sanctum. Scuro.",
+  "theme.parchment": "Pergamena",
+  "theme.parchment.desc": "Caldo e chiaro, come la carta.",
+  "theme.arcane": "Arcano",
+  "theme.arcane.desc": "Blu profondo e viola. Scuro.",
+  "theme.forest": "Foresta",
+  "theme.forest.desc": "Verdi profondi. Scuro.",
+  "theme.crimson": "Cremisi",
+  "theme.crimson.desc": "Dettagli rosso sangue. Scuro.",
+  "theme.highContrast": "Alto contrasto",
+  "theme.highContrast.desc": "Massima leggibilità. Segue l'impostazione chiara o scura del sistema."
 }

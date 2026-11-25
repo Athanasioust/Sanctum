@@ -586,5 +586,20 @@
   "location.notesHint": "Notes about this place: what's here, who's here, its secrets. Plan a session's encounter or dungeon in Sessions, and follow the ongoing plot in Story.",
   "sessions.encountersHint": "A planned encounter or dungeon for this session belongs here; notes about the place itself go on its location.",
   "sessions.prepNotesHint": "This session's plan: secrets, reminders, read-aloud text. The ongoing plot lives in Story.",
-  "story.whereHint": "The ongoing plot lives here. Notes about a place go on that location, and a session's planned encounters go in Sessions."
+  "story.whereHint": "The ongoing plot lives here. Notes about a place go on that location, and a session's planned encounters go in Sessions.",
+  "settings.theme": "Theme",
+  "settings.themeHint": "Pick a colour theme. It applies to every page, the battle map, the atlas and the player view on this computer.",
+  "settings.themeSaved": "Theme changed",
+  "theme.candlelight": "Candlelight",
+  "theme.candlelight.desc": "The original Sanctum look. Dark.",
+  "theme.parchment": "Parchment",
+  "theme.parchment.desc": "Warm and light, like paper.",
+  "theme.arcane": "Arcane",
+  "theme.arcane.desc": "Deep blue and violet. Dark.",
+  "theme.forest": "Forest",
+  "theme.forest.desc": "Deep greens. Dark.",
+  "theme.crimson": "Crimson",
+  "theme.crimson.desc": "Blood-red highlights. Dark.",
+  "theme.highContrast": "High Contrast",
+  "theme.highContrast.desc": "Maximum readability. Follows your system's light or dark setting."
 }

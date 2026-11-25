@@ -586,5 +586,20 @@
   "location.notesHint": "Notas sobre este lugar: qué hay, quién está, sus secretos. Prepara el encuentro o la mazmorra de una sesión en Sesiones y sigue la trama en curso en Historia.",
   "sessions.encountersHint": "Un encuentro o una mazmorra prevista para esta sesión va aquí; las notas sobre el lugar en sí van en su ubicación.",
   "sessions.prepNotesHint": "El plan de esta sesión: secretos, recordatorios, texto para leer en voz alta. La trama en curso está en Historia.",
-  "story.whereHint": "La trama en curso vive aquí. Las notas sobre un lugar van en esa ubicación, y los encuentros previstos de una sesión en Sesiones."
+  "story.whereHint": "La trama en curso vive aquí. Las notas sobre un lugar van en esa ubicación, y los encuentros previstos de una sesión en Sesiones.",
+  "settings.theme": "Tema",
+  "settings.themeHint": "Elige un tema de color. Se aplica a todas las páginas, al mapa de batalla, al atlas y a la vista de jugadores en este ordenador.",
+  "settings.themeSaved": "Tema cambiado",
+  "theme.candlelight": "Luz de vela",
+  "theme.candlelight.desc": "El aspecto original de Sanctum. Oscuro.",
+  "theme.parchment": "Pergamino",
+  "theme.parchment.desc": "Cálido y claro, como el papel.",
+  "theme.arcane": "Arcano",
+  "theme.arcane.desc": "Azul profundo y violeta. Oscuro.",
+  "theme.forest": "Bosque",
+  "theme.forest.desc": "Verdes profundos. Oscuro.",
+  "theme.crimson": "Carmesí",
+  "theme.crimson.desc": "Detalles rojo sangre. Oscuro.",
+  "theme.highContrast": "Alto contraste",
+  "theme.highContrast.desc": "Máxima legibilidad. Sigue el ajuste claro u oscuro de tu sistema."
 }

@@ -1477,7 +1477,7 @@ function LairRow({ isCurrent, onUse }: { isCurrent: boolean; onUse: () => void }
         </p>
       </div>
       {isCurrent ? (
-        <Badge className="bg-amber-400 text-amber-950">{t("combat.lairCallout")}</Badge>
+        <Badge className="bg-amber-400 text-white dark:text-amber-950">{t("combat.lairCallout")}</Badge>
       ) : null}
       <Button size="sm" variant={isCurrent ? "default" : "outline"} onClick={onUse}>
         {t("combat.lairUse")}

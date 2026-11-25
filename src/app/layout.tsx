@@ -6,6 +6,7 @@ import { LaunchDialogs } from "@/components/tour/welcome-dialog";
 import { TourProvider } from "@/components/tour/tour-provider";
 import { UpdateNoticeOnLaunch } from "@/components/shared/update-notice";
 import { getLocale } from "@/lib/i18n/server";
+import { getTheme } from "@/lib/theme-server";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -35,11 +36,13 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const locale = await getLocale();
+  const [locale, theme] = await Promise.all([getLocale(), getTheme()]);
   return (
     <html
       lang={locale}
-      className={`dark ${geistSans.variable} ${geistMono.variable} ${cinzel.variable} h-full antialiased`}
+      data-theme={theme.id}
+      data-mode={theme.mode}
+      className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-background text-foreground">
         <I18nProvider locale={locale}>
@@ -49,7 +52,7 @@ export default async function RootLayout({
             <UpdateNoticeOnLaunch />
           </TourProvider>
         </I18nProvider>
-        <Toaster richColors position="bottom-right" />
+        <Toaster richColors position="bottom-right" theme={theme.mode} />
       </body>
     </html>
   );

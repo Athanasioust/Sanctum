@@ -26,6 +26,7 @@ import {
   type Point,
 } from "@/lib/battle-map";
 import type { BattleToken, FogData, MapAnnotation } from "@/db/schema";
+import { useThemeColors } from "@/components/shared/use-theme-colors";
 
 /** Everything the canvas needs to draw, without the database bookkeeping. */
 export type CanvasMap = {
@@ -158,6 +159,7 @@ export default function BattleMapCanvas({
   const image = useMapImage(map.imageUrl);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const colors = useThemeColors();
   const scale = useFitScale(containerRef, width, fitWidth);
 
   /** Measure tool: the anchor point and the live cursor, in cells. */
@@ -302,7 +304,7 @@ export default function BattleMapCanvas({
   return (
     <div
       ref={containerRef}
-      className={fitWidth ? "w-full" : "overflow-auto rounded-lg border border-border bg-[#0b0b0c]"}
+      className={fitWidth ? "w-full" : "overflow-auto rounded-lg border border-border bg-[var(--map-surface)]"}
     >
       <Stage
         width={width * scale}
@@ -320,13 +322,13 @@ export default function BattleMapCanvas({
       >
         {/* Background image */}
         <Layer listening={false}>
-          <Rect width={width} height={height} fill="#111113" />
+          <Rect width={width} height={height} fill={colors.mapSurface} />
           {image && <KonvaImage image={image} width={width} height={height} />}
         </Layer>
 
         {/* Grid */}
         <Layer listening={false}>
-          <GridLines cols={gridCols} rows={gridRows} size={gridSize} />
+          <GridLines cols={gridCols} rows={gridRows} size={gridSize} color={colors.mapGrid} />
         </Layer>
 
         {/* Annotations sit under the tokens so combatants stay readable */}
@@ -473,7 +475,7 @@ function useFitScale(
   return Math.min(2, containerWidth / naturalWidth);
 }
 
-function GridLines({ cols, rows, size }: { cols: number; rows: number; size: number }) {
+function GridLines({ cols, rows, size, color }: { cols: number; rows: number; size: number; color: string }) {
   const width = cols * size;
   const height = rows * size;
   const lines: React.ReactNode[] = [];
@@ -482,7 +484,7 @@ function GridLines({ cols, rows, size }: { cols: number; rows: number; size: num
       <Line
         key={`v${c}`}
         points={[c * size, 0, c * size, height]}
-        stroke="rgba(255,255,255,0.12)"
+        stroke={color}
         strokeWidth={1}
       />,
     );
@@ -492,7 +494,7 @@ function GridLines({ cols, rows, size }: { cols: number; rows: number; size: num
       <Line
         key={`h${r}`}
         points={[0, r * size, width, r * size]}
-        stroke="rgba(255,255,255,0.12)"
+        stroke={color}
         strokeWidth={1}
       />,
     );
