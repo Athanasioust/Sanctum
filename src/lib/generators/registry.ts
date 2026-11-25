@@ -49,11 +49,32 @@ export type GenContext = {
   pool: PoolItem[];
 };
 
+/** "mix": the DM's entries join the built-ins. "only": they replace them. */
+export type CustomMode = "mix" | "only";
+export type CustomList = { entries: string[]; mode: CustomMode };
+/** The DM's lists for one generator, by list key (usually the field key). */
+export type CustomLists = Record<string, CustomList>;
+
+/** What a roll may draw from besides the built-in tables. */
+export type GenSources = { pool?: PoolItem[]; custom?: CustomLists };
+
+/**
+ * The size given to a built-in pool that isn't one list (names and rumors are
+ * assembled from parts), to weigh "mix" lists against it.
+ */
+const COMPOSED_POOL = 40;
+
 export type FieldDef = {
   key: string;
   labelKey: TranslationKey;
   multiline?: boolean;
   roll: (r: Rng, ctx: GenContext) => string;
+  /**
+   * Set when the DM can feed this field their own list. `builtIn` is how many
+   * built-in results it is weighed against in "mix" mode; `listKey` names the
+   * list when it isn't the field key (one names list per kind of name).
+   */
+  custom?: { builtIn: number; listKey?: (options: Record<string, string>) => string };
 };
 
 export type OptionDef = {
@@ -109,6 +130,12 @@ const field = (
   multiline = false,
 ): FieldDef => ({ key, labelKey: `gen.field.${key}` as TranslationKey, roll, multiline });
 
+/** A field the DM can feed their own list, weighed against a built-in pool. */
+const listField = (key: string, roll: FieldDef["roll"], builtIn: number | readonly unknown[]): FieldDef => ({
+  ...field(key, roll),
+  custom: { builtIn: typeof builtIn === "number" ? builtIn : builtIn.length },
+});
+
 const choices = (values: readonly string[]) =>
   values.map((value) => ({ value, labelKey: `gen.choice.${value}` as TranslationKey }));
 
@@ -134,17 +161,17 @@ export const GENERATORS: GeneratorDef[] = [
       },
     ],
     fields: [
-      field("ancestry", (r) => weighted(r, T.ANCESTRIES).name),
-      field("name", (r, c) => personName(r, styleForAncestry(c.values.ancestry))),
+      listField("ancestry", (r) => weighted(r, T.ANCESTRIES).name, T.ANCESTRIES),
+      listField("name", (r, c) => personName(r, styleForAncestry(c.values.ancestry)), COMPOSED_POOL),
       field("pronouns", (r) => r.pick(T.PRONOUNS)),
-      field("occupation", (r) => r.pick(T.OCCUPATIONS)),
-      field("appearance", (r) => r.pick(T.APPEARANCES)),
-      field("trait", (r) => r.pick(T.TRAITS)),
-      field("ideal", (r) => r.pick(T.IDEALS)),
-      field("bond", (r) => r.pick(T.BONDS)),
-      field("flaw", (r) => r.pick(T.FLAWS)),
-      field("secret", (r) => r.pick(T.SECRETS)),
-      field("hook", (r) => r.pick(T.NPC_HOOKS)),
+      listField("occupation", (r) => r.pick(T.OCCUPATIONS), T.OCCUPATIONS),
+      listField("appearance", (r) => r.pick(T.APPEARANCES), T.APPEARANCES),
+      listField("trait", (r) => r.pick(T.TRAITS), T.TRAITS),
+      listField("ideal", (r) => r.pick(T.IDEALS), T.IDEALS),
+      listField("bond", (r) => r.pick(T.BONDS), T.BONDS),
+      listField("flaw", (r) => r.pick(T.FLAWS), T.FLAWS),
+      listField("secret", (r) => r.pick(T.SECRETS), T.SECRETS),
+      listField("hook", (r) => r.pick(T.NPC_HOOKS), T.NPC_HOOKS),
       field("statBlock", (r, c) => (c.options.statBlock === "auto" ? r.pick(T.NPC_STAT_BLOCKS) : "")),
     ],
     saves: ["npc"],
@@ -157,15 +184,15 @@ export const GENERATORS: GeneratorDef[] = [
     icon: Beer,
     options: [],
     fields: [
-      field("name", (r) => tavernName(r)),
-      field("vibe", (r) => r.pick(T.TAVERN_VIBES)),
-      field("specialty", (r) => `${r.pick(T.TAVERN_DRINKS)}; ${r.pick(T.TAVERN_DISHES).toLowerCase()}`),
-      field("barkeep", (r) => {
+      listField("name", (r) => tavernName(r), COMPOSED_POOL),
+      listField("vibe", (r) => r.pick(T.TAVERN_VIBES), T.TAVERN_VIBES),
+      listField("specialty", (r) => `${r.pick(T.TAVERN_DRINKS)}; ${r.pick(T.TAVERN_DISHES).toLowerCase()}`, COMPOSED_POOL),
+      listField("barkeep", (r) => {
         const ancestry = weighted(r, T.ANCESTRIES).name;
         return `${personName(r, styleForAncestry(ancestry))} (${ancestry.toLowerCase()}, ${r.pick(T.PRONOUNS)}), ${r.pick(T.TRAITS).toLowerCase()}`;
-      }),
-      field("patron", (r) => r.pick(T.PATRONS)),
-      field("rumor", (r) => `${capitalise(r.pick(T.RUMOR_SUBJECTS))} ${r.pick(T.RUMOR_CLAIMS)}.`),
+      }, COMPOSED_POOL),
+      listField("patron", (r) => r.pick(T.PATRONS), T.PATRONS),
+      listField("rumor", (r) => `${capitalise(r.pick(T.RUMOR_SUBJECTS))} ${r.pick(T.RUMOR_CLAIMS)}.`, COMPOSED_POOL),
     ],
     saves: ["shop"],
     mapLink: "shop",
@@ -177,14 +204,14 @@ export const GENERATORS: GeneratorDef[] = [
     icon: Home,
     options: [],
     fields: [
-      field("name", (r) => settlementName(r)),
+      listField("name", (r) => settlementName(r), COMPOSED_POOL),
       field("size", (r) => {
         const s = weighted(r, T.SETTLEMENT_SIZES);
         return `${s.label} (pop. ${s.population})`;
       }),
-      field("feature", (r) => r.pick(T.SETTLEMENT_FEATURES)),
-      field("problem", (r) => r.pick(T.SETTLEMENT_PROBLEMS)),
-      field("power", (r) => r.pick(T.SETTLEMENT_POWERS)),
+      listField("feature", (r) => r.pick(T.SETTLEMENT_FEATURES), T.SETTLEMENT_FEATURES),
+      listField("problem", (r) => r.pick(T.SETTLEMENT_PROBLEMS), T.SETTLEMENT_PROBLEMS),
+      listField("power", (r) => r.pick(T.SETTLEMENT_POWERS), T.SETTLEMENT_POWERS),
     ],
     saves: ["location"],
     mapLink: "location",
@@ -238,11 +265,11 @@ export const GENERATORS: GeneratorDef[] = [
     icon: ScrollText,
     options: [],
     fields: [
-      field("patron", (r) => r.pick(T.QUEST_PATRONS)),
-      field("task", (r) => r.pick(T.QUEST_TASKS)),
-      field("place", (r) => r.pick(T.QUEST_PLACES)),
-      field("twist", (r) => capitalise(r.pick(T.QUEST_TWISTS))),
-      field("reward", (r) => r.pick(T.QUEST_REWARDS)),
+      listField("patron", (r) => r.pick(T.QUEST_PATRONS), T.QUEST_PATRONS),
+      listField("task", (r) => r.pick(T.QUEST_TASKS), T.QUEST_TASKS),
+      listField("place", (r) => r.pick(T.QUEST_PLACES), T.QUEST_PLACES),
+      listField("twist", (r) => capitalise(r.pick(T.QUEST_TWISTS)), T.QUEST_TWISTS),
+      listField("reward", (r) => r.pick(T.QUEST_REWARDS), T.QUEST_REWARDS),
     ],
     saves: ["quest"],
   },
@@ -253,8 +280,8 @@ export const GENERATORS: GeneratorDef[] = [
     icon: MessageCircleQuestion,
     options: [],
     fields: [
-      field("rumor", (r) => `${capitalise(r.pick(T.RUMOR_SUBJECTS))} ${r.pick(T.RUMOR_CLAIMS)}.`),
-      field("source", (r) => r.pick(T.RUMOR_SOURCES)),
+      listField("rumor", (r) => `${capitalise(r.pick(T.RUMOR_SUBJECTS))} ${r.pick(T.RUMOR_CLAIMS)}.`, COMPOSED_POOL),
+      listField("source", (r) => r.pick(T.RUMOR_SOURCES), T.RUMOR_SOURCES),
       field("truth", (r) => r.pick(T.RUMOR_TRUTHS)),
     ],
     saves: ["rumor"],
@@ -273,6 +300,8 @@ export const GENERATORS: GeneratorDef[] = [
       labelKey: "gen.field.name" as TranslationKey,
       roll: (r: Rng, c: GenContext) =>
         nameOfKind(r, (c.options.kind as NameKind) ?? "person", (c.options.style as NameStyle) ?? "common"),
+      // One list per kind of name, shared by all six slots.
+      custom: { builtIn: COMPOSED_POOL, listKey: (o: Record<string, string>) => `name:${o.kind ?? "person"}` },
     })),
     saves: [],
   },
@@ -325,6 +354,30 @@ export function defaultOptions(def: GeneratorDef): Record<string, string> {
   return Object.fromEntries(def.options.map((o) => [o.key, o.default]));
 }
 
+/** The list a customisable field reads with these options, or null. */
+export function listKeyFor(f: FieldDef, options: Record<string, string>): string | null {
+  if (!f.custom) return null;
+  return f.custom.listKey ? f.custom.listKey(options) : f.key;
+}
+
+/**
+ * Roll one field. A DM list in "only" mode always draws from the list; in
+ * "mix" mode each of its entries is as likely as one built-in result. An
+ * empty list changes nothing, so "only" with no entries falls back to the
+ * built-ins rather than coming up blank. The choice uses the field's own
+ * seeded rng, so locks and rerolls behave exactly as before.
+ */
+function rollField(f: FieldDef, r: Rng, ctx: GenContext, custom: CustomLists): string {
+  const key = listKeyFor(f, ctx.options);
+  const list = key ? custom[key] : undefined;
+  const entries = list ? list.entries.filter((e) => e.trim()) : [];
+  if (list && f.custom && entries.length > 0) {
+    const share = list.mode === "only" ? 1 : entries.length / (entries.length + f.custom.builtIn);
+    if (r.next() < share) return r.pick(entries);
+  }
+  return f.roll(r, ctx);
+}
+
 /** Roll every field in order from its seed, keeping locked fields as they were. */
 function build(
   def: GeneratorDef,
@@ -332,14 +385,16 @@ function build(
   seeds: Record<string, number>,
   locked: string[],
   previous: Record<string, string>,
-  pool: PoolItem[],
+  sources: GenSources,
 ): Record<string, string> {
   const values: Record<string, string> = {};
+  const pool = sources.pool ?? [];
+  const custom = sources.custom ?? {};
   for (const f of def.fields) {
     values[f.key] =
       locked.includes(f.key) && previous[f.key] !== undefined
         ? previous[f.key]
-        : f.roll(rng(seeds[f.key]), { values, options, pool });
+        : rollField(f, rng(seeds[f.key]), { values, options, pool }, custom);
   }
   return values;
 }
@@ -348,10 +403,10 @@ function build(
 export function generate(
   def: GeneratorDef,
   options: Record<string, string> = defaultOptions(def),
-  pool: PoolItem[] = [],
+  sources: GenSources = {},
 ): GeneratedResult {
   const seeds = Object.fromEntries(def.fields.map((f) => [f.key, newSeed()]));
-  return { generatorId: def.id, options, seeds, values: build(def, options, seeds, [], {}, pool), locked: [] };
+  return { generatorId: def.id, options, seeds, values: build(def, options, seeds, [], {}, sources), locked: [] };
 }
 
 /**
@@ -363,14 +418,14 @@ export function reroll(
   def: GeneratorDef,
   result: GeneratedResult,
   keys: string[] | "all",
-  pool: PoolItem[] = [],
+  sources: GenSources = {},
 ): GeneratedResult {
   const targets = keys === "all" ? def.fields.map((f) => f.key).filter((k) => !result.locked.includes(k)) : keys;
   const seeds = { ...result.seeds };
   for (const k of targets) seeds[k] = newSeed();
   // A field rerolled on purpose is unlocked for the roll.
   const locked = result.locked.filter((k) => !targets.includes(k));
-  return { ...result, seeds, values: build(def, result.options, seeds, locked, result.values, pool) };
+  return { ...result, seeds, values: build(def, result.options, seeds, locked, result.values, sources) };
 }
 
 /** Change an option (tier, style…) and re-roll from the same seeds. */
@@ -378,9 +433,9 @@ export function withOptions(
   def: GeneratorDef,
   result: GeneratedResult,
   options: Record<string, string>,
-  pool: PoolItem[] = [],
+  sources: GenSources = {},
 ): GeneratedResult {
-  return { ...result, options, values: build(def, options, result.seeds, result.locked, result.values, pool) };
+  return { ...result, options, values: build(def, options, result.seeds, result.locked, result.values, sources) };
 }
 
 export function toggleLock(result: GeneratedResult, key: string): GeneratedResult {

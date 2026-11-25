@@ -601,5 +601,21 @@
   "theme.crimson": "Cramoisi",
   "theme.crimson.desc": "Touches rouge sang. Sombre.",
   "theme.highContrast": "Contraste élevé",
-  "theme.highContrast.desc": "Lisibilité maximale. Suit le réglage clair ou sombre de votre système."
+  "theme.highContrast.desc": "Lisibilité maximale. Suit le réglage clair ou sombre de votre système.",
+  "gen.custom.button": "Mes listes",
+  "gen.custom.desc": "Ajoutez vos propres entrées pour les champs de ce générateur. Elles sont enregistrées avec cette campagne, sur cet ordinateur.",
+  "gen.custom.field": "Champ",
+  "gen.custom.entries": "Vos entrées, une par ligne",
+  "gen.custom.placeholder": "Collez ici une liste entière, une entrée par ligne.",
+  "gen.custom.count": "Entrées",
+  "gen.custom.mix": "Ajouter mes entrées à celles fournies",
+  "gen.custom.only": "Utiliser uniquement mes entrées",
+  "gen.custom.onlyHint": "Tant qu'une liste est vide, les entrées fournies sont utilisées.",
+  "gen.custom.import": "Importer un .txt",
+  "gen.custom.importFailed": "Impossible de lire ce fichier",
+  "gen.custom.save": "Enregistrer la liste",
+  "gen.custom.close": "Fermer",
+  "gen.custom.saved": "Liste enregistrée",
+  "gen.custom.tooMany": "Une liste peut contenir jusqu'à 5000 entrées. Divisez-la et réessayez.",
+  "gen.custom.inUse": "Utilise votre liste"
 }

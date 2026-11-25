@@ -38,6 +38,7 @@ import {
   atlasMaps,
   atlasCategories,
   atlasMarkers,
+  generatorLists,
 } from "@/db/schema";
 import type { AtlasLinkType, BattleToken, MindMapNode, SoundscapeTrack } from "@/db/schema";
 import { ApiError } from "@/lib/api";
@@ -74,6 +75,7 @@ import {
   homebrewFeatCreateSchema,
   documentCreateSchema,
   clockCreateSchema,
+  generatorListCreateSchema,
   atlasMapCreateSchema,
   atlasMapUpdateSchema,
   atlasCategoryCreateSchema,
@@ -127,6 +129,7 @@ export async function exportCampaign(campaignId: number) {
     clockRows,
     atlasMapRows,
     atlasCategoryRows,
+    generatorListRows,
   ] = await Promise.all([
     db.select().from(characters).where(eq(characters.campaignId, campaignId)),
     db.select().from(npcs).where(eq(npcs.campaignId, campaignId)),
@@ -154,6 +157,7 @@ export async function exportCampaign(campaignId: number) {
     db.select().from(clocks).where(eq(clocks.campaignId, campaignId)),
     db.select().from(atlasMaps).where(eq(atlasMaps.campaignId, campaignId)),
     db.select().from(atlasCategories).where(eq(atlasCategories.campaignId, campaignId)),
+    db.select().from(generatorLists).where(eq(generatorLists.campaignId, campaignId)),
   ]);
 
   const charIds = characterRows.map((c) => c.id);
@@ -217,6 +221,8 @@ export async function exportCampaign(campaignId: number) {
     atlasMaps: atlasMapRows,
     atlasCategories: atlasCategoryRows,
     atlasMarkers: atlasMarkerRows,
+    // 1.1: older exports simply lack this key; the importer treats it as empty.
+    generatorLists: generatorListRows,
   };
 }
 
@@ -300,6 +306,7 @@ const ImportSchemas = {
   homebrewFeat: homebrewFeatCreateSchema.omit({ campaignId: true }),
   document: documentCreateSchema.omit({ campaignId: true }),
   clock: clockCreateSchema.omit({ campaignId: true }),
+  generatorList: generatorListCreateSchema.omit({ campaignId: true }),
   atlasCategory: atlasCategoryCreateSchema.omit({ campaignId: true }),
   // The fogged player render isn't carried over; the editor re-renders it.
   atlasMap: atlasMapCreateSchema
@@ -621,6 +628,14 @@ export async function importCampaign(raw: unknown): Promise<number> {
     }
     for (const { data } of validateRows(ImportSchemas.clock, bundle.clocks)) {
       tx.insert(clocks).values({ ...data, campaignId } as never).run();
+    }
+    // One list per generator field: a hand-edited file with duplicates keeps the first.
+    const seenLists = new Set<string>();
+    for (const { data } of validateRows(ImportSchemas.generatorList, bundle.generatorLists)) {
+      const key = `${data.generatorId}/${data.fieldKey}`;
+      if (seenLists.has(key)) continue;
+      seenLists.add(key);
+      tx.insert(generatorLists).values({ ...data, campaignId } as never).run();
     }
 
     // Atlas: categories, then maps (two passes for the self-referencing

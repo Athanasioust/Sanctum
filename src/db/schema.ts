@@ -3,6 +3,7 @@ import {
   sqliteTable,
   text,
   real,
+  uniqueIndex,
   type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core";
 import type { ConditionEntry } from "@/lib/conditions";
@@ -1247,6 +1248,34 @@ export const clocks = sqliteTable("clocks", {
  * no good for these in the desktop app: the bundled server gets a new port on
  * every launch, so the page's origin — and its localStorage — changes too.
  */
+/* -------------------------------------------------------------------------- */
+/*  Custom generator lists (1.1)                                               */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The DM's own entries for one field of one generator ("npc" / "hook"), per
+ * campaign. "mix" adds them to the built-in pool; "only" draws from them alone
+ * (falling back to the built-ins while the list is empty).
+ */
+export const generatorLists = sqliteTable(
+  "generator_lists",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    campaignId: integer("campaign_id")
+      .notNull()
+      .references(() => campaigns.id, { onDelete: "cascade" }),
+    generatorId: text("generator_id").notNull(),
+    fieldKey: text("field_key").notNull(),
+    entries: text("entries", { mode: "json" })
+      .notNull()
+      .$type<string[]>()
+      .$defaultFn(() => []),
+    mode: text("mode", { enum: ["mix", "only"] }).notNull().default("mix"),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("generator_lists_campaign_field_idx").on(t.campaignId, t.generatorId, t.fieldKey)],
+);
+
 export const appSettings = sqliteTable("app_settings", {
   key: text("key").primaryKey(),
   value: text("value").notNull(),
@@ -1348,3 +1377,5 @@ export type Clock = typeof clocks.$inferSelect;
 export type NewClock = typeof clocks.$inferInsert;
 export type Backup = typeof backups.$inferSelect;
 export type NewBackup = typeof backups.$inferInsert;
+export type GeneratorList = typeof generatorLists.$inferSelect;
+export type NewGeneratorList = typeof generatorLists.$inferInsert;

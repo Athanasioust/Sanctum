@@ -601,5 +601,21 @@
   "theme.crimson": "Carmesí",
   "theme.crimson.desc": "Detalles rojo sangre. Oscuro.",
   "theme.highContrast": "Alto contraste",
-  "theme.highContrast.desc": "Máxima legibilidad. Sigue el ajuste claro u oscuro de tu sistema."
+  "theme.highContrast.desc": "Máxima legibilidad. Sigue el ajuste claro u oscuro de tu sistema.",
+  "gen.custom.button": "Mis listas",
+  "gen.custom.desc": "Añade tus propias entradas para los campos de este generador. Se guardan con esta campaña, en este ordenador.",
+  "gen.custom.field": "Campo",
+  "gen.custom.entries": "Tus entradas, una por línea",
+  "gen.custom.placeholder": "Pega aquí una lista entera, una entrada por línea.",
+  "gen.custom.count": "Entradas",
+  "gen.custom.mix": "Incluir mis entradas junto a las integradas",
+  "gen.custom.only": "Usar solo mis entradas",
+  "gen.custom.onlyHint": "Mientras una lista esté vacía, se usan las integradas.",
+  "gen.custom.import": "Importar .txt",
+  "gen.custom.importFailed": "No se pudo leer ese archivo",
+  "gen.custom.save": "Guardar lista",
+  "gen.custom.close": "Cerrar",
+  "gen.custom.saved": "Lista guardada",
+  "gen.custom.tooMany": "Una lista admite hasta 5000 entradas. Divídela e inténtalo de nuevo.",
+  "gen.custom.inUse": "Usa tu lista"
 }

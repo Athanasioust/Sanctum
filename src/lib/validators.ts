@@ -937,3 +937,17 @@ export type CharacterSheetImportInput = z.infer<typeof characterSheetImportSchem
 
 /* re-export helpers for reuse by later entity schemas in this file */
 export { optionalString, stringArray, idArray };
+
+/* -------------------------------------------------------------------------- */
+/*  Custom generator lists (1.1)                                               */
+/* -------------------------------------------------------------------------- */
+
+export const generatorListCreateSchema = z.object({
+  campaignId: z.number().int(),
+  generatorId: z.string().trim().min(1).max(40),
+  fieldKey: z.string().trim().min(1).max(60),
+  // Generous: whole text files of names or rumors get pasted in.
+  entries: z.array(z.string().trim().min(1).max(2000)).max(5000).optional().default([]),
+  mode: z.enum(["mix", "only"]).optional().default("mix"),
+});
+export const generatorListUpdateSchema = generatorListCreateSchema.partial();

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Copy, Dices, Lock, LockOpen, MapPinPlus, RefreshCw, Save } from "lucide-react";
+import { Copy, Dices, ListChecks, Lock, LockOpen, MapPinPlus, RefreshCw, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -20,16 +20,25 @@ import { cn } from "@/lib/utils";
 import {
   generate,
   generatorById,
+  listKeyFor,
   reroll,
   resultText,
   toggleLock,
   withOptions,
+  type CustomLists,
   type GeneratedResult,
+  type GenSources,
   type PoolItem,
   type SaveTarget,
   NONE,
 } from "@/lib/generators/registry";
 import { addRecordToMap, saveResult, type SavedRecord } from "@/lib/generators/save";
+import { CustomListsDialog } from "@/components/generators/custom-lists-dialog";
+import type { GeneratorList } from "@/db/schema";
+
+function toCustom(lists: GeneratorList[]): CustomLists {
+  return Object.fromEntries(lists.map((l) => [l.fieldKey, { entries: l.entries, mode: l.mode }]));
+}
 
 const SAVE_LABEL: Record<SaveTarget, TranslationKey> = {
   npc: "gen.saveAsNpc",
@@ -60,6 +69,7 @@ export function GeneratorPanel({
   const router = useRouter();
   const def = generatorById(generatorId);
   const [pool, setPool] = useState<PoolItem[]>([]);
+  const [lists, setLists] = useState<GeneratorList[]>([]);
   const [result, setResult] = useState<GeneratedResult | null>(() => (def ? generate(def) : null));
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState<SavedRecord | null>(null);
@@ -86,6 +96,16 @@ export function GeneratorPanel({
         })
         .catch(() => {});
     }
+    // The DM's own lists: once they arrive, the current result is rebuilt from
+    // the same seeds so the very first roll already draws from them.
+    api
+      .get<GeneratorList[]>(`/api/generator-lists?campaignId=${campaignId}&generatorId=${def.id}`)
+      .then((rows) => {
+        if (cancelled || rows.length === 0) return;
+        setLists(rows);
+        setResult((r) => (r ? withOptions(def, r, r.options, { custom: toCustom(rows) }) : r));
+      })
+      .catch(() => {});
     if (needsShops) {
       api
         .get<Option[]>(`/api/shops?campaignId=${campaignId}`)
@@ -104,6 +124,8 @@ export function GeneratorPanel({
   }, [def, campaignId, needsShops, canMap]);
 
   const text = useMemo(() => (def && result ? resultText(def, result, t) : ""), [def, result, t]);
+  const custom = useMemo(() => toCustom(lists), [lists]);
+  const sources: GenSources = { pool, custom };
 
   if (!def || !result) return null;
 
@@ -146,6 +168,13 @@ export function GeneratorPanel({
     }
   }
 
+  function listSaved(list: GeneratorList) {
+    if (!def || !result) return;
+    const next = [...lists.filter((l) => l.id !== list.id), list];
+    setLists(next);
+    update(withOptions(def, result, result.options, { pool, custom: toCustom(next) }));
+  }
+
   async function copy() {
     try {
       await navigator.clipboard.writeText(text);
@@ -165,7 +194,7 @@ export function GeneratorPanel({
               <Select
                 value={result.options[o.key] ?? o.default}
                 onValueChange={(value) =>
-                  update(withOptions(def, result, { ...result.options, [o.key]: value }, pool))
+                  update(withOptions(def, result, { ...result.options, [o.key]: value }, sources))
                 }
               >
                 <SelectTrigger className="h-9">
@@ -194,6 +223,14 @@ export function GeneratorPanel({
             <div key={f.key} className="flex items-start gap-3 px-3 py-2.5">
               <dt className="w-28 shrink-0 pt-0.5 text-xs font-medium uppercase text-muted-foreground">
                 {t(f.labelKey)}
+                {(() => {
+                  const key = listKeyFor(f, result.options);
+                  return key && custom[key]?.entries.length ? (
+                    <span title={t("gen.custom.inUse")} aria-label={t("gen.custom.inUse")} className="ml-1 inline-flex align-middle text-primary">
+                      <ListChecks className="size-3" />
+                    </span>
+                  ) : null;
+                })()}
               </dt>
               <dd
                 className={cn(
@@ -211,7 +248,7 @@ export function GeneratorPanel({
                   className="size-7"
                   aria-label={t("gen.rerollField")}
                   title={t("gen.rerollField")}
-                  onClick={() => update(reroll(def, result, [f.key], pool))}
+                  onClick={() => update(reroll(def, result, [f.key], sources))}
                 >
                   <RefreshCw className="size-3.5" />
                 </Button>
@@ -236,12 +273,19 @@ export function GeneratorPanel({
       <p className="text-xs text-muted-foreground">{t("gen.englishNote")}</p>
 
       <div className="flex flex-wrap items-center gap-2">
-        <Button type="button" onClick={() => update(reroll(def, result, "all", pool))}>
+        <Button type="button" onClick={() => update(reroll(def, result, "all", sources))}>
           <Dices className="size-4" /> {t("gen.rerollAll")}
         </Button>
         <Button type="button" variant="outline" onClick={copy}>
           <Copy className="size-4" /> {t("gen.copy")}
         </Button>
+        <CustomListsDialog
+          campaignId={campaignId}
+          def={def}
+          options={result.options}
+          lists={lists}
+          onSaved={listSaved}
+        />
 
         {needsShops ? (
           <>

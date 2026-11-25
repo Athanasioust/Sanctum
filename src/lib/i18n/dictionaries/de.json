@@ -601,5 +601,21 @@
   "theme.crimson": "Karmesin",
   "theme.crimson.desc": "Blutrote Akzente. Dunkel.",
   "theme.highContrast": "Hoher Kontrast",
-  "theme.highContrast.desc": "Maximale Lesbarkeit. Folgt der Hell- oder Dunkel-Einstellung deines Systems."
+  "theme.highContrast.desc": "Maximale Lesbarkeit. Folgt der Hell- oder Dunkel-Einstellung deines Systems.",
+  "gen.custom.button": "Meine Listen",
+  "gen.custom.desc": "Füge eigene Einträge für die Felder dieses Generators hinzu. Sie werden mit dieser Kampagne auf diesem Computer gespeichert.",
+  "gen.custom.field": "Feld",
+  "gen.custom.entries": "Deine Einträge, einer pro Zeile",
+  "gen.custom.placeholder": "Füge hier eine ganze Liste ein, ein Eintrag pro Zeile.",
+  "gen.custom.count": "Einträge",
+  "gen.custom.mix": "Meine Einträge zusätzlich zu den eingebauten verwenden",
+  "gen.custom.only": "Nur meine Einträge verwenden",
+  "gen.custom.onlyHint": "Solange eine Liste leer ist, werden die eingebauten Einträge verwendet.",
+  "gen.custom.import": ".txt importieren",
+  "gen.custom.importFailed": "Die Datei konnte nicht gelesen werden",
+  "gen.custom.save": "Liste speichern",
+  "gen.custom.close": "Schließen",
+  "gen.custom.saved": "Liste gespeichert",
+  "gen.custom.tooMany": "Eine Liste fasst bis zu 5000 Einträge. Teile sie auf und versuche es erneut.",
+  "gen.custom.inUse": "Nutzt deine Liste"
 }

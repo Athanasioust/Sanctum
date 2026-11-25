@@ -601,5 +601,21 @@
   "theme.crimson": "Crimson",
   "theme.crimson.desc": "Blood-red highlights. Dark.",
   "theme.highContrast": "High Contrast",
-  "theme.highContrast.desc": "Maximum readability. Follows your system's light or dark setting."
+  "theme.highContrast.desc": "Maximum readability. Follows your system's light or dark setting.",
+  "gen.custom.button": "My lists",
+  "gen.custom.desc": "Add your own entries for this generator's fields. They are saved with this campaign, on this computer.",
+  "gen.custom.field": "Field",
+  "gen.custom.entries": "Your entries, one per line",
+  "gen.custom.placeholder": "Paste a whole list here, one entry per line.",
+  "gen.custom.count": "Entries",
+  "gen.custom.mix": "Include my entries alongside the built-ins",
+  "gen.custom.only": "Use only my entries",
+  "gen.custom.onlyHint": "While a list is empty, the built-ins are used.",
+  "gen.custom.import": "Import .txt",
+  "gen.custom.importFailed": "Couldn't read that file",
+  "gen.custom.save": "Save list",
+  "gen.custom.close": "Close",
+  "gen.custom.saved": "List saved",
+  "gen.custom.tooMany": "A list can hold up to 5000 entries. Split it and try again.",
+  "gen.custom.inUse": "Draws from your list"
 }

@@ -601,5 +601,21 @@
   "theme.crimson": "Cremisi",
   "theme.crimson.desc": "Dettagli rosso sangue. Scuro.",
   "theme.highContrast": "Alto contrasto",
-  "theme.highContrast.desc": "Massima leggibilità. Segue l'impostazione chiara o scura del sistema."
+  "theme.highContrast.desc": "Massima leggibilità. Segue l'impostazione chiara o scura del sistema.",
+  "gen.custom.button": "Le mie liste",
+  "gen.custom.desc": "Aggiungi voci tue per i campi di questo generatore. Vengono salvate con questa campagna, su questo computer.",
+  "gen.custom.field": "Campo",
+  "gen.custom.entries": "Le tue voci, una per riga",
+  "gen.custom.placeholder": "Incolla qui un'intera lista, una voce per riga.",
+  "gen.custom.count": "Voci",
+  "gen.custom.mix": "Includi le mie voci insieme a quelle integrate",
+  "gen.custom.only": "Usa solo le mie voci",
+  "gen.custom.onlyHint": "Finché una lista è vuota, vengono usate le voci integrate.",
+  "gen.custom.import": "Importa .txt",
+  "gen.custom.importFailed": "Impossibile leggere il file",
+  "gen.custom.save": "Salva lista",
+  "gen.custom.close": "Chiudi",
+  "gen.custom.saved": "Lista salvata",
+  "gen.custom.tooMany": "Una lista può contenere fino a 5000 voci. Dividila e riprova.",
+  "gen.custom.inUse": "Usa la tua lista"
 }
