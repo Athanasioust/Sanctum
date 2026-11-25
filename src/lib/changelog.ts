@@ -14,6 +14,17 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.1.0",
+    date: "2026-11-25",
+    highlights: [
+      "Colour themes: pick Candlelight (the new candle-gold default), Parchment, Arcane, Forest, Crimson or High Contrast in Settings. Arcane is closest to the old look, and High Contrast follows your system's light or dark setting. The theme covers every page, the battle map, the atlas and the player view, and is remembered between launches.",
+      "No more lost notes: location notes, sticky notes, quests, story events and session prep now save as you type and when you click away, with a Saved indicator. A dialog with typed text no longer closes on a stray click, and long notes scroll properly.",
+      "Not sure where a note goes? Short hints now say it: notes about a place go on that location, a session's planned encounter or dungeon goes in Sessions, and the ongoing plot goes in Story.",
+      "Your own generator lists: add your own names, rumors, quest hooks and more to any generator from My lists. Paste a whole list or import a .txt file, then mix your entries in with the built-ins or use only yours. Lists are saved per campaign and travel with campaign export.",
+      "Fix: editing a quest no longer clears its sub-objectives, and error text is easier to read on dark themes.",
+    ],
+  },
+  {
     version: "1.0.0",
     date: "2026-11-09",
     highlights: [
