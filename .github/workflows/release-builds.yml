@@ -120,7 +120,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" dist/*.AppImage dist/*.tar.gz --clobber
+            # Upload each file separately, with retries: the upload API
+            # sometimes answers 500/404 when GitHub is under load.
+            for f in dist/*.AppImage dist/*.tar.gz; do
+              for try in 1 2 3 4; do
+                gh release upload "$TAG" "$f" --clobber && break
+                [ "$try" = 4 ] && { echo "::error::could not upload $f"; exit 1; }
+                echo "::warning::upload of $f failed, retrying"; sleep $((try * 20))
+              done
+            done
           else
             echo "::warning::No GitHub Release for $TAG yet, so nothing was attached. Create it, then re-run this workflow for $TAG."
           fi
@@ -242,7 +250,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" dist/*.dmg dist/*.zip --clobber
+            # Upload each file separately, with retries: the upload API
+            # sometimes answers 500/404 when GitHub is under load.
+            for f in dist/*.dmg dist/*.zip; do
+              for try in 1 2 3 4; do
+                gh release upload "$TAG" "$f" --clobber && break
+                [ "$try" = 4 ] && { echo "::error::could not upload $f"; exit 1; }
+                echo "::warning::upload of $f failed, retrying"; sleep $((try * 20))
+              done
+            done
           else
             echo "::warning::No GitHub Release for $TAG yet, so nothing was attached. Create it, then re-run this workflow for $TAG."
           fi
