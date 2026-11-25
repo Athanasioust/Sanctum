@@ -116,7 +116,7 @@ export function CreateCampaignDialog({ trigger }: { trigger?: React.ReactNode })
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="campaign-name">
-                Name <span className="text-destructive">*</span>
+                Name <span className="text-danger">*</span>
               </Label>
               <Input
                 id="campaign-name"
@@ -169,7 +169,7 @@ export function CreateCampaignDialog({ trigger }: { trigger?: React.ReactNode })
               </p>
             </div>
 
-            {error ? <p className="text-sm text-destructive">{error}</p> : null}
+            {error ? <p className="text-sm text-danger">{error}</p> : null}
           </div>
 
           <DialogFooter>

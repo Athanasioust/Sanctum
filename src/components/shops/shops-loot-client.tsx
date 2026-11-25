@@ -381,7 +381,7 @@ function RollTableDialog({
                     onChange={(ev) => updateEntry(i, { result: ev.target.value })}
                     placeholder="Result"
                   />
-                  <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-destructive" onClick={() => setEntries((p) => p.filter((_, idx) => idx !== i))} aria-label="Remove entry">
+                  <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-danger" onClick={() => setEntries((p) => p.filter((_, idx) => idx !== i))} aria-label="Remove entry">
                     <Trash2 className="size-4" />
                   </Button>
                 </div>

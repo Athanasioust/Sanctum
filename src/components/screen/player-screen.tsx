@@ -419,7 +419,7 @@ function PlayerBattleMap({
           fitWidth
         />
       </div>
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {error ? <p className="text-sm text-danger">{error}</p> : null}
     </div>
   );
 }
@@ -555,7 +555,7 @@ function MonsterStatus({ band }: { band: HealthBand }) {
   let tone = "text-success";
   if (band === "down") {
     label = t("player.down");
-    tone = "text-destructive";
+    tone = "text-danger";
   } else if (band === "bloodied") {
     label = t("player.bloodied");
     tone = "text-orange-400";

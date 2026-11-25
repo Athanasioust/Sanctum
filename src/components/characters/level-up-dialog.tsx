@@ -241,7 +241,7 @@ export function LevelUpDialog({ character }: { character: Character }) {
           </Field>
 
           {blocked && (
-            <div className="flex gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+            <div className="flex gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-danger">
               <TriangleAlert className="size-4 shrink-0" />
               <div>
                 <p>{prereq.reason}</p>

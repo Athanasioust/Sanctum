@@ -307,7 +307,7 @@ export function MindMap({
         {map && (
           <Button
             variant="ghost"
-            className="text-muted-foreground hover:text-destructive"
+            className="text-muted-foreground hover:text-danger"
             onClick={() => setDeleteOpen(true)}
           >
             <Trash2 className="size-4" /> Delete

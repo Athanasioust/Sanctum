@@ -29,7 +29,7 @@ export const THEMES = [
     nameKey: "theme.candlelight",
     descKey: "theme.candlelight.desc",
     mode: "dark",
-    swatch: ["#0f0f0f", "#161618", "#7c3aed"],
+    swatch: ["#0f0d0a", "#17140f", "#e6a83e"],
   },
   {
     id: "parchment",
@@ -70,7 +70,7 @@ export const THEMES = [
 
 export type ThemeId = (typeof THEMES)[number]["id"];
 
-/** The original look, and what a fresh install gets. */
+/** Candle gold, and what a fresh install gets. */
 export const DEFAULT_THEME: ThemeId = "candlelight";
 
 export function isThemeId(value: unknown): value is ThemeId {

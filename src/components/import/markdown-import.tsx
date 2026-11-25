@@ -314,7 +314,7 @@ export function MarkdownImport({
                 </Select>
               </Field>
               {owners.length === 0 ? (
-                <p className="mt-2 text-xs text-destructive">
+                <p className="mt-2 text-xs text-danger">
                   This campaign has no characters or NPCs yet. Create one first, or import
                   those spell notes as Notes instead.
                 </p>
@@ -428,7 +428,7 @@ function ImportResults({ results }: { results: ImportResult[] }) {
               <span
                 className={cn(
                   "shrink-0 font-medium",
-                  r.status === "failed" ? "text-destructive" : "text-muted-foreground",
+                  r.status === "failed" ? "text-danger" : "text-muted-foreground",
                 )}
               >
                 {r.status}

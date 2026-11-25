@@ -488,7 +488,7 @@ export function AtlasEditor({
             }}
             trigger={<Button size="sm" variant="outline">{t("atlas.editMap")}</Button>}
           />
-          <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setConfirmDelete(true)}>
+          <Button size="sm" variant="ghost" className="text-danger" onClick={() => setConfirmDelete(true)}>
             {t("action.delete")}
           </Button>
         </div>

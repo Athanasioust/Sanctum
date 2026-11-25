@@ -31,7 +31,7 @@ export function DangerZone({
 
   return (
     <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-5">
-      <h3 className="font-heading text-lg font-semibold text-destructive">Danger zone</h3>
+      <h3 className="font-heading text-lg font-semibold text-danger">Danger zone</h3>
       <p className="mt-1 text-sm text-muted-foreground">
         Permanently delete this campaign and everything in it. Consider exporting first.
       </p>

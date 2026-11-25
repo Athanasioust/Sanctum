@@ -269,7 +269,7 @@ function QuestCard({
           <Button
             variant="ghost"
             size="icon"
-            className="size-8 text-destructive hover:text-destructive"
+            className="size-8 text-danger hover:text-danger"
             onClick={remove}
             aria-label={`Delete ${quest.title}`}
           >

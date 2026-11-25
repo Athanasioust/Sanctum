@@ -207,7 +207,7 @@ function HandoutCard({
               </Button>
             }
           />
-          <Button variant="ghost" size="icon" className="size-8 text-destructive hover:text-destructive" onClick={remove} aria-label={`Delete ${handout.title}`}>
+          <Button variant="ghost" size="icon" className="size-8 text-danger hover:text-danger" onClick={remove} aria-label={`Delete ${handout.title}`}>
             <Trash2 className="size-3.5" />
           </Button>
         </div>

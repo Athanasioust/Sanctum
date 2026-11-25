@@ -313,7 +313,7 @@ export function PdfViewer({ url, name }: { url: string; name: string }) {
           </p>
         )}
         {error && (
-          <p className="max-w-sm self-center text-center text-sm text-destructive">{error}</p>
+          <p className="max-w-sm self-center text-center text-sm text-danger">{error}</p>
         )}
         <canvas
           ref={canvasRef}

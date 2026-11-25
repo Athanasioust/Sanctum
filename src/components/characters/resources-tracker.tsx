@@ -169,7 +169,7 @@ export function ResourcesTracker({
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="size-7 text-muted-foreground hover:text-destructive"
+                  className="size-7 text-muted-foreground hover:text-danger"
                   onClick={() => remove(r.id)}
                   aria-label={`${t("action.delete")} ${r.name}`}
                 >

@@ -553,7 +553,7 @@ export function RelationsGraph({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="size-7 text-destructive hover:text-destructive"
+                  className="size-7 text-danger hover:text-danger"
                   onClick={() => remove(rel)}
                   aria-label="Delete relationship"
                 >

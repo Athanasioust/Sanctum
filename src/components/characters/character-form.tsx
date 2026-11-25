@@ -215,7 +215,7 @@ export function CharacterForm({ campaignId, character }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-8 pb-24">
       {error ? (
-        <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-2.5 text-sm text-destructive">
+        <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-2.5 text-sm text-danger">
           {error}
         </div>
       ) : null}
@@ -558,7 +558,7 @@ function MulticlassEditor({
           <Field label="Level" className="w-24">
             <Input type="number" min={1} value={entry.level} onChange={(e) => update(i, { level: Number(e.target.value || 1) })} />
           </Field>
-          <Button type="button" size="icon" variant="ghost" className="text-muted-foreground hover:text-destructive" onClick={() => removeAt(i)} aria-label="Remove class">
+          <Button type="button" size="icon" variant="ghost" className="text-muted-foreground hover:text-danger" onClick={() => removeAt(i)} aria-label="Remove class">
             <Trash2 className="size-4" />
           </Button>
         </div>

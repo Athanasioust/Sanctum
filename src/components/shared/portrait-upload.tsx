@@ -97,7 +97,7 @@ export function PortraitUpload({
           type="button"
           onClick={remove}
           disabled={busy || refreshing}
-          className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full border border-border bg-card text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100 focus-visible:opacity-100"
+          className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full border border-border bg-card text-muted-foreground opacity-0 transition-opacity hover:text-danger group-hover:opacity-100 focus-visible:opacity-100"
           aria-label={t("portrait.remove")}
           title={t("portrait.remove")}
         >

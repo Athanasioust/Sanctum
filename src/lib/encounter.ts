@@ -132,7 +132,7 @@ export const DIFFICULTY_STYLES: Record<Difficulty, string> = {
   Easy: "text-success",
   Medium: "text-amber-400",
   Hard: "text-orange-400",
-  Deadly: "text-destructive",
+  Deadly: "text-danger",
 };
 
 /** Dictionary key for a difficulty band's display name. */

@@ -416,7 +416,7 @@ function MonthEventList({
               </div>
               <p className="text-xs text-muted-foreground">{dateOf(e)}</p>
             </button>
-            <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-destructive" onClick={() => onDelete(e.id)} aria-label={`Delete ${e.title}`}>
+            <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-danger" onClick={() => onDelete(e.id)} aria-label={`Delete ${e.title}`}>
               <Trash2 className="size-4" />
             </Button>
           </div>

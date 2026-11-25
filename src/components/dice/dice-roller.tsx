@@ -318,7 +318,7 @@ export function DiceRoller({ campaignId }: { campaignId: number }) {
             </div>
             <p className="mt-1.5 text-xs text-muted-foreground">
               {formula && inputError ? (
-                <span className="text-destructive">{inputError}</span>
+                <span className="text-danger">{inputError}</span>
               ) : (
                 "Supports 2d6+3, 1d20-1, 4d6kh3, d%."
               )}
@@ -448,7 +448,7 @@ function ResultCard({ entry }: { entry: HistoryEntry }) {
           <span
             className={cn(
               "shrink-0 text-xs font-semibold uppercase",
-              result.critical === "hit" ? "text-primary" : "text-destructive",
+              result.critical === "hit" ? "text-primary" : "text-danger",
             )}
           >
             {result.critical === "hit" ? "Nat 20" : "Nat 1"}

@@ -1408,7 +1408,7 @@ function ParticipantRow({
           <Button
             size="icon"
             variant="ghost"
-            className="size-8 text-muted-foreground hover:text-destructive"
+            className="size-8 text-muted-foreground hover:text-danger"
             onClick={() => setConfirmOpen(true)}
             aria-label="Remove"
           >
@@ -1819,7 +1819,7 @@ function HpStepper({
     <div className="flex items-center gap-0.5">
       <HoldRepeatButton
         ariaLabel="Damage 1 (hold for faster)"
-        className="text-muted-foreground hover:text-destructive"
+        className="text-muted-foreground hover:text-danger"
         onStep={(magnitude) => onAdjustHp(participantId, -magnitude)}
       >
         <Minus className="size-4" />
@@ -1930,7 +1930,7 @@ function HpDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="icon" variant="ghost" className="size-8" aria-label="Adjust HP">
-          <Heart className="size-4 text-destructive" />
+          <Heart className="size-4 text-danger" />
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-sm">
@@ -2630,7 +2630,7 @@ function BestiaryPicker({
                         >
                           <span className="min-w-0 truncate font-medium">{b.name}</span>
                           {blocked ? (
-                            <span className="flex shrink-0 items-center gap-1 text-xs text-destructive/80">
+                            <span className="flex shrink-0 items-center gap-1 text-xs text-danger/80">
                               {isDown ? <Skull className="size-3" /> : null}
                               {noHpSet ? "No HP set" : "Down · 0 HP"}
                             </span>

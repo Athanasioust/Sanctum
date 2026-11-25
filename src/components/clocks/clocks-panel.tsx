@@ -134,7 +134,7 @@ export function ClocksPanel({
                 <p className="text-sm tabular-nums text-muted-foreground">
                   {clock.filled} / {clock.segments}
                   {clock.filled >= clock.segments ? (
-                    <span className="ml-1.5 font-medium text-destructive">{t("clocks.full")}</span>
+                    <span className="ml-1.5 font-medium text-danger">{t("clocks.full")}</span>
                   ) : null}
                 </p>
                 {clock.note ? (
@@ -187,7 +187,7 @@ export function ClocksPanel({
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="size-7 text-muted-foreground hover:text-destructive"
+                    className="size-7 text-muted-foreground hover:text-danger"
                     onClick={() => setDeleting(clock)}
                     aria-label={t("action.delete")}
                     title={t("action.delete")}

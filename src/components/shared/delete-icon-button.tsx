@@ -32,7 +32,7 @@ export function DeleteIconButton({
         type="button"
         size="icon"
         variant="ghost"
-        className={cn("size-8 text-muted-foreground hover:text-destructive", buttonClassName)}
+        className={cn("size-8 text-muted-foreground hover:text-danger", buttonClassName)}
         onClick={() => setOpen(true)}
         aria-label={`Delete ${label}`}
       >

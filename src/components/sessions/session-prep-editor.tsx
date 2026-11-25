@@ -129,7 +129,7 @@ export function SessionPrepEditor({
                 className={cn(pp.checked && "text-muted-foreground line-through")}
                 placeholder="Plot point…"
               />
-              <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-destructive" onClick={() => setPlotPoints((p) => p.filter((_, idx) => idx !== i))} aria-label="Remove plot point">
+              <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-danger" onClick={() => setPlotPoints((p) => p.filter((_, idx) => idx !== i))} aria-label="Remove plot point">
                 <Trash2 className="size-4" />
               </Button>
             </div>

@@ -23,14 +23,14 @@ export function Field({
       {label ? (
         <Label htmlFor={htmlFor}>
           {label}
-          {required ? <span className="text-destructive"> *</span> : null}
+          {required ? <span className="text-danger"> *</span> : null}
         </Label>
       ) : null}
       {children}
       {hint && !error ? (
         <p className="text-xs text-muted-foreground">{hint}</p>
       ) : null}
-      {error ? <p className="text-xs text-destructive">{error}</p> : null}
+      {error ? <p className="text-xs text-danger">{error}</p> : null}
     </div>
   );
 }

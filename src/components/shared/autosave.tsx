@@ -119,7 +119,7 @@ export function SaveStatus({ state, className }: { state: Autosave; className?: 
       aria-live="polite"
       className={cn(
         "inline-flex items-center gap-1 text-xs",
-        failed ? "text-destructive" : "text-muted-foreground",
+        failed ? "text-danger" : "text-muted-foreground",
         className,
       )}
     >

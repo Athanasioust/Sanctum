@@ -69,7 +69,7 @@ export function CharacterGrid({
                       <Shield className="size-4 text-primary" /> AC {c.armorClass}
                     </span>
                     <span className="flex items-center gap-1">
-                      <Heart className="size-4 text-destructive" /> {c.hpMax} HP
+                      <Heart className="size-4 text-danger" /> {c.hpMax} HP
                     </span>
                   </div>
                 </div>

@@ -299,7 +299,7 @@ export function RumorsBoard({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="size-7 text-destructive hover:text-destructive"
+                      className="size-7 text-danger hover:text-danger"
                       onClick={() => remove(rumor)}
                       aria-label="Delete rumor"
                     >

@@ -166,7 +166,7 @@ export function NpcForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-8 pb-24">
       {error ? (
-        <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-2.5 text-sm text-destructive">{error}</div>
+        <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-2.5 text-sm text-danger">{error}</div>
       ) : null}
 
       <FormSection title="Identity">

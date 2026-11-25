@@ -509,7 +509,7 @@ export function CharacterWizard({ campaignId }: { campaignId: number }) {
             <p
               className={cn(
                 "text-sm font-medium",
-                skillsRemaining === 0 ? "text-primary" : skillsRemaining < 0 ? "text-destructive" : "",
+                skillsRemaining === 0 ? "text-primary" : skillsRemaining < 0 ? "text-danger" : "",
               )}
             >
               {skillsRemaining > 0
@@ -579,7 +579,7 @@ export function CharacterWizard({ campaignId }: { campaignId: number }) {
       </div>
 
       {currentError && (
-        <p className="flex items-center gap-1.5 text-sm text-destructive">
+        <p className="flex items-center gap-1.5 text-sm text-danger">
           <TriangleAlert className="size-4" /> {currentError}
         </p>
       )}
@@ -656,7 +656,7 @@ function PointBuyMeter({ scores }: { scores: AbilityScores }) {
           style={{ width: `${Math.min(100, (spent / POINT_BUY_BUDGET) * 100)}%` }}
         />
       </div>
-      <p className={cn("text-sm tabular-nums", over && "text-destructive")}>
+      <p className={cn("text-sm tabular-nums", over && "text-danger")}>
         {spent} / {POINT_BUY_BUDGET} points
       </p>
     </div>

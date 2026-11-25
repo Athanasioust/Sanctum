@@ -340,7 +340,7 @@ export function MagicItemsList({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="size-7 text-destructive hover:text-destructive"
+                      className="size-7 text-danger hover:text-danger"
                       onClick={() => remove(item)}
                       aria-label={`Delete ${item.name}`}
                     >

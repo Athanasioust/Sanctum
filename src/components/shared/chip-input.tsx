@@ -53,7 +53,7 @@ export function ChipInput({
               <button
                 type="button"
                 onClick={() => onChange(value.filter((t) => t !== tag))}
-                className="text-muted-foreground hover:text-destructive"
+                className="text-muted-foreground hover:text-danger"
                 aria-label={`Remove ${tag}`}
               >
                 <X className="size-3" />
