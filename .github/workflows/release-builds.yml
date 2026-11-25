@@ -1,0 +1,251 @@
+# Builds the Linux and macOS desktop apps in the cloud for every version tag.
+#
+# Windows is still built locally (npm run desktop:build:win). Adding it here
+# later is one more job on windows-latest shaped like the two below.
+#
+# Runs on:
+#   - every pushed tag matching v* (e.g. v1.2.0)
+#   - by hand: gh workflow run release-builds.yml -f tag=v1.1.0
+#
+# For a real tag, each job attaches its files to that tag's GitHub Release
+# (assets only, the release notes are never touched) and, if the repository
+# secret BUTLER_API_KEY is set, pushes them to itch.io. To turn the itch push on:
+#   gh secret set BUTLER_API_KEY      (paste the key from itch.io > Settings > API keys)
+# Without the secret the itch step is skipped and the files are still on the
+# Release and in the run's artifacts, ready to download and push by hand.
+#
+# macOS builds are UNSIGNED (ad-hoc signed only, see electron-builder.yml).
+# Mac users right-click the app and choose Open the first time, the same
+# friction as "Run anyway" on Windows. Notarization needs an Apple Developer
+# account ($99/year); see the marked spot in the macos job.
+
+name: Release builds
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to build, e.g. v1.1.0"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  # The tag being built: the dispatch input, or the pushed tag.
+  TAG: ${{ inputs.tag || github.ref_name }}
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out the tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Work out the version
+        id: version
+        shell: bash
+        run: |
+          if [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+            echo "is_tag=true" >> "$GITHUB_OUTPUT"
+            echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_tag=false" >> "$GITHUB_OUTPUT"
+            echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The bundle-leak guard (MAY_SHIP allowlist) and the LAN guard copy run
+      # inside desktop:build and fail it if anything is wrong.
+      #
+      # CI=false and unsetting GITHUB_REF_TYPE stop electron-builder's implicit
+      # "publish on CI / on tag" behaviour: this workflow attaches the files to
+      # the Release itself, and the build script does not pass --publish never.
+      - name: Build Linux (AppImage + tar.gz)
+        shell: bash
+        env:
+          CI: "false"
+        run: |
+          unset GITHUB_REF_TYPE
+          npm run desktop:build:linux
+
+      - name: Confirm the guards made it into the package
+        shell: bash
+        run: |
+          res=dist/linux-unpacked/resources/standalone
+          for f in lan-guard.cjs sanctum-server.cjs server.js; do
+            test -f "$res/$f" || { echo "::error::$f missing from the packaged app"; exit 1; }
+          done
+          cmp scripts/lan-guard.cjs "$res/lan-guard.cjs"
+          echo "Leak guard passed (build succeeded); LAN guard present and identical to the repo copy."
+
+      - name: List dist/
+        run: ls -la dist/
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sanctum-linux-${{ steps.version.outputs.version }}
+          path: |
+            dist/*.AppImage
+            dist/*.tar.gz
+          if-no-files-found: error
+
+      - name: Attach to the GitHub Release
+        if: steps.version.outputs.is_tag == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/*.AppImage dist/*.tar.gz --clobber
+          else
+            echo "::warning::No GitHub Release for $TAG yet, so nothing was attached. Create it, then re-run this workflow for $TAG."
+          fi
+
+      - name: Push to itch.io
+        if: steps.version.outputs.is_tag == 'true'
+        shell: bash
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if [ -z "$BUTLER_API_KEY" ]; then
+            echo "BUTLER_API_KEY is not set; skipping the itch push. The files are on the Release and in this run's artifacts."
+            exit 0
+          fi
+          curl -sSfL -o butler.zip https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
+          unzip -q butler.zip -d "$RUNNER_TEMP/butler" && chmod +x "$RUNNER_TEMP/butler/butler"
+          b="$RUNNER_TEMP/butler/butler"
+          "$b" push dist/*.AppImage athanasioust/sanctum:linux-appimage --userversion "$VERSION"
+          "$b" push dist/*.tar.gz   athanasioust/sanctum:linux-tar      --userversion "$VERSION"
+
+  macos:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out the tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Work out the version
+        id: version
+        shell: bash
+        run: |
+          if [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+            echo "is_tag=true" >> "$GITHUB_OUTPUT"
+            echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_tag=false" >> "$GITHUB_OUTPUT"
+            echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Builds Intel (x64) and Apple Silicon (arm64) DMGs and zips, unsigned.
+      #
+      # ---- Signing + notarization (NOT enabled) --------------------------------
+      # To ship a signed, notarized build later:
+      #   1. Add repository secrets: CSC_LINK (base64 .p12 of the Developer ID
+      #      Application certificate), CSC_KEY_PASSWORD, APPLE_ID,
+      #      APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID.
+      #   2. In electron-builder.yml under `mac:`, remove `identity: "-"`, set
+      #      `hardenedRuntime: true` and add `notarize: true`.
+      #   3. In this step, drop CSC_IDENTITY_AUTO_DISCOVERY and pass the secrets:
+      #        CSC_LINK: ${{ secrets.CSC_LINK }}
+      #        CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+      #        APPLE_ID: ${{ secrets.APPLE_ID }}
+      #        APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+      #        APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      # ---------------------------------------------------------------------------
+      #
+      # CI=false and unsetting GITHUB_REF_TYPE: see the Linux build step.
+      - name: Build macOS (DMG + zip, x64 and arm64, unsigned)
+        shell: bash
+        env:
+          CI: "false"
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: |
+          unset GITHUB_REF_TYPE
+          npm run desktop:build:mac
+
+      - name: Confirm the guards made it into the package
+        shell: bash
+        run: |
+          found=0
+          for app in dist/mac*/Sanctum.app; do
+            res="$app/Contents/Resources/standalone"
+            for f in lan-guard.cjs sanctum-server.cjs server.js; do
+              test -f "$res/$f" || { echo "::error::$f missing from $app"; exit 1; }
+            done
+            cmp scripts/lan-guard.cjs "$res/lan-guard.cjs"
+            echo "$app: LAN guard present and identical to the repo copy."
+            found=$((found+1))
+          done
+          [ "$found" -ge 2 ] || { echo "::error::expected an x64 and an arm64 app, found $found"; exit 1; }
+          echo "Leak guard passed (build succeeded)."
+
+      - name: List dist/
+        run: ls -la dist/
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sanctum-macos-${{ steps.version.outputs.version }}
+          path: |
+            dist/*.dmg
+            dist/*.zip
+          if-no-files-found: error
+
+      - name: Attach to the GitHub Release
+        if: steps.version.outputs.is_tag == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/*.dmg dist/*.zip --clobber
+          else
+            echo "::warning::No GitHub Release for $TAG yet, so nothing was attached. Create it, then re-run this workflow for $TAG."
+          fi
+
+      # macos-dmg and macos-zip are new channels; butler creates them on the
+      # first push. Each channel holds both the Intel and the Apple Silicon file.
+      - name: Push to itch.io
+        if: steps.version.outputs.is_tag == 'true'
+        shell: bash
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if [ -z "$BUTLER_API_KEY" ]; then
+            echo "BUTLER_API_KEY is not set; skipping the itch push. The files are on the Release and in this run's artifacts."
+            exit 0
+          fi
+          curl -sSfL -o butler.zip https://broth.itch.zone/butler/darwin-arm64/LATEST/archive/default
+          unzip -q butler.zip -d "$RUNNER_TEMP/butler" && chmod +x "$RUNNER_TEMP/butler/butler"
+          b="$RUNNER_TEMP/butler/butler"
+          mkdir -p itch/dmg itch/zip
+          cp dist/*.dmg itch/dmg/ && cp dist/*.zip itch/zip/
+          "$b" push itch/dmg athanasioust/sanctum:macos-dmg --userversion "$VERSION"
+          "$b" push itch/zip athanasioust/sanctum:macos-zip --userversion "$VERSION"
