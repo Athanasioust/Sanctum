@@ -119,9 +119,9 @@ export function LocationDialog({
             </Field>
             <Field label="Parent location">
               <Select value={form.parentLocationId} onValueChange={(v) => set("parentLocationId", v)}>
-                <SelectTrigger className="w-full"><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectTrigger className="w-full"><SelectValue placeholder="-" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">— None (top level)</SelectItem>
+                  <SelectItem value="none">None (top level)</SelectItem>
                   {selectableParents.map((o) => <SelectItem key={o.id} value={String(o.id)}>{o.name}</SelectItem>)}
                 </SelectContent>
               </Select>

@@ -9,7 +9,7 @@ import {
 const MAX_BYTES = 20 * 1024 * 1024;
 
 const FLAT_SHEET_MESSAGE =
-  "This PDF has no fillable form fields, so there's nothing to read — it's a flat, printed or scanned sheet. " +
+  "This PDF has no fillable form fields, so there's nothing to read. It's a flat, printed or scanned sheet. " +
   "Sanctum doesn't read text out of page images. Open the file in a PDF viewer: if you can't click into a box " +
   "and type, it won't import. Sheets exported or printed from most character builders are flattened this way. " +
   "Use a sheet you filled in directly in a PDF reader (the official Wizards fillable sheet works).";
@@ -54,7 +54,7 @@ export const POST = apiRoute(async (req) => {
 
   if (fields.text.size === 0) {
     throw new ApiError(
-      "This sheet has form fields but they're all blank — fill the sheet in and export it again.",
+      "This sheet has form fields but they're all blank. Fill the sheet in and export it again.",
       422,
     );
   }

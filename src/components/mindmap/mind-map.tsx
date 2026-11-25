@@ -413,7 +413,7 @@ export function MindMap({
                     >
                       <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">— nothing —</SelectItem>
+                        <SelectItem value="none">Nothing</SelectItem>
                         {LINK_KINDS.map((kind) => {
                           const options = entities.filter((e) => e.type === kind.value);
                           if (options.length === 0) return null;

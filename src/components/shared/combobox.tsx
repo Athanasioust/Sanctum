@@ -190,7 +190,7 @@ export function Combobox({
                   onClick={() => choose(i)}
                   className={cn(base, "text-muted-foreground", highlighted && "bg-muted")}
                 >
-                  —
+                  -
                 </button>
               );
             }

@@ -18,7 +18,7 @@ export default async function NewCharacterAdvancedPage({
   return (
     <PageContainer>
       <PageHeader
-        title="New Character — full form"
+        title="New Character: full form"
         description="Every field on the sheet, nothing filled in for you."
         icon={UserPlus}
       />

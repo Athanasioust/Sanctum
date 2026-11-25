@@ -164,7 +164,7 @@ export function EncounterBuilder({
 
       await api.post("/api/participants", payloads);
       if (saveForLater) {
-        toast.success(`Saved "${encounterName}" — start it from the combat page when you need it`);
+        toast.success(`Saved "${encounterName}". Start it from the combat page when you need it`);
         setStarting(false);
         router.refresh();
         return;
@@ -232,7 +232,7 @@ export function EncounterBuilder({
           </h2>
           {monsters.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No monsters yet — import SRD monsters from the Bestiary first.
+              No monsters yet. Import SRD monsters from the Bestiary first.
             </p>
           ) : (
             <>
@@ -373,7 +373,7 @@ function DifficultyMeter({
             {partySize === 0
               ? t("encounter.addParty")
               : monsterTotal === 0
-                ? "—"
+                ? "-"
                 : t(difficultyKey(rating.difficulty))}
           </p>
         </div>

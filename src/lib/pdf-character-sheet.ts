@@ -568,20 +568,20 @@ export function mapSheetToCharacter(fields: SheetFields): ParsedCharacterSheet {
   );
 
   /* --- warnings ------------------------------------------------------------ */
-  if (!classLevelRaw) warnings.push("No class/level field found — set the class manually after import.");
+  if (!classLevelRaw) warnings.push("No class/level field found. Set the class manually after import.");
   if (hpMax === 0) warnings.push("No hit points found on the sheet.");
   if (guessedLevels > 0) {
     warnings.push(
-      `${guessedLevels} spell${guessedLevels === 1 ? " isn't" : "s aren't"} in the SRD list, so ${guessedLevels === 1 ? "its" : "their"} level is a best guess from where ${guessedLevels === 1 ? "it sits" : "they sit"} on the sheet — check before playing.`,
+      `${guessedLevels} spell${guessedLevels === 1 ? " isn't" : "s aren't"} in the SRD list, so ${guessedLevels === 1 ? "its" : "their"} level is a best guess from where ${guessedLevels === 1 ? "it sits" : "they sit"} on the sheet. Check before playing.`,
     );
   }
   if (unknownLevels > 0) {
     warnings.push(
-      `${unknownLevels} spell${unknownLevels === 1 ? "" : "s"} came from a field Sanctum doesn't recognise and ${unknownLevels === 1 ? "was" : "were"} imported as level 0 — set the level manually.`,
+      `${unknownLevels} spell${unknownLevels === 1 ? "" : "s"} came from a field Sanctum doesn't recognise and ${unknownLevels === 1 ? "was" : "were"} imported as level 0. Set the level manually.`,
     );
   }
   if (spells.length > 0) {
-    warnings.push("Prepared/known checkmarks aren't read from the PDF — mark prepared spells after import.");
+    warnings.push("Prepared/known checkmarks aren't read from the PDF. Mark prepared spells after import.");
   }
 
   return {

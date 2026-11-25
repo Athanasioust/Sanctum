@@ -845,7 +845,7 @@ export function BattleMap({
             <p className="text-xs text-muted-foreground">
               Players see this map within a few seconds. Fogged areas are solid black
               for them, and tokens marked hidden or standing in fog aren&apos;t drawn at
-              all — but anything you draw on the map is visible, so keep secrets off it.
+              all. But anything you draw on the map is visible, so keep secrets off it.
             </p>
           )}
 
@@ -934,7 +934,7 @@ export function BattleMap({
                         ? undefined
                         : tokenImages[selectedToken.id]
                           ? "Using the combatant's portrait"
-                          : "None — a plain coloured disc"
+                          : "None, a plain coloured disc"
                     }
                   >
                     <div className="flex items-center gap-2">
@@ -1149,7 +1149,7 @@ export function BattleMap({
                       ? TOOLS.find((t) => t.value === tool)?.hint
                       : map.tokens.length === 0
                         ? "No tokens yet. Add combatants from the linked encounter, or drop a blank token."
-                        : "Select a token or shape to edit it. Drag tokens to move them — they snap to the grid."}
+                        : "Select a token or shape to edit it. Drag tokens to move them; they snap to the grid."}
                 </div>
               )}
 
@@ -1157,7 +1157,7 @@ export function BattleMap({
               {live && (
                 <div className="rounded-xl border border-border bg-card p-3">
                   <p className="mb-2 text-xs font-medium text-muted-foreground">
-                    {live.name} — round {live.roundNumber}
+                    {live.name}, round {live.roundNumber}
                   </p>
                   <ul className="space-y-1">
                     {live.participants.map((p) => {
@@ -1188,7 +1188,7 @@ export function BattleMap({
                 <div className="flex flex-col items-center rounded-xl border border-dashed border-border p-4 text-center">
                   <ImageIcon className="mb-2 size-8 text-muted-foreground" />
                   <p className="text-sm text-muted-foreground">
-                    No background image — the bare grid works fine for theatre of the mind.
+                    No background image. The bare grid works fine for theatre of the mind.
                   </p>
                 </div>
               )}

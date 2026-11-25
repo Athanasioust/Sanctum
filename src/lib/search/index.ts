@@ -93,7 +93,7 @@ function doc(
   body: string,
   sublabel?: string,
 ): SearchDoc {
-  const name = label.trim() || "—";
+  const name = label.trim() || "-";
   return {
     type,
     id,

@@ -369,7 +369,7 @@ function SpellDialog({
               >
                 <SelectTrigger className="w-full"><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">—</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {SPELL_SCHOOLS.map((s) => (
                     <SelectItem key={s} value={s}>{s}</SelectItem>
                   ))}

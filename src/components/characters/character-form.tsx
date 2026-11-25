@@ -276,7 +276,7 @@ export function CharacterForm({ campaignId, character }: Props) {
             <Select value={form.alignment || "none"} onValueChange={(v) => set("alignment", v === "none" ? "" : v)}>
               <SelectTrigger className="w-full"><SelectValue placeholder="Select" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">—</SelectItem>
+                <SelectItem value="none">None</SelectItem>
                 {ALIGNMENTS.map((a) => (
                   <SelectItem key={a} value={a}>{a}</SelectItem>
                 ))}
@@ -344,7 +344,7 @@ export function CharacterForm({ campaignId, character }: Props) {
                 onChange={(e) => set("darkvision", Math.max(0, Number(e.target.value || 0)))}
                 aria-label="Darkvision range in feet"
               />
-              <span className="text-sm text-muted-foreground">ft — commonly 60 or 120</span>
+              <span className="text-sm text-muted-foreground">ft (commonly 60 or 120)</span>
             </div>
           ) : null}
         </div>
@@ -398,7 +398,7 @@ export function CharacterForm({ campaignId, character }: Props) {
               <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {Object.entries(EXHAUSTION_EFFECTS).map(([lvl, eff]) => (
-                  <SelectItem key={lvl} value={lvl}>{lvl} — {eff}</SelectItem>
+                  <SelectItem key={lvl} value={lvl}>{lvl}: {eff}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

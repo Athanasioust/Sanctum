@@ -230,7 +230,7 @@ export function RumorsBoard({
         <EmptyState
           icon={MessageCircleQuestion}
           title="No rumors yet"
-          description="Track rumors and gossip the party hears — mark them as followed up once investigated."
+          description="Track rumors and gossip the party hears, and mark them as followed up once investigated."
         />
       ) : (
         <ul className="space-y-3">

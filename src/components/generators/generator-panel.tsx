@@ -27,6 +27,7 @@ import {
   type GeneratedResult,
   type PoolItem,
   type SaveTarget,
+  NONE,
 } from "@/lib/generators/registry";
 import { addRecordToMap, saveResult, type SavedRecord } from "@/lib/generators/save";
 
@@ -200,7 +201,7 @@ export function GeneratorPanel({
                   f.key === "name" && "font-heading text-base font-semibold",
                 )}
               >
-                {value || "—"}
+                {value || NONE}
               </dd>
               <div className="flex shrink-0 gap-0.5">
                 <Button
@@ -259,7 +260,7 @@ export function GeneratorPanel({
             <Button
               type="button"
               variant="outline"
-              disabled={saving || !shopId || !result.values.items || result.values.items === "—"}
+              disabled={saving || !shopId || !result.values.items || result.values.items === NONE}
               onClick={() => save("shop_stock")}
             >
               <Save className="size-4" /> {t(SAVE_LABEL.shop_stock)}

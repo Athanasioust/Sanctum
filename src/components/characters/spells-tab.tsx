@@ -312,9 +312,9 @@ function SpellDialog({
             </Field>
             <Field label="School">
               <Select value={form.school || "none"} onValueChange={(v) => set("school", v === "none" ? "" : v)}>
-                <SelectTrigger className="w-full"><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectTrigger className="w-full"><SelectValue placeholder="-" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">—</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {SPELL_SCHOOLS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -489,7 +489,7 @@ function SpellCompendium({
         </div>
         <div className="-mt-1 flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs text-muted-foreground">
-            Tap a spell to add an editable copy — add as many as you need.
+            Tap a spell to add an editable copy, and add as many as you need.
           </p>
           {campaignId ? (
             <CreateHomebrewButton

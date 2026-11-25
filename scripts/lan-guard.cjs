@@ -196,7 +196,7 @@ function refuse(req, res) {
     res.end(JSON.stringify({ error: "Not available from other devices" }));
   } else {
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
-    res.end("403 — not available from other devices");
+    res.end("403: not available from other devices");
   }
 }
 

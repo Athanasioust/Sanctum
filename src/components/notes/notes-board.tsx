@@ -92,7 +92,7 @@ export function NotesBoard({
         <EmptyState
           icon={StickyNote}
           title="No notes yet"
-          description="Jot down anything — lore, reminders, secrets. Pin the important ones to your dashboard."
+          description="Jot down anything: lore, reminders, secrets. Pin the important ones to your dashboard."
         />
       ) : (
         <div className="columns-1 gap-4 sm:columns-2 lg:columns-3 [&>*]:mb-4">

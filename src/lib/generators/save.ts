@@ -5,7 +5,7 @@
 import type { AtlasCategory, AtlasMarker, Npc } from "@/db/schema";
 import type { AtlasLinkType } from "@/lib/atlas/link-types";
 import { api } from "@/lib/client";
-import type { GeneratedResult, SaveTarget } from "@/lib/generators/registry";
+import { NONE, type GeneratedResult, type SaveTarget } from "@/lib/generators/registry";
 import { MAGIC_ITEMS, SETTLEMENT_SIZES, TREASURE_TIERS } from "@/lib/generators/tables";
 
 export type SavedRecord = {
@@ -18,7 +18,7 @@ export type SavedRecord = {
 
 const lines = (...parts: [string, string | undefined][]) =>
   parts
-    .filter(([, v]) => v && v !== "—")
+    .filter(([, v]) => v && v !== NONE)
     .map(([k, v]) => `**${k}:** ${v}`)
     .join("\n\n");
 
@@ -110,7 +110,7 @@ export async function saveResult(
       const rumor = await api.post<{ id: number; text: string }>("/api/rumors", {
         campaignId,
         text: v.rumor,
-        source: `${v.source} — ${v.truth}`,
+        source: `${v.source}. Truth: ${v.truth}`,
       });
       return { id: rumor.id, name: rumor.text, href: `${base}/rumors?focus=rumor-${rumor.id}`, linkType: "rumor" };
     }
@@ -120,7 +120,7 @@ export async function saveResult(
       const known = new Map(
         TREASURE_TIERS.flatMap((t) => MAGIC_ITEMS[t]).map((i) => [i.name, i] as const),
       );
-      const items = (v.items ?? "").split("\n").map((s) => s.trim()).filter((s) => s && s !== "—");
+      const items = (v.items ?? "").split("\n").map((s) => s.trim()).filter((s) => s && s !== NONE);
       for (const name of items) {
         const srd = known.get(name);
         await api.post("/api/shop-items", {

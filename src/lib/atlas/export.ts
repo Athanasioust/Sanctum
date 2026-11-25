@@ -119,7 +119,7 @@ export async function buildAtlasExport(opts: {
   for (const m of maps) if (m.parent && !exported.has(m.parent)) m.parent = null;
 
   const { js, css, license } = await leafletAssets();
-  const title = `${root.name} — ${variant === "dm" ? t("atlas.exportDmLabel") : t("atlas.exportPlayerLabel")}`;
+  const title = `${root.name}: ${variant === "dm" ? t("atlas.exportDmLabel") : t("atlas.exportPlayerLabel")}`;
   const data = { start: root.id, maps, labels: { subMaps: t("atlas.tabSubMaps") } };
   const slug = root.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "map";
 

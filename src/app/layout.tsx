@@ -25,7 +25,7 @@ const cinzel = Cinzel({
 });
 
 export const metadata: Metadata = {
-  title: "Sanctum — DnD Campaign Manager",
+  title: "Sanctum: DnD Campaign Manager",
   description:
     "A local-first campaign manager for Dungeon Masters: characters, combat, world, story and more.",
 };

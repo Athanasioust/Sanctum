@@ -2,7 +2,7 @@
   "version": 1,
   "exportedAt": "2026-10-26T00:00:00.000Z",
   "campaign": {
-    "name": "The Lost Souls — Sample Campaign (you can delete this)",
+    "name": "The Lost Souls: Sample Campaign (you can delete this)",
     "setting": "Dark fantasy",
     "description": "A small sample campaign to explore Sanctum with: a party of four, a crypt full of restless dead and a fight already in progress. Change anything you like, or delete it from Settings → Danger zone when you're done.",
     "inWorldCalendarType": "real",
@@ -381,7 +381,7 @@
           "description": "On initiative count 20, the bound souls wail. Each creature in the crypt makes a DC 13 Wisdom save or is frightened of the Warden until initiative count 20 on the next round."
         }
       ],
-      "notes": "Original sample boss — shows off legendary and lair actions in the combat tracker."
+      "notes": "Original sample boss that shows off legendary and lair actions in the combat tracker."
     }
   ],
   "spells": [],
@@ -1008,12 +1008,12 @@
       "name": "Crypt of the Lost",
       "type": "dungeon",
       "parentLocationId": 2,
-      "description": "Beneath the abbey, where the souls of the faithful were bound to guard it — and never released."
+      "description": "Beneath the abbey, where the souls of the faithful were bound to guard it, and never released."
     }
   ],
   "storyEvents": [
     {
-      "title": "Session 1 — The silent bells",
+      "title": "Session 1: The silent bells",
       "eventType": "session_log",
       "sessionNumber": 1,
       "status": "resolved",
@@ -1059,11 +1059,11 @@
         },
         {
           "weight": 1,
-          "result": "The bound souls wail — DC 12 Wisdom save or frightened for 1 minute"
+          "result": "The bound souls wail: DC 12 Wisdom save or frightened for 1 minute"
         },
         {
           "weight": 2,
-          "result": "Nothing — but the candles gutter"
+          "result": "Nothing, but the candles gutter"
         }
       ]
     }
@@ -1155,7 +1155,7 @@
   ],
   "rumors": [
     {
-      "text": "Folk say the bell-ringer was seen walking into the abbey at midnight — without a lantern.",
+      "text": "Folk say the bell-ringer was seen walking into the abbey at midnight, without a lantern.",
       "source": "The Drowned Rat tavern"
     },
     {
@@ -1177,7 +1177,7 @@
     {
       "id": 1,
       "name": "The Candle & Coffin",
-      "description": "A cramped chandlery off Duskmere's square that sells candles, holy water and grave goods — no questions asked.",
+      "description": "A cramped chandlery off Duskmere's square that sells candles, holy water and grave goods, no questions asked.",
       "locationId": 1,
       "notes": "The owner pays well for anything taken from the crypt."
     }

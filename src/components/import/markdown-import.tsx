@@ -106,7 +106,7 @@ export function MarkdownImport({
       const path = (file as File & { webkitRelativePath?: string }).webkitRelativePath || file.name;
       if (!MD_EXTENSION.test(file.name)) continue; // silently ignore vault assets
       if (file.size > MAX_FILE_BYTES) {
-        rejected.push(`${path} — larger than 400 KB`);
+        rejected.push(`${path}: larger than 400 KB`);
         continue;
       }
       try {
@@ -114,7 +114,7 @@ export function MarkdownImport({
         const doc = parseMarkdownDoc(path, content);
         next.push({ ...doc, content, target: doc.detected });
       } catch {
-        rejected.push(`${path} — could not be read`);
+        rejected.push(`${path}: could not be read`);
       }
     }
 
@@ -193,7 +193,7 @@ export function MarkdownImport({
         <h2 className="font-heading text-lg font-semibold">Import markdown</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Bring in notes from Obsidian or any other markdown folder. Sanctum reads YAML
-          frontmatter and stat-block layouts to guess what each note is — check the guesses
+          frontmatter and stat-block layouts to guess what each note is. Check the guesses
           below and change any that are wrong. This is a one-way copy: your vault is never
           modified, and re-running it later only adds what&apos;s new.
         </p>
@@ -315,7 +315,7 @@ export function MarkdownImport({
               </Field>
               {owners.length === 0 ? (
                 <p className="mt-2 text-xs text-destructive">
-                  This campaign has no characters or NPCs yet — create one first, or import
+                  This campaign has no characters or NPCs yet. Create one first, or import
                   those spell notes as Notes instead.
                 </p>
               ) : null}
@@ -385,7 +385,7 @@ export function MarkdownImport({
               {importable.length} of {rows.length} will be imported
               {counts.size > 0 ? (
                 <>
-                  {" — "}
+                  {": "}
                   {[...counts.entries()]
                     .filter(([target]) => target !== "skip")
                     .map(([target, n]) => `${n} ${importTargetLabel(target).toLowerCase()}`)
@@ -435,7 +435,7 @@ function ImportResults({ results }: { results: ImportResult[] }) {
               </span>
               <span className="text-muted-foreground">
                 {r.name || r.path}
-                {r.message ? ` — ${r.message}` : ""}
+                {r.message ? `: ${r.message}` : ""}
               </span>
             </li>
           ))}

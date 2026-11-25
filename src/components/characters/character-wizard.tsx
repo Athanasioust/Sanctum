@@ -145,7 +145,7 @@ export function CharacterWizard({ campaignId }: { campaignId: number }) {
         return null;
       case "skills":
         return skillsRemaining < 0
-          ? `Pick ${classSkillCount} class skills — you've chosen ${chosenClassSkills.length}.`
+          ? `Pick ${classSkillCount} class skills; you've chosen ${chosenClassSkills.length}.`
           : null;
       default:
         return null;
@@ -318,7 +318,7 @@ export function CharacterWizard({ campaignId }: { campaignId: number }) {
                 </div>
                 {traits.flexible && (
                   <p className="mt-2 text-xs text-muted-foreground">
-                    {traits.flexible} — set these yourself on the Ability Scores step.
+                    {traits.flexible}. Set these yourself on the Ability Scores step.
                   </p>
                 )}
               </div>
@@ -465,7 +465,7 @@ export function CharacterWizard({ campaignId }: { campaignId: number }) {
             {method === "point-buy" && <PointBuyMeter scores={base} />}
             {method === "standard-array" && (
               <p className="text-xs text-muted-foreground">
-                Standard array: {STANDARD_ARRAY.join(", ")} — assign them however you like.
+                Standard array: {STANDARD_ARRAY.join(", ")}. Assign them however you like.
               </p>
             )}
             {method === "roll" && (
@@ -533,11 +533,11 @@ export function CharacterWizard({ campaignId }: { campaignId: number }) {
         {STEPS[step].key === "review" && (
           <StepPanel title="Review" description="Everything the wizard will create.">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <Summary label="Name" value={name || "—"} />
-              <Summary label="Species" value={species || "—"} />
-              <Summary label="Class" value={className ? `${className} ${level}` : "—"} />
-              <Summary label={rules?.subclassLabel ?? "Subclass"} value={(subclassDue && subclass) || "—"} />
-              <Summary label="Background" value={background || "—"} />
+              <Summary label="Name" value={name || "-"} />
+              <Summary label="Species" value={species || "-"} />
+              <Summary label="Class" value={className ? `${className} ${level}` : "-"} />
+              <Summary label={rules?.subclassLabel ?? "Subclass"} value={(subclassDue && subclass) || "-"} />
+              <Summary label="Background" value={background || "-"} />
               <Summary label="Max HP" value={`${hpMax} (d${hitDie}${formatModifier(conMod)})`} />
               <Summary label="Armor Class" value={String(10 + abilityModifier(finalScores.dex))} />
               <Summary label="Proficiency" value={formatModifier(proficiencyBonus)} />

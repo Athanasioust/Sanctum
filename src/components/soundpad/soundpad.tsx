@@ -230,7 +230,7 @@ export function Soundpad({
               <section key={category}>
                 <h3 className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
                   <meta.icon className="size-4" /> {meta.label}
-                  <span className="text-xs font-normal">— {meta.hint}</span>
+                  <span className="text-xs font-normal">({meta.hint})</span>
                 </h3>
                 <ul className="space-y-1.5">
                   {inChannel.map((asset) => (

@@ -188,7 +188,7 @@ export function SaveEncounterButton({ encounterId, name }: { encounterId: number
     setPending(true);
     try {
       await api.post(`/api/encounters/${encounterId}/clone`, { template: true, name });
-      toast.success(`Saved "${name}" — start a fresh copy any time from the combat page`);
+      toast.success(`Saved "${name}". Start a fresh copy any time from the combat page`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save");
     } finally {

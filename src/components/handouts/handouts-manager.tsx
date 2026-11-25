@@ -290,7 +290,7 @@ export function HandoutsManager({
         <EmptyState
           icon={Image}
           title="No handouts yet"
-          description="Create player-facing handouts — notes, letters, maps, lore excerpts."
+          description="Create player-facing handouts: notes, letters, maps, lore excerpts."
         />
       ) : (
         <div className="space-y-3">

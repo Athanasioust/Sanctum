@@ -35,7 +35,7 @@ export function RollableStat({
     <button
       type="button"
       onClick={() => rollDice({ formula: checkFormula(bonus), label: name, actorName })}
-      title={`Roll ${name} — 1d20${modifierSuffix(bonus)}`}
+      title={`Roll ${name}: 1d20${modifierSuffix(bonus)}`}
       className={cn(
         "group flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-sm transition-colors hover:bg-primary/10",
         className,
@@ -82,7 +82,7 @@ export function RollableFormula({
     <button
       type="button"
       onClick={() => rollDice({ formula, label, actorName })}
-      title={`Roll ${formula} — ${label}`}
+      title={`Roll ${formula} (${label})`}
       className={cn(
         "inline rounded-sm px-0.5 font-medium text-primary underline decoration-primary/40 decoration-dotted underline-offset-2 transition-colors hover:bg-primary/10 hover:decoration-solid",
         className,

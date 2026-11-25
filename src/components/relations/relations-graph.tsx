@@ -507,7 +507,7 @@ export function RelationsGraph({
         <EmptyState
           icon={Network}
           title="No relationships yet"
-          description="Map the connections between NPCs — allies, enemies, family, informants."
+          description="Map the connections between NPCs: allies, enemies, family, informants."
         />
       ) : view === "graph" ? (
         <RelationGraph npcs={npcs} relationships={relationships} />

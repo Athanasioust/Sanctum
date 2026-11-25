@@ -34,7 +34,7 @@ export default async function RumorsPage({
       <PageHeader
         icon={MessageCircleQuestion}
         title="Rumors"
-        description="Collect rumors and gossip the party hears — mark them as followed up once investigated."
+        description="Collect rumors and gossip the party hears, and mark them as followed up once investigated."
         actions={<GenerateButton campaignId={id} generatorId="rumor" size="sm" />}
       />
       <RumorsBoard

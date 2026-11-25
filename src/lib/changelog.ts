@@ -17,7 +17,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: "1.0.0",
     date: "2026-11-09",
     highlights: [
-      "A guided tour: seven short stops through Sanctum's highlights — character sheets, the combat tracker, the battle map, the world atlas, generators and ⌘K search. Start it any time from the new Help button (bottom right) or Settings. It only points at things, so it never changes your data.",
+      "A guided tour: seven short stops through Sanctum's highlights: character sheets, the combat tracker, the battle map, the world atlas, generators and ⌘K search. Start it any time from the new Help button (bottom right) or Settings. It only points at things, so it never changes your data.",
       "The tour runs on the Sample Campaign, which now includes a world atlas with linked markers, a shop and a second magic item. Loading it again reopens the same copy instead of making another, and it never touches your own campaigns. New installs get a one-time welcome that offers the tour or goes straight to creating your first campaign.",
       "Safer local-network sharing: other devices on your Wi-Fi can now open only the player view, and only through the link or QR code in Settings, which carries a secret key. The rest of Sanctum stays on your computer. Regenerate the link in Settings to cut off every old one at once.",
       "Combat: an \"Acted\" marker on each combatant (or minion group) that ticks itself when their turn ends and clears each new round, with an \"X of Y acted\" count under the round number. The Lair Actions row now stands out when initiative reaches 20.",
@@ -29,8 +29,8 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: "0.8.0",
     date: "2026-11-08",
     highlights: [
-      "Generators: roll up NPCs, taverns, settlements, treasure, quest hooks, rumors, names and weather in one click — fully offline, no AI. Reroll or lock any single field, then save the result as a real NPC, shop, location, quest or rumor, add loot to a shop, or drop it onto an Atlas map.",
-      "Search everything: ⌘K / Ctrl+K now finds every kind of record — shops, factions, notes, sessions, map markers, roll tables and more — and matches the text inside them, not just names. Results open the record itself.",
+      "Generators: roll up NPCs, taverns, settlements, treasure, quest hooks, rumors, names and weather in one click, fully offline, with no AI. Reroll or lock any single field, then save the result as a real NPC, shop, location, quest or rumor, add loot to a shop, or drop it onto an Atlas map.",
+      "Search everything: ⌘K / Ctrl+K now finds every kind of record (shops, factions, notes, sessions, map markers, roll tables and more) and matches the text inside them, not just names. Results open the record itself.",
       "The palette also runs commands: create a quest or note, roll a d20, open the player view or settings, jump to a generator, or reveal a handout to players with Shift+Enter.",
       "Player view privacy: the player screen now gets only what players may see from the server. Hidden and fogged tokens, unrevealed handouts and clocks, monster hit points and the unfogged battle-map image are no longer sent to players' devices at all.",
     ],

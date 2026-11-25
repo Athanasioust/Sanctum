@@ -89,7 +89,7 @@ export default async function SettingsPage({
         <section className="rounded-xl border border-border bg-card p-5">
           <h2 className="font-heading text-lg font-semibold">Export</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Download this entire campaign as a single JSON file — characters, NPCs, world,
+            Download this entire campaign as a single JSON file, with characters, NPCs, world,
             story, factions, shops, sessions and notes included.
           </p>
           <Button asChild className="mt-4" variant="outline">

@@ -122,7 +122,7 @@ export function DocumentsLibrary({
           </Button>
         </label>
         <p className="text-xs text-muted-foreground">
-          Adventures, rules references, homebrew documents — read in-app, fully offline.
+          Adventures, rules references, homebrew documents, read in-app, fully offline.
         </p>
       </div>
 

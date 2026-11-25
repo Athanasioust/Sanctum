@@ -46,7 +46,7 @@ export const TRAITS = [
 
 export const IDEALS = [
   "Freedom is worth any price.", "Knowledge should be hoarded, not shared.",
-  "The strong protect the weak — or should.", "Coin is the only honest language.",
+  "The strong protect the weak, or should.", "Coin is the only honest language.",
   "Tradition keeps the world from falling apart.", "Everyone deserves a second chance.",
   "Power is the only thing that lasts.", "Beauty is worth suffering for.",
   "A debt is sacred, whichever way it runs.", "The town comes before any one person.",
@@ -83,7 +83,7 @@ export const SECRETS = [
   "Is the illegitimate heir of a minor noble house.", "Poisoned their former business partner.",
   "Has been passing information to a rival town.", "Can't actually read, and hides it well.",
   "Is a deserter from a famous army.", "Keeps a dangerous creature hidden in the cellar.",
-  "Knows where a missing child is — and is afraid to say.", "Isn't who they claim; the real one died years ago.",
+  "Knows where a missing child is, and is afraid to say.", "Isn't who they claim; the real one died years ago.",
   "Has a second family in the next town over.", "Hears a voice in dreams that tells true things.",
 ];
 
@@ -240,7 +240,7 @@ export const RUMOR_SUBJECTS = [
 
 export const RUMOR_CLAIMS = [
   "has been seen talking to wolves at midnight", "is hiding a fortune in old coins",
-  "isn't human — not entirely", "owes money to very dangerous people", "is haunted by a weeping ghost",
+  "isn't human, not entirely", "owes money to very dangerous people", "is haunted by a weeping ghost",
   "opened a door that should have stayed shut", "is planning to leave town for good",
   "has a secret tunnel to the river", "was replaced by a double last winter", "found something in the hills",
   "is selling forged maps", "is the one behind the recent thefts",

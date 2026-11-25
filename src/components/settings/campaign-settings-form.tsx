@@ -99,7 +99,7 @@ export function CampaignSettingsForm({ campaign }: { campaign: Campaign }) {
 
       <FormSection
         title="Rulebooks"
-        description="Tick the books your table plays with — character race, class, subclass and background pickers narrow to what those books allow. Leave everything unticked to allow all options."
+        description="Tick the books your table plays with. Character race, class, subclass and background pickers narrow to what those books allow. Leave everything unticked to allow all options."
       >
         <CheckboxGroup
           columns={3}
@@ -109,7 +109,7 @@ export function CampaignSettingsForm({ campaign }: { campaign: Campaign }) {
         />
         <Field
           label="Homebrew rulebooks"
-          hint="Anything you can't find above. These are recorded for reference — the pickers always let you type an option in by hand."
+          hint="Anything you can't find above. These are recorded for reference; the pickers always let you type an option in by hand."
         >
           <ChipInput
             value={customBooks}
@@ -129,7 +129,7 @@ export function CampaignSettingsForm({ campaign }: { campaign: Campaign }) {
             </Field>
             <Field
               label="First year"
-              hint="The epoch your reckoning starts from — weekdays are anchored to day 1 of this year."
+              hint="The epoch your reckoning starts from. Weekdays are anchored to day 1 of this year."
             >
               <Input
                 type="number"

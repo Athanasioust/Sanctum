@@ -118,8 +118,8 @@ export function PlayerViewSharing({ campaignId }: { campaignId: number }) {
       setState((s) => (s ? { ...s, enabled, shareToken: res.shareToken } : s));
       toast.success(
         enabled
-          ? "Sharing enabled — restart Sanctum to apply"
-          : "Sharing disabled — restart Sanctum to apply",
+          ? "Sharing enabled. Restart Sanctum to apply"
+          : "Sharing disabled. Restart Sanctum to apply",
       );
     } catch {
       toast.error("Could not save the setting");
@@ -177,7 +177,7 @@ export function PlayerViewSharing({ campaignId }: { campaignId: number }) {
           </h2>
           <p className="mt-1 max-w-xl text-sm text-muted-foreground">
             Let players open the read-only player view on their own phones. Everything
-            stays on your local network — no account, no cloud, nothing uploaded.
+            stays on your local network: no account, no cloud, nothing uploaded.
           </p>
         </div>
         <label className="flex shrink-0 items-center gap-2 text-sm">
@@ -194,7 +194,7 @@ export function PlayerViewSharing({ campaignId }: { campaignId: number }) {
       {state?.enabled && !state.active && (
         <p className="mt-4 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">
           <RefreshCw className="mt-0.5 size-4 shrink-0" />
-          Restart Sanctum to finish turning this on — until then the player view is
+          Restart Sanctum to finish turning this on. Until then the player view is
           only reachable on this computer.
         </p>
       )}
@@ -225,7 +225,7 @@ export function PlayerViewSharing({ campaignId }: { campaignId: number }) {
             <ShieldAlert className="mt-0.5 size-4 shrink-0" />
             Phones stuck on a blank page, or told the site can&apos;t be reached? That
             is Windows Firewall dropping the connection, not the player view. Windows
-            asks once, the first time Sanctum starts sharing — if that prompt was
+            asks once, the first time Sanctum starts sharing. If that prompt was
             dismissed it never comes back.
           </p>
           <Button
@@ -263,7 +263,7 @@ export function PlayerViewSharing({ campaignId }: { campaignId: number }) {
         <p className="mt-4 text-sm text-muted-foreground">Checking the network…</p>
       ) : !reachable ? null : state.addresses.length === 0 ? (
         <p className="mt-4 text-sm text-muted-foreground">
-          No local network address found — this machine may be offline or only on a
+          No local network address found. This machine may be offline or only on a
           virtual adapter.
         </p>
       ) : (
@@ -292,7 +292,7 @@ export function PlayerViewSharing({ campaignId }: { campaignId: number }) {
                   </SelectContent>
                 </Select>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  If one doesn&apos;t work, try another — virtual adapters show up here too.
+                  If one doesn&apos;t work, try another; virtual adapters show up here too.
                 </p>
               </div>
             )}
@@ -303,7 +303,7 @@ export function PlayerViewSharing({ campaignId }: { campaignId: number }) {
               </p>
               <div className="flex flex-wrap items-center gap-2">
                 <code className="rounded-md border border-border bg-muted/40 px-2.5 py-1.5 text-sm">
-                  {url || "—"}
+                  {url || "-"}
                 </code>
                 <Button size="sm" variant="outline" onClick={copy} disabled={!url}>
                   {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
@@ -333,7 +333,7 @@ export function PlayerViewSharing({ campaignId }: { campaignId: number }) {
             <p className="text-sm text-muted-foreground">
               Players scan the code (or type the address) and see live initiative, party
               status, revealed handouts and the battle map you&apos;re showing. The page is
-              read-only — nothing they do can change your campaign.
+              read-only: nothing they do can change your campaign.
             </p>
           </div>
         </div>

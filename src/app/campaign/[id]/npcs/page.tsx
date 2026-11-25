@@ -72,7 +72,7 @@ async function CastTab({ campaignId }: { campaignId: number }) {
     <>
       <PageHeader
         title="NPCs & Monsters"
-        description="The living cast of this campaign — the specific characters and creatures in play."
+        description="The living cast of this campaign: the specific characters and creatures in play."
         icon={Skull}
         actions={
           list.length > 0 ? (
@@ -91,7 +91,7 @@ async function CastTab({ campaignId }: { campaignId: number }) {
         <InfoCallout>
           These are the actual NPCs and monsters in your campaign. For a reusable
           library of stat blocks (including 140+ SRD monsters), see the{" "}
-          <strong className="text-foreground">Bestiary</strong> tab — save any NPC
+          <strong className="text-foreground">Bestiary</strong> tab. Save any NPC
           there from its page to reuse it later.
         </InfoCallout>
       ) : null}
@@ -131,7 +131,7 @@ async function BestiaryTab({ campaignId }: { campaignId: number }) {
     <>
       <PageHeader
         title="Bestiary"
-        description="Your reusable library of stat-block templates — the monster manual you draw from."
+        description="Your reusable library of stat-block templates, the monster manual you draw from."
         icon={BookOpen}
         actions={
           list.length > 0 ? (
@@ -148,7 +148,7 @@ async function BestiaryTab({ campaignId }: { campaignId: number }) {
       />
       {list.length > 0 ? (
         <InfoCallout>
-          Templates here aren&apos;t in play — they&apos;re a library. Use{" "}
+          Templates here aren&apos;t in play; they&apos;re a library. Use{" "}
           <strong className="text-foreground">Add to campaign</strong> to create a
           living NPC/monster (it appears under the{" "}
           <strong className="text-foreground">Cast</strong> tab), or{" "}
@@ -199,7 +199,7 @@ async function RelationsTab({ campaignId }: { campaignId: number }) {
       <PageHeader
         icon={Network}
         title="NPC Relations"
-        description="Visualize the web of relationships between your NPCs — allies, enemies, family, and more."
+        description="Visualize the web of relationships between your NPCs: allies, enemies, family, and more."
       />
       <RelationsGraph
         campaignId={campaignId}

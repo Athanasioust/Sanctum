@@ -51,7 +51,7 @@ export function StatBlock({ npc }: { npc: Npc }) {
           ))}
           {npc.exhaustionLevel > 0 ? (
             <Badge className="bg-destructive/20 text-red-200">
-              Exhaustion {npc.exhaustionLevel} — {EXHAUSTION_EFFECTS[npc.exhaustionLevel]}
+              Exhaustion {npc.exhaustionLevel}: {EXHAUSTION_EFFECTS[npc.exhaustionLevel]}
             </Badge>
           ) : null}
         </div>
@@ -64,7 +64,7 @@ export function StatBlock({ npc }: { npc: Npc }) {
           <Stat label="Armor Class" value={npc.armorClass} />
           <Stat label="Hit Points" value={`${npc.hpMax}`} />
           <Stat label="Speed" value={npc.speed} />
-          <Stat label="Challenge" value={npc.challengeRating ? `${npc.challengeRating} (${npc.experiencePoints.toLocaleString()} XP)` : "—"} />
+          <Stat label="Challenge" value={npc.challengeRating ? `${npc.challengeRating} (${npc.experiencePoints.toLocaleString()} XP)` : "-"} />
         </div>
 
         <HpBar current={npc.hpCurrent} max={npc.hpMax} />

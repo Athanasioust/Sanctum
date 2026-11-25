@@ -48,7 +48,7 @@ export default async function PopoutCombatPage({
           <EmptyState
             icon={Swords}
             title="No active encounter"
-            description="Start one in the main window — it will show up here."
+            description="Start one in the main window and it will show up here."
           />
         )}
         <CombatRefresher />

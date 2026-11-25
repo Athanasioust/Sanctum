@@ -62,7 +62,7 @@ export function FactionsBoard({
         <EmptyState
           icon={Flag}
           title="No factions yet"
-          description="Track the organisations, guilds and powers at play — and where they stand with your party."
+          description="Track the organisations, guilds and powers at play, and where they stand with your party."
         />
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

@@ -85,7 +85,7 @@ export default async function EncounterBuilderPage({
       </Link>
       <PageHeader
         title="Encounter Builder"
-        description="Pick your party and some monsters to see how hard the fight will be — before the session."
+        description="Pick your party and some monsters to see how hard the fight will be before the session."
         icon={Swords}
       />
       <EncounterBuilder campaignId={campaignId} party={party} monsters={pool} />

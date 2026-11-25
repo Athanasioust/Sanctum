@@ -757,7 +757,7 @@ export function describeDoc(doc: ParsedDoc, target: ImportTarget): string {
       stats.challengeRating ? `CR ${stats.challengeRating}` : null,
       stats.actions.length ? `${stats.actions.length} actions` : null,
     ].filter(Boolean);
-    return bits.length ? bits.join(" · ") : "No stat block found — text kept in notes";
+    return bits.length ? bits.join(" · ") : "No stat block found, text kept in notes";
   }
   if (target === "spell") {
     const spell = buildSpell(doc);

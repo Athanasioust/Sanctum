@@ -230,7 +230,7 @@ export function PdfViewer({ url, name }: { url: string; name: string }) {
             className="h-8 w-16 text-center tabular-nums"
             aria-label="Page number"
           />
-          <span className="text-muted-foreground">/ {numPages || "—"}</span>
+          <span className="text-muted-foreground">/ {numPages || "-"}</span>
         </div>
         <Button
           size="icon-sm"

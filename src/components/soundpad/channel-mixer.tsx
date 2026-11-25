@@ -91,7 +91,7 @@ function LoopChannel({
             <SelectValue placeholder={assets.length ? "Choose a track" : "Nothing uploaded"} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="none">— none —</SelectItem>
+            <SelectItem value="none">None</SelectItem>
             {assets.map((asset) => (
               <SelectItem key={asset.id} value={String(asset.id)}>
                 {asset.name}

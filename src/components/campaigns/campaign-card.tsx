@@ -100,7 +100,7 @@ export function CampaignCard({ campaign }: { campaign: Campaign }) {
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
         title={`Delete "${campaign.name}"?`}
-        description="This permanently deletes the campaign and everything in it — characters, NPCs, encounters, locations, notes and more. This cannot be undone."
+        description="This permanently deletes the campaign and everything in it: characters, NPCs, encounters, locations, notes and more. This cannot be undone."
         confirmLabel="Delete campaign"
         onConfirm={handleDelete}
       />

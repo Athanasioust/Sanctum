@@ -843,7 +843,7 @@ export function CombatTracker({
             variant="outline"
             onClick={rollAll}
             disabled={parts.length === 0}
-            title="Rolls initiative for NPCs & monsters only — players type their own"
+            title="Rolls initiative for NPCs & monsters only; players type their own"
           >
             <Dices className="size-4" /> Roll NPCs
           </Button>
@@ -1304,7 +1304,7 @@ function ParticipantRow({
               value={p.initiativeTotal}
               onChange={(e) => onSetInitiative(p.id, Number(e.target.value || 0))}
               className="h-8 w-11 px-1 text-center text-sm tabular-nums"
-              title="Initiative total — players type their own roll here"
+              title="Initiative total: players type their own roll here"
             />
           </div>
           {isNpc ? (
@@ -1315,7 +1315,7 @@ function ParticipantRow({
                 value={p.initiativeMod}
                 onChange={(e) => onSetInitiativeMod(p.id, Number(e.target.value || 0))}
                 className="h-8 w-11 px-1 text-center text-sm tabular-nums"
-                title="Initiative modifier — added to the d20 when you roll NPCs"
+                title="Initiative modifier, added to the d20 when you roll NPCs"
               />
             </div>
           ) : null}
@@ -1653,7 +1653,7 @@ function BossDialog({
       </DialogTrigger>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>{p.name} — {t("combat.bossSettings")}</DialogTitle>
+          <DialogTitle>{p.name}: {t("combat.bossSettings")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <Field label={t("combat.legendaryPerRound")} hint={t("combat.legendaryPerRoundHint")}>
@@ -1935,7 +1935,7 @@ function HpDialog({
       </DialogTrigger>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>{p.name} — HP</DialogTitle>
+          <DialogTitle>{p.name}: HP</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <HpBar current={p.hpCurrent} max={p.hpMax} temp={p.hpTemp} />
@@ -2070,7 +2070,7 @@ function ConditionsDialog({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{p.name} — Conditions</DialogTitle>
+          <DialogTitle>{p.name}: Conditions</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <CheckboxGroup
@@ -2094,7 +2094,7 @@ function ConditionsDialog({
                       value={draft?.expiry === "endOfCombat" ? "" : (draft?.rounds ?? "")}
                       disabled={draft?.expiry === "endOfCombat"}
                       onChange={(e) => setTimer(name, { rounds: e.target.value })}
-                      placeholder="—"
+                      placeholder="-"
                       className="h-8 w-16 text-center tabular-nums"
                       aria-label={`${name}: ${t("conditions.rounds")}`}
                     />
@@ -2123,7 +2123,7 @@ function ConditionsDialog({
               <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {Object.entries(EXHAUSTION_EFFECTS).map(([lvl, eff]) => (
-                  <SelectItem key={lvl} value={lvl}>{lvl} — {eff}</SelectItem>
+                  <SelectItem key={lvl} value={lvl}>{lvl}: {eff}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -2149,8 +2149,8 @@ function CombatantOption({ entity, onAdd }: { entity: Addable; onAdd: () => void
   const blocked = noHpSet || isDown;
   const reason = noHpSet ? "No HP set" : "Down · 0 HP";
   const title = noHpSet
-    ? "Can't add — set this creature's Max HP first"
-    : "Can't add — currently at 0 HP";
+    ? "Can't add: set this creature's Max HP first"
+    : "Can't add: currently at 0 HP";
   return (
     <DropdownMenuItem
       disabled={blocked}
@@ -2323,7 +2323,7 @@ function ConcentrationDialog({
       </DialogTrigger>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>{p.name} — Concentration</DialogTitle>
+          <DialogTitle>{p.name}: Concentration</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 py-2">
           <Input
@@ -2434,7 +2434,7 @@ function CombatLogPanel({
                       <span className="min-w-0 flex-1">
                         {e.action}
                         {e.details ? (
-                          <span className="text-muted-foreground"> — {e.details}</span>
+                          <span className="text-muted-foreground">: {e.details}</span>
                         ) : null}
                       </span>
                     </li>
@@ -2524,7 +2524,7 @@ function BestiaryPicker({
           <div className="space-y-4 py-1">
             <Field
               label="Name in this fight"
-              hint="What you'll call it at the table — “Jerry”, “Goblin Boss”, “Archer”."
+              hint="What you'll call it at the table, like “Jerry”, “Goblin Boss”, “Archer”."
             >
               <Input
                 value={customName}
@@ -2537,7 +2537,7 @@ function BestiaryPicker({
                 }}
               />
             </Field>
-            <Field label="How many?" hint="More than one gets numbered — Jerry 1, Jerry 2…">
+            <Field label="How many?" hint="More than one gets numbered: Jerry 1, Jerry 2…">
               <Input
                 type="number"
                 min={1}
@@ -2605,8 +2605,8 @@ function BestiaryPicker({
                     const isDown = !noHpSet && b.hpCurrent <= 0;
                     const blocked = noHpSet || isDown;
                     const blockedReason = noHpSet
-                      ? "Can't add — set this creature's Max HP first"
-                      : "Can't add — currently at 0 HP";
+                      ? "Can't add: set this creature's Max HP first"
+                      : "Can't add: currently at 0 HP";
                     return (
                       <div
                         key={b.id}

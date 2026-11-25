@@ -59,7 +59,7 @@ export const POST = apiRoute(async (req) => {
   const key = `${move.battleMapId}:${move.tokenId}`;
   const now = Date.now();
   if (now - (lastMove.get(key) ?? 0) < MIN_INTERVAL_MS) {
-    throw new ApiError("Too many moves — slow down", 429);
+    throw new ApiError("Too many moves, slow down", 429);
   }
 
   const [map] = await db.select().from(battleMaps).where(eq(battleMaps.id, move.battleMapId));

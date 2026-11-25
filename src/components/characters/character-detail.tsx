@@ -102,7 +102,7 @@ export function CharacterDetail({
           ))}
           {character.exhaustionLevel > 0 ? (
             <Badge className="bg-destructive/20 text-red-200">
-              Exhaustion {character.exhaustionLevel} — {EXHAUSTION_EFFECTS[character.exhaustionLevel]}
+              Exhaustion {character.exhaustionLevel}: {EXHAUSTION_EFFECTS[character.exhaustionLevel]}
             </Badge>
           ) : null}
         </div>
@@ -353,7 +353,7 @@ function TextBlock({ title, text }: { title: string; text: string }) {
       {text ? (
         <p className="whitespace-pre-wrap text-sm text-muted-foreground">{text}</p>
       ) : (
-        <p className="text-sm text-muted-foreground/60">—</p>
+        <p className="text-sm text-muted-foreground/60">-</p>
       )}
     </div>
   );
@@ -499,7 +499,7 @@ function HitDiceTracker({
     setSaving(true);
     try {
       await api.patch(`/api/characters/${characterId}`, { hitDiceUsed: used + 1, hpCurrent: newHp });
-      toast.success(`Spent hit die — rolled d${hitDie} (${roll}) + CON ${conMod} = +${healed} HP`);
+      toast.success(`Spent hit die: rolled d${hitDie} (${roll}) + CON ${conMod} = +${healed} HP`);
       startRefresh(() => router.refresh());
     } catch {
       toast.error("Failed to save");
@@ -527,8 +527,8 @@ function HitDiceTracker({
       const restored = await restoreResources(["short"]);
       toast.success(
         restored > 0
-          ? `Short rest taken — ${restored} ${restored === 1 ? "ability" : "abilities"} recharged`
-          : "Short rest taken — nothing to recharge",
+          ? `Short rest taken: ${restored} ${restored === 1 ? "ability" : "abilities"} recharged`
+          : "Short rest taken, nothing to recharge",
       );
       startRefresh(() => router.refresh());
     } catch {
@@ -566,7 +566,7 @@ function HitDiceTracker({
       // "At dawn" abilities are treated as coming back with the long rest,
       // which is when nearly every table's dawn falls.
       await restoreResources(["short", "long", "dawn"]);
-      toast.success("Long rest taken — HP, hit dice, spell slots and abilities restored");
+      toast.success("Long rest taken: HP, hit dice, spell slots and abilities restored");
       startRefresh(() => router.refresh());
     } catch {
       toast.error("Failed to save");

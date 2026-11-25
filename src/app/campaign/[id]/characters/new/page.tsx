@@ -14,7 +14,7 @@ export default async function NewCharacterPage({
     <PageContainer>
       <PageHeader
         title="New Character"
-        description="Build a 5e character step by step — species, class, background, scores and skills."
+        description="Build a 5e character step by step: species, class, background, scores and skills."
         icon={UserPlus}
       />
       <CharacterWizard campaignId={campaignId} />

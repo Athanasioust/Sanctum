@@ -36,6 +36,9 @@ import {
 } from "@/lib/generators/names";
 import * as T from "@/lib/generators/tables";
 
+/** What an empty field shows (treasure with no coins, items or valuables). */
+export const NONE = "None";
+
 /** A campaign magic item the treasure generator may mix in. */
 export type PoolItem = { name: string; rarity: string; itemType: string };
 
@@ -159,7 +162,7 @@ export const GENERATORS: GeneratorDef[] = [
       field("specialty", (r) => `${r.pick(T.TAVERN_DRINKS)}; ${r.pick(T.TAVERN_DISHES).toLowerCase()}`),
       field("barkeep", (r) => {
         const ancestry = weighted(r, T.ANCESTRIES).name;
-        return `${personName(r, styleForAncestry(ancestry))} (${ancestry.toLowerCase()}, ${r.pick(T.PRONOUNS)}) — ${r.pick(T.TRAITS).toLowerCase()}`;
+        return `${personName(r, styleForAncestry(ancestry))} (${ancestry.toLowerCase()}, ${r.pick(T.PRONOUNS)}), ${r.pick(T.TRAITS).toLowerCase()}`;
       }),
       field("patron", (r) => r.pick(T.PATRONS)),
       field("rumor", (r) => `${capitalise(r.pick(T.RUMOR_SUBJECTS))} ${r.pick(T.RUMOR_CLAIMS)}.`),
@@ -206,17 +209,17 @@ export const GENERATORS: GeneratorDef[] = [
           .map((k) => [k, ranges[k][1] ? r.int(...ranges[k]) : 0] as const)
           .filter(([, n]) => n > 0)
           .map(([k, n]) => `${n.toLocaleString("en")} ${k}`);
-        return parts.join(", ") || "—";
+        return parts.join(", ") || NONE;
       }),
       field("valuables", (r, c) => {
         const tier = tierOf(c);
-        if (!r.chance(0.7)) return "—";
+        if (!r.chance(0.7)) return NONE;
         return r.sample(T.VALUABLES[tier], r.int(1, tier === "17-20" ? 3 : 2)).map(capitalise).join("\n");
       }, true),
       field("items", (r, c) => {
         const tier = tierOf(c);
         const chance = tier === "1-4" ? 0.45 : tier === "5-10" ? 0.6 : 0.8;
-        if (!r.chance(chance)) return "—";
+        if (!r.chance(chance)) return NONE;
         // Mix the campaign's own unclaimed items (homebrew included) of a fitting rarity into the SRD list.
         const own = c.pool
           .filter((i) => T.TIER_RARITIES[tier].includes(i.rarity.toLowerCase()))
@@ -394,7 +397,7 @@ export function resultText(
   label: (key: TranslationKey) => string,
 ): string {
   return def.fields
-    .filter((f) => result.values[f.key] && result.values[f.key] !== "—")
+    .filter((f) => result.values[f.key] && result.values[f.key] !== NONE)
     .map((f) =>
       def.id === "names"
         ? result.values[f.key]

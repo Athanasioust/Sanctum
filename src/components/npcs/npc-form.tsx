@@ -191,9 +191,9 @@ export function NpcForm({
           </Field>
           <Field label="Alignment">
             <Select value={form.alignment || "none"} onValueChange={(v) => set("alignment", v === "none" ? "" : v)}>
-              <SelectTrigger className="w-full"><SelectValue placeholder="—" /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue placeholder="-" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">—</SelectItem>
+                <SelectItem value="none">None</SelectItem>
                 {ALIGNMENTS.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
               </SelectContent>
             </Select>
@@ -223,9 +223,9 @@ export function NpcForm({
           </Field>
           <Field label="Challenge Rating">
             <Select value={form.challengeRating || "none"} onValueChange={(v) => onCrChange(v === "none" ? "" : v)}>
-              <SelectTrigger className="w-full"><SelectValue placeholder="—" /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue placeholder="-" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">—</SelectItem>
+                <SelectItem value="none">None</SelectItem>
                 {CHALLENGE_RATINGS.map((c) => <SelectItem key={c} value={c}>CR {c}</SelectItem>)}
               </SelectContent>
             </Select>
@@ -288,7 +288,7 @@ export function NpcForm({
             <Select value={String(form.exhaustionLevel)} onValueChange={(v) => set("exhaustionLevel", Number(v))}>
               <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {Object.entries(EXHAUSTION_EFFECTS).map(([lvl, eff]) => <SelectItem key={lvl} value={lvl}>{lvl} — {eff}</SelectItem>)}
+                {Object.entries(EXHAUSTION_EFFECTS).map(([lvl, eff]) => <SelectItem key={lvl} value={lvl}>{lvl}: {eff}</SelectItem>)}
               </SelectContent>
             </Select>
           </Field>

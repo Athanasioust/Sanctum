@@ -25,7 +25,7 @@ export default async function HandoutsPage({
       <PageHeader
         icon={Image}
         title="Handouts"
-        description="Create and reveal player-facing handouts — letters, maps, lore excerpts, images."
+        description="Create and reveal player-facing handouts: letters, maps, lore excerpts, images."
       />
       <HandoutsManager campaignId={id} initialHandouts={allHandouts} />
     </PageContainer>

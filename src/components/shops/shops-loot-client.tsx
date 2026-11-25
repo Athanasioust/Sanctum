@@ -249,18 +249,18 @@ function ShopDialog({
           <div className="grid grid-cols-2 gap-3">
             <Field label="Location">
               <Select value={form.locationId} onValueChange={(v) => set("locationId", v)}>
-                <SelectTrigger className="w-full"><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectTrigger className="w-full"><SelectValue placeholder="-" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">—</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {locations.map((l) => <SelectItem key={l.id} value={String(l.id)}>{l.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </Field>
             <Field label="Owner NPC">
               <Select value={form.ownerNpcId} onValueChange={(v) => set("ownerNpcId", v)}>
-                <SelectTrigger className="w-full"><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectTrigger className="w-full"><SelectValue placeholder="-" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">—</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {npcs.map((n) => <SelectItem key={n.id} value={String(n.id)}>{n.name}</SelectItem>)}
                 </SelectContent>
               </Select>

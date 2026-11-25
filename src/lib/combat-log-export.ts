@@ -16,7 +16,7 @@ export function formatCombatLog(
     (a, b) => a.round - b.round || new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
   );
   const out: string[] = [];
-  const title = `Combat log — ${encounterName}`;
+  const title = `Combat log: ${encounterName}`;
   const stamp = format(new Date(), "yyyy-MM-dd HH:mm");
   if (as === "md") out.push(`# ${title}`, "", `_Exported ${stamp}_`);
   else out.push(title, `Exported ${stamp}`);
@@ -33,9 +33,9 @@ export function formatCombatLog(
       out.push("", as === "md" ? `## Round ${round}` : `Round ${round}`);
     }
     const time = format(new Date(e.createdAt), "HH:mm:ss");
-    const what = e.details ? `${e.action} — ${e.details}` : e.action;
+    const what = e.details ? `${e.action}: ${e.details}` : e.action;
     if (as === "md") {
-      out.push(`- ${time} — ${e.actorName ? `**${e.actorName}**: ` : ""}${what}`);
+      out.push(`- ${time}: ${e.actorName ? `**${e.actorName}**: ` : ""}${what}`);
     } else {
       out.push(`[${time}] ${e.actorName ? `${e.actorName}: ` : ""}${what}`);
     }

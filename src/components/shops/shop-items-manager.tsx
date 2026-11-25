@@ -92,9 +92,9 @@ export function ShopItemsManager({
                     <p className="font-medium">{item.name}</p>
                     {item.description ? <p className="text-xs text-muted-foreground">{item.description}</p> : null}
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{item.itemType || "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">{item.itemType || "-"}</TableCell>
                   <TableCell className={cn("capitalize", rarityClasses(item.rarity))}>{item.rarity}</TableCell>
-                  <TableCell className="text-right">{item.price || "—"}</TableCell>
+                  <TableCell className="text-right">{item.price || "-"}</TableCell>
                   <TableCell className="text-right tabular-nums">{item.quantity}</TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-1">

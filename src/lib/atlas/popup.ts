@@ -19,7 +19,7 @@ export function atlasPopupHtml(opts: {
   portal?: { id: number; label: string } | null;
   extraHtml?: string;
 }): string {
-  const parts = [`<div class="atlas-popup-title">${esc(opts.title || "—")}</div>`];
+  const parts = [`<div class="atlas-popup-title">${esc(opts.title || "-")}</div>`];
   if (opts.description.trim()) {
     parts.push(`<div class="atlas-popup-body">${renderMarkdown(opts.description)}</div>`);
   }

@@ -675,7 +675,7 @@ export function AtlasEditor({
                                 dangerouslySetInnerHTML={{ __html: atlasIconSvg(look.icon, 13, "#fff") }}
                               />
                               <span className="min-w-0">
-                                <span className="block truncate text-sm">{m.title || "—"}</span>
+                                <span className="block truncate text-sm">{m.title || "-"}</span>
                                 {rec ? (
                                   <span className="block truncate text-xs text-muted-foreground">
                                     {t(ATLAS_LINK_LABEL_KEYS[m.linkType!])}: {rec.name}

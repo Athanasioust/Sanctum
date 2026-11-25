@@ -64,9 +64,9 @@ type HistoryEntry = {
 };
 
 const MODES: { value: RollMode; label: string; hint: string }[] = [
-  { value: "disadvantage", label: "Dis", hint: "Disadvantage — roll twice, keep the lowest" },
+  { value: "disadvantage", label: "Dis", hint: "Disadvantage: roll twice, keep the lowest" },
   { value: "normal", label: "Normal", hint: "Roll once" },
-  { value: "advantage", label: "Adv", hint: "Advantage — roll twice, keep the highest" },
+  { value: "advantage", label: "Adv", hint: "Advantage: roll twice, keep the highest" },
 ];
 
 let nextEntryId = 1;

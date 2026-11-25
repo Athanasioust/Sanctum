@@ -908,7 +908,7 @@ function multiclassPanel(f: Fonts, c: Character): Panel | null {
   const units = c.multiclassInfo.flatMap((entry) =>
     paragraphUnits(
       f.body,
-      `${entry.className}${entry.subclass ? ` (${entry.subclass})` : ""} — level ${entry.level}`,
+      `${entry.className}${entry.subclass ? ` (${entry.subclass})` : ""}, level ${entry.level}`,
       7.5,
     ),
   );
@@ -1235,7 +1235,7 @@ export async function buildCharacterSheetPdf(data: CharacterSheetData): Promise<
     display: await pdf.embedFont(StandardFonts.TimesRomanBold),
   };
 
-  pdf.setTitle(`${c.name} — character sheet`);
+  pdf.setTitle(`${c.name}: character sheet`);
   pdf.setAuthor("Sanctum");
   pdf.setCreator("Sanctum");
   pdf.setProducer("Sanctum");

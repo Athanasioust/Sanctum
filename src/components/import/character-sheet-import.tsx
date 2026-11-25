@@ -83,11 +83,11 @@ export function CharacterSheetImport({ campaignId }: { campaignId: number }) {
         <h2 className="font-heading text-lg font-semibold">Import a character sheet</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Upload a filled-in 5e character sheet PDF and Sanctum reads the form fields
-          straight off it — abilities, skills, HP, equipment, currency and spells.
+          straight off it: abilities, skills, HP, equipment, currency and spells.
         </p>
         <p className="mt-2 text-sm text-muted-foreground">
           It has to be a <strong className="font-medium text-foreground">fillable</strong> sheet
-          — one where you can click into a box and type. The official Wizards fillable PDF is
+          (one where you can click into a box and type). The official Wizards fillable PDF is
           the reference. Sheets that were printed, scanned, or exported from a character
           builder are usually <em>flattened</em>: they look identical but carry no form data,
           and nothing can be read out of them.
@@ -135,11 +135,11 @@ export function CharacterSheetImport({ campaignId }: { campaignId: number }) {
 
             <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
               <Stat label="Class">
-                {[sheet.character.class, sheet.character.level].filter(Boolean).join(" ") || "—"}
+                {[sheet.character.class, sheet.character.level].filter(Boolean).join(" ") || "-"}
               </Stat>
-              <Stat label="Race">{sheet.character.race || "—"}</Stat>
-              <Stat label="Background">{sheet.character.background || "—"}</Stat>
-              <Stat label="Alignment">{sheet.character.alignment || "—"}</Stat>
+              <Stat label="Race">{sheet.character.race || "-"}</Stat>
+              <Stat label="Background">{sheet.character.background || "-"}</Stat>
+              <Stat label="Alignment">{sheet.character.alignment || "-"}</Stat>
               <Stat label="Armor Class">{sheet.character.armorClass}</Stat>
               <Stat label="Hit Points">
                 {sheet.character.hpCurrent} / {sheet.character.hpMax}
@@ -189,7 +189,7 @@ export function CharacterSheetImport({ campaignId }: { campaignId: number }) {
                 Spells
                 <span className="text-muted-foreground">
                   {" "}
-                  — {sheet.spells.length} found, {sheet.spellSlots.length} slot levels
+                  ({sheet.spells.length} found, {sheet.spellSlots.length} slot levels)
                 </span>
               </span>
               <Switch
@@ -201,7 +201,7 @@ export function CharacterSheetImport({ campaignId }: { campaignId: number }) {
             <label className="flex items-center justify-between gap-4 text-sm">
               <span>
                 Equipment
-                <span className="text-muted-foreground"> — {sheet.inventory.length} items</span>
+                <span className="text-muted-foreground"> ({sheet.inventory.length} items)</span>
               </span>
               <Switch
                 checked={withInventory}

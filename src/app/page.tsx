@@ -30,7 +30,7 @@ export default async function HomePage() {
               Sanctum
             </h1>
             <p className="text-sm text-muted-foreground">
-              Your campaigns, characters and worlds — all in one place.
+              Your campaigns, characters and worlds, all in one place.
             </p>
           </div>
         </div>
@@ -46,7 +46,7 @@ export default async function HomePage() {
         <EmptyState
           icon={Sparkles}
           title="No campaigns yet"
-          description="Create your first campaign to start tracking characters, combat, your world and story — or load a ready-made sample to look around first. It's a normal campaign you can change or delete."
+          description="Create your first campaign to start tracking characters, combat, your world and story, or load a ready-made sample to look around first. It's a normal campaign you can change or delete."
           action={
             <div className="flex flex-wrap items-center justify-center gap-2">
               <SampleCampaignButton variant="default" />

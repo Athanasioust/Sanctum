@@ -262,7 +262,7 @@ export function allowThroughFirewall(): void {
     // 1223 is ERROR_CANCELLED: the administrator prompt was dismissed.
     if (result.status === 1223) {
       throw new FirewallError(
-        "Windows needs permission to change firewall rules — the prompt was cancelled.",
+        "Windows needs permission to change firewall rules, and the prompt was cancelled.",
       );
     }
     if (result.status !== 0) {
