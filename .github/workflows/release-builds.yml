@@ -229,8 +229,9 @@ jobs:
             echo "::warning::No GitHub Release for $TAG yet, so nothing was attached. Create it, then re-run this workflow for $TAG."
           fi
 
-      # macos-dmg and macos-zip are new channels; butler creates them on the
-      # first push. Each channel holds both the Intel and the Apple Silicon file.
+      # One channel per architecture, so each is a direct .dmg download.
+      # Only the DMGs go to itch; the zips are on the GitHub Release only.
+      # Both channels are new; butler creates them on the first push.
       - name: Push to itch.io
         if: steps.version.outputs.is_tag == 'true'
         shell: bash
@@ -245,7 +246,11 @@ jobs:
           curl -sSfL -o butler.zip https://broth.itch.zone/butler/darwin-arm64/LATEST/archive/default
           unzip -q butler.zip -d "$RUNNER_TEMP/butler" && chmod +x "$RUNNER_TEMP/butler/butler"
           b="$RUNNER_TEMP/butler/butler"
-          mkdir -p itch/dmg itch/zip
-          cp dist/*.dmg itch/dmg/ && cp dist/*.zip itch/zip/
-          "$b" push itch/dmg athanasioust/sanctum:macos-dmg --userversion "$VERSION"
-          "$b" push itch/zip athanasioust/sanctum:macos-zip --userversion "$VERSION"
+          # DMG names come from electron-builder.yml: Sanctum-${version}-${arch}.dmg
+          arm="dist/Sanctum-$VERSION-arm64.dmg"
+          intel="dist/Sanctum-$VERSION-x64.dmg"
+          for f in "$arm" "$intel"; do
+            test -f "$f" || { echo "::error::$f not found"; ls dist/; exit 1; }
+          done
+          "$b" push "$arm"   athanasioust/sanctum:macos-apple-silicon --userversion "$VERSION"
+          "$b" push "$intel" athanasioust/sanctum:macos-intel         --userversion "$VERSION"
