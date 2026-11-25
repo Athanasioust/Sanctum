@@ -68,6 +68,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # next build opens the database while collecting page data, from several
+      # workers at once. On a fresh checkout they race to create and migrate it
+      # ("database is locked"), so create it first. data/ never ships (the
+      # leak guard would stop the build if it did).
+      - name: Create the build-time database
+        run: npm run db:migrate
+
       # The bundle-leak guard (MAY_SHIP allowlist) and the LAN guard copy run
       # inside desktop:build and fail it if anything is wrong.
       #
@@ -80,7 +87,9 @@ jobs:
           CI: "false"
         run: |
           unset GITHUB_REF_TYPE
-          npm run desktop:build:linux
+          # One retry: next/font/google downloads fonts at build time and a
+          # transient fetch failure on the runner fails the whole build.
+          npm run desktop:build:linux || { echo "::warning::Build failed, retrying once"; npm run desktop:build:linux; }
 
       - name: Confirm the guards made it into the package
         shell: bash
@@ -162,6 +171,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # next build opens the database while collecting page data, from several
+      # workers at once. On a fresh checkout they race to create and migrate it
+      # ("database is locked"), so create it first. data/ never ships (the
+      # leak guard would stop the build if it did).
+      - name: Create the build-time database
+        run: npm run db:migrate
+
       # Builds Intel (x64) and Apple Silicon (arm64) DMGs and zips, unsigned.
       #
       # ---- Signing + notarization (NOT enabled) --------------------------------
@@ -187,7 +203,9 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
         run: |
           unset GITHUB_REF_TYPE
-          npm run desktop:build:mac
+          # One retry: next/font/google downloads fonts at build time and a
+          # transient fetch failure on the runner fails the whole build.
+          npm run desktop:build:mac || { echo "::warning::Build failed, retrying once"; npm run desktop:build:mac; }
 
       - name: Confirm the guards made it into the package
         shell: bash
