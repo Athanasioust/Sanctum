@@ -575,5 +575,16 @@
   "sharing.onlyPlayerView": "Other devices on your network can open only the player view, and only through this link. The rest of Sanctum stays on this computer.",
   "sharing.listeningButOff": "This server is listening on your network, but other devices are turned away until sharing is on.",
   "screen.linkExpired.title": "This link no longer works",
-  "screen.linkExpired.body": "Ask your DM for the current player-view link or QR code, then open it again."
+  "screen.linkExpired.body": "Ask your DM for the current player-view link or QR code, then open it again.",
+  "autosave.saving": "Saving…",
+  "autosave.saved": "Saved",
+  "autosave.unsaved": "Unsaved changes",
+  "autosave.failed": "Couldn't save. Check the required fields and try again.",
+  "autosave.on": "Changes save automatically",
+  "autosave.done": "Done",
+  "autosave.closeBlocked": "You have unsaved text. Use Save or Cancel to close.",
+  "location.notesHint": "Notes about this place: what's here, who's here, its secrets. Plan a session's encounter or dungeon in Sessions, and follow the ongoing plot in Story.",
+  "sessions.encountersHint": "A planned encounter or dungeon for this session belongs here; notes about the place itself go on its location.",
+  "sessions.prepNotesHint": "This session's plan: secrets, reminders, read-aloud text. The ongoing plot lives in Story.",
+  "story.whereHint": "The ongoing plot lives here. Notes about a place go on that location, and a session's planned encounters go in Sessions."
 }

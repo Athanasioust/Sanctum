@@ -24,6 +24,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Field } from "@/components/shared/form";
+import { SaveStatus, useAutosave } from "@/components/shared/autosave";
+import { useT } from "@/components/i18n/i18n-provider";
 import { CheckboxGroup } from "@/components/shared/checkbox-group";
 import { EmptyState } from "@/components/shared/empty-state";
 import { EntityActions } from "@/components/shared/entity-actions";
@@ -192,6 +194,7 @@ function EventDialog({
   onSaved: (e: StoryEvent) => void;
   trigger?: React.ReactNode;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [form, setForm] = useState({
@@ -209,23 +212,48 @@ function EventDialog({
     setForm((f) => ({ ...f, [k]: v }));
   }
 
+  const payload = {
+    campaignId,
+    title: form.title,
+    description: form.description,
+    eventType: form.eventType,
+    status: form.status,
+    sessionNumber: form.sessionNumber ? Number(form.sessionNumber) : null,
+    inWorldDate: form.inWorldDate || null,
+    linkedNpcIds: form.linkedNpcIds.map(Number),
+    linkedLocationIds: form.linkedLocationIds.map(Number),
+  };
+
+  // Editing an existing event saves as you go and when the dialog closes.
+  const autosave = useAutosave({
+    data: payload,
+    enabled: open && Boolean(event),
+    canSave: (d) => d.title.trim().length > 0,
+    save: async (d) => onSaved(await api.patch<StoryEvent>(`/api/story-events/${event!.id}`, d)),
+  });
+
+  async function changeOpen(next: boolean) {
+    if (next || !event) {
+      setOpen(next);
+      return;
+    }
+    if (!form.title.trim()) {
+      toast.error("Title is required");
+      return;
+    }
+    if (!(await autosave.flush())) {
+      toast.error(t("autosave.failed"));
+      return;
+    }
+    setOpen(false);
+  }
+
   async function save() {
     if (!form.title.trim()) {
       toast.error("Title is required");
       return;
     }
     setPending(true);
-    const payload = {
-      campaignId,
-      title: form.title,
-      description: form.description,
-      eventType: form.eventType,
-      status: form.status,
-      sessionNumber: form.sessionNumber ? Number(form.sessionNumber) : null,
-      inWorldDate: form.inWorldDate || null,
-      linkedNpcIds: form.linkedNpcIds.map(Number),
-      linkedLocationIds: form.linkedLocationIds.map(Number),
-    };
     try {
       const saved = event
         ? // On edit the original real-world timestamp is preserved (omitted here).
@@ -246,7 +274,7 @@ function EventDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(o) => void changeOpen(o)}>
       <DialogTrigger asChild>
         {trigger ?? (
           <Button data-create-trigger>
@@ -254,7 +282,7 @@ function EventDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[85vh] overflow-y-auto" guardUnsaved={!event}>
         <DialogHeader>
           <DialogTitle>{event ? "Edit event" : "New story event"}</DialogTitle>
         </DialogHeader>
@@ -290,7 +318,7 @@ function EventDialog({
             <Input value={form.inWorldDate} onChange={(e) => set("inWorldDate", e.target.value)} placeholder="15th of Mirtul" />
           </Field>
           <Field label="Description">
-            <Textarea value={form.description} onChange={(e) => set("description", e.target.value)} rows={4} />
+            <Textarea value={form.description} onChange={(e) => set("description", e.target.value)} onBlur={() => void autosave.flush()} rows={4} />
           </Field>
           {npcs.length > 0 ? (
             <Field label="Linked NPCs">
@@ -303,10 +331,17 @@ function EventDialog({
             </Field>
           ) : null}
         </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => setOpen(false)} disabled={pending}>Cancel</Button>
-          <Button onClick={save} disabled={pending}>{pending ? "Saving…" : "Save"}</Button>
-        </DialogFooter>
+        {event ? (
+          <DialogFooter className="items-center sm:justify-between">
+            <SaveStatus state={autosave} />
+            <Button onClick={() => void changeOpen(false)} disabled={autosave.saving}>{t("autosave.done")}</Button>
+          </DialogFooter>
+        ) : (
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setOpen(false)} disabled={pending}>Cancel</Button>
+            <Button onClick={save} disabled={pending}>{pending ? "Saving…" : "Save"}</Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

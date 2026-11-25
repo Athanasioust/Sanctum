@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { storyEvents, npcs, locations } from "@/db/schema";
 import { PageContainer, PageHeader } from "@/components/shared/page-header";
 import { StoryTimeline } from "@/components/story/story-timeline";
+import { getTranslation } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,7 @@ export default async function StoryPage({
   params: Promise<{ id: string }>;
 }) {
   const campaignId = Number((await params).id);
+  const { t } = await getTranslation();
   const [events, npcOptions, locationOptions] = await Promise.all([
     db.select().from(storyEvents).where(eq(storyEvents.campaignId, campaignId)).orderBy(desc(storyEvents.createdAt)),
     db
@@ -27,7 +29,7 @@ export default async function StoryPage({
     <PageContainer>
       <PageHeader
         title="Story"
-        description="A timeline of sessions, plot threads, milestones and events."
+        description={`A timeline of sessions, plot threads, milestones and events. ${t("story.whereHint")}`}
         icon={ScrollText}
       />
       <StoryTimeline

@@ -6,6 +6,8 @@ import { Dialog as DialogPrimitive } from "radix-ui"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
+import { toast } from "sonner"
+import { useT } from "@/components/i18n/i18n-provider"
 
 function Dialog({
   ...props
@@ -51,19 +53,55 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  guardUnsaved = true,
+  onInput,
+  onOpenAutoFocus,
+  onInteractOutside,
+  onEscapeKeyDown,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
+  /**
+   * Once something has been typed into a text area, a click outside or Escape no longer closes
+   * the dialog (Cancel, the close button and Save still do), so text isn't
+   * thrown away by a stray click. Dialogs that autosave turn this off.
+   */
+  guardUnsaved?: boolean
 }) {
+  const t = useT()
+  const typed = React.useRef(false)
+  const block = (e: Event) => {
+    if (!guardUnsaved || !typed.current) return
+    e.preventDefault()
+    toast(t("autosave.closeBlocked"), { id: "dialog-unsaved" })
+  }
   return (
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          "fixed top-1/2 left-1/2 z-50 grid max-h-[calc(100dvh-2rem)] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
           className
         )}
+        onOpenAutoFocus={(e) => {
+          typed.current = false
+          onOpenAutoFocus?.(e)
+        }}
+        onInput={(e) => {
+          // Long free text only: a search box or a one-line field shouldn't
+          // stop a quick dismiss.
+          if ((e.target as HTMLElement).tagName === "TEXTAREA") typed.current = true
+          onInput?.(e)
+        }}
+        onInteractOutside={(e) => {
+          onInteractOutside?.(e)
+          if (!e.defaultPrevented) block(e)
+        }}
+        onEscapeKeyDown={(e) => {
+          onEscapeKeyDown?.(e)
+          if (!e.defaultPrevented) block(e)
+        }}
         {...props}
       >
         {children}

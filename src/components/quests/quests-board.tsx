@@ -22,6 +22,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Field } from "@/components/shared/form";
+import { SaveStatus, useAutosave } from "@/components/shared/autosave";
+import { useT } from "@/components/i18n/i18n-provider";
 import { EmptyState } from "@/components/shared/empty-state";
 import { api } from "@/lib/client";
 import {
@@ -84,9 +86,41 @@ function QuestDialog({
   onSaved: (q: Quest) => void;
   trigger: React.ReactNode;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<QuestFormState>(initial ?? BLANK);
   const [saving, setSaving] = useState(false);
+
+  // Only the fields this form edits: sub-objectives and links are managed on
+  // the card and must survive an edit here.
+  const edits = {
+    title: form.title.trim(),
+    description: form.description,
+    status: form.status,
+    reward: form.reward,
+    notes: form.notes,
+  };
+  const autosave = useAutosave({
+    data: edits,
+    enabled: open && questId !== undefined,
+    canSave: (d) => d.title.length > 0,
+    save: async (d) => onSaved(await api.patch<Quest>(`/api/quests/${questId}`, d)),
+  });
+
+  async function changeOpen(next: boolean) {
+    if (next || questId === undefined) {
+      // Reopening an existing quest starts from its current values.
+      if (next && initial) setForm(initial);
+      setOpen(next);
+      return;
+    }
+    if (!form.title.trim()) { toast.error("Title is required"); return; }
+    if (!(await autosave.flush())) {
+      toast.error(t("autosave.failed"));
+      return;
+    }
+    setOpen(false);
+  }
 
   function set(key: keyof QuestFormState, value: string) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -96,20 +130,15 @@ function QuestDialog({
     if (!form.title.trim()) { toast.error("Title is required"); return; }
     setSaving(true);
     try {
-      const payload = {
-        campaignId,
-        title: form.title.trim(),
-        description: form.description,
-        status: form.status,
-        reward: form.reward,
-        notes: form.notes,
-        subObjectives: [],
-        linkedNpcIds: [],
-        linkedLocationIds: [],
-      };
       const saved: Quest = questId
-        ? await api.patch(`/api/quests/${questId}`, payload)
-        : await api.post("/api/quests", payload);
+        ? await api.patch(`/api/quests/${questId}`, edits)
+        : await api.post("/api/quests", {
+            campaignId,
+            ...edits,
+            subObjectives: [],
+            linkedNpcIds: [],
+            linkedLocationIds: [],
+          });
       onSaved(saved);
       toast.success(questId ? "Quest updated" : "Quest created");
       setOpen(false);
@@ -122,9 +151,9 @@ function QuestDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(o) => void changeOpen(o)}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg" guardUnsaved={questId === undefined}>
         <DialogHeader>
           <DialogTitle>{questId ? "Edit Quest" : "New Quest"}</DialogTitle>
         </DialogHeader>
@@ -133,7 +162,7 @@ function QuestDialog({
             <Input value={form.title} onChange={(e) => set("title", e.target.value)} placeholder="Retrieve the stolen artifact" />
           </Field>
           <Field label="Description">
-            <Textarea value={form.description} onChange={(e) => set("description", e.target.value)} rows={3} placeholder="Quest details…" />
+            <Textarea value={form.description} onChange={(e) => set("description", e.target.value)} onBlur={() => void autosave.flush()} rows={3} placeholder="Quest details…" />
           </Field>
           <Field label="Status">
             <Select value={form.status} onValueChange={(v) => set("status", v as QuestStatus)}>
@@ -149,13 +178,20 @@ function QuestDialog({
             <Input value={form.reward} onChange={(e) => set("reward", e.target.value)} placeholder="500 gp, magic ring…" />
           </Field>
           <Field label="DM Notes">
-            <Textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={2} placeholder="Private notes…" />
+            <Textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} onBlur={() => void autosave.flush()} rows={2} placeholder="Private notes…" />
           </Field>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={save} disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
-        </DialogFooter>
+        {questId !== undefined ? (
+          <DialogFooter className="items-center sm:justify-between">
+            <SaveStatus state={autosave} />
+            <Button onClick={() => void changeOpen(false)} disabled={autosave.saving}>{t("autosave.done")}</Button>
+          </DialogFooter>
+        ) : (
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button onClick={save} disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

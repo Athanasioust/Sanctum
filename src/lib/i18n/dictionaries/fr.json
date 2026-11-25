@@ -575,5 +575,16 @@
   "sharing.onlyPlayerView": "Les autres appareils de votre réseau ne peuvent ouvrir que la vue joueurs, et seulement via ce lien. Le reste de Sanctum reste sur cet ordinateur.",
   "sharing.listeningButOff": "Ce serveur écoute sur votre réseau, mais les autres appareils sont refusés tant que le partage est désactivé.",
   "screen.linkExpired.title": "Ce lien ne fonctionne plus",
-  "screen.linkExpired.body": "Demandez au MJ le lien ou le QR code actuel de la vue joueurs, puis ouvrez-le à nouveau."
+  "screen.linkExpired.body": "Demandez au MJ le lien ou le QR code actuel de la vue joueurs, puis ouvrez-le à nouveau.",
+  "autosave.saving": "Enregistrement…",
+  "autosave.saved": "Enregistré",
+  "autosave.unsaved": "Modifications non enregistrées",
+  "autosave.failed": "Échec de l'enregistrement. Vérifiez les champs obligatoires et réessayez.",
+  "autosave.on": "Les modifications sont enregistrées automatiquement",
+  "autosave.done": "Terminé",
+  "autosave.closeBlocked": "Vous avez du texte non enregistré. Utilisez Enregistrer ou Annuler pour fermer.",
+  "location.notesHint": "Notes sur ce lieu : ce qu'on y trouve, qui s'y trouve, ses secrets. Préparez la rencontre ou le donjon d'une séance dans Séances, et suivez l'intrigue en cours dans Intrigue.",
+  "sessions.encountersHint": "Une rencontre ou un donjon prévu pour cette séance se note ici ; les notes sur le lieu lui-même vont sur sa fiche de lieu.",
+  "sessions.prepNotesHint": "Le plan de cette séance : secrets, rappels, texte à lire. L'intrigue en cours se trouve dans Intrigue.",
+  "story.whereHint": "L'intrigue en cours se trouve ici. Les notes sur un lieu vont sur ce lieu, et les rencontres prévues d'une séance dans Séances."
 }

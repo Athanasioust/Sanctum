@@ -10,6 +10,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Field, FormSection } from "@/components/shared/form";
 import { CheckboxGroup } from "@/components/shared/checkbox-group";
+import { SaveStatus, useAutosave } from "@/components/shared/autosave";
+import { useT } from "@/components/i18n/i18n-provider";
 import { api } from "@/lib/client";
 import { statusClasses } from "@/lib/ui";
 import { cn } from "@/lib/utils";
@@ -26,6 +28,7 @@ export function SessionPrepEditor({
   bestiary: Option[];
   npcs: Option[];
 }) {
+  const t = useT();
   const [status, setStatus] = useState(session.status);
   const [sessionNumber, setSessionNumber] = useState(
     session.sessionNumber != null ? String(session.sessionNumber) : "",
@@ -50,13 +53,18 @@ export function SessionPrepEditor({
     };
   }
 
+  // The prep saves itself a moment after you stop typing, on blur, and when
+  // you leave the page. "Save now" is still there for peace of mind.
+  const autosave = useAutosave({
+    data: payload(),
+    save: (d) => api.patch(`/api/session-preps/${session.id}`, d),
+  });
+
   async function save() {
     setPending(true);
     try {
-      await api.patch(`/api/session-preps/${session.id}`, payload());
-      toast.success("Session saved");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save");
+      if (await autosave.flush()) toast.success("Session saved");
+      else toast.error(t("autosave.failed"));
     } finally {
       setPending(false);
     }
@@ -133,7 +141,7 @@ export function SessionPrepEditor({
       </FormSection>
 
       {bestiary.length > 0 ? (
-        <FormSection title="Planned encounters" description="Bestiary templates you expect to use.">
+        <FormSection title="Planned encounters" description={`Bestiary templates you expect to use. ${t("sessions.encountersHint")}`}>
           <CheckboxGroup columns={3} options={bestiary.map((b) => ({ value: String(b.id), label: b.name }))} value={plannedEncounters} onChange={setPlannedEncounters} />
         </FormSection>
       ) : null}
@@ -144,13 +152,20 @@ export function SessionPrepEditor({
         </FormSection>
       ) : null}
 
-      <FormSection title="DM private notes">
-        <Textarea value={dmNotes} onChange={(e) => setDmNotes(e.target.value)} rows={8} placeholder="Secrets, reminders, read-aloud text…" />
+      <FormSection title="DM private notes" description={t("sessions.prepNotesHint")}>
+        <Textarea
+          value={dmNotes}
+          onChange={(e) => setDmNotes(e.target.value)}
+          onBlur={() => void autosave.flush()}
+          rows={8}
+          placeholder="Secrets, reminders, read-aloud text…"
+        />
       </FormSection>
 
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 px-5 py-3 backdrop-blur sm:px-8">
-        <div className="mx-auto flex max-w-6xl items-center justify-end">
-          <Button onClick={save} disabled={pending}>
+        <div className="mx-auto flex max-w-6xl items-center justify-end gap-3">
+          <SaveStatus state={autosave} />
+          <Button onClick={save} disabled={pending || autosave.saving}>
             <Save className="size-4" /> {pending ? "Saving…" : "Save changes"}
           </Button>
         </div>

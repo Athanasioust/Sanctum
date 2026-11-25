@@ -575,5 +575,16 @@
   "sharing.onlyPlayerView": "Gli altri dispositivi della rete possono aprire solo la vista giocatori, e solo tramite questo link. Il resto di Sanctum resta su questo computer.",
   "sharing.listeningButOff": "Questo server è in ascolto sulla rete, ma gli altri dispositivi vengono respinti finché la condivisione è disattivata.",
   "screen.linkExpired.title": "Questo link non funziona più",
-  "screen.linkExpired.body": "Chiedi al tuo DM il link o il codice QR attuale della vista giocatori, poi aprilo di nuovo."
+  "screen.linkExpired.body": "Chiedi al tuo DM il link o il codice QR attuale della vista giocatori, poi aprilo di nuovo.",
+  "autosave.saving": "Salvataggio…",
+  "autosave.saved": "Salvato",
+  "autosave.unsaved": "Modifiche non salvate",
+  "autosave.failed": "Salvataggio non riuscito. Controlla i campi obbligatori e riprova.",
+  "autosave.on": "Le modifiche vengono salvate automaticamente",
+  "autosave.done": "Fatto",
+  "autosave.closeBlocked": "Hai del testo non salvato. Usa Salva o Annulla per chiudere.",
+  "location.notesHint": "Note su questo luogo: cosa c'è, chi c'è, i suoi segreti. Prepara l'incontro o il dungeon di una sessione in Sessioni e segui la trama in corso in Storia.",
+  "sessions.encountersHint": "Un incontro o un dungeon previsto per questa sessione va qui; le note sul luogo in sé vanno nella sua scheda luogo.",
+  "sessions.prepNotesHint": "Il piano di questa sessione: segreti, promemoria, testo da leggere ad alta voce. La trama in corso sta in Storia.",
+  "story.whereHint": "La trama in corso sta qui. Le note su un luogo vanno in quel luogo, e gli incontri previsti di una sessione in Sessioni."
 }

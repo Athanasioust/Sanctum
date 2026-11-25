@@ -575,5 +575,16 @@
   "sharing.onlyPlayerView": "Os outros dispositivos da rede só podem abrir a vista dos jogadores, e apenas através deste link. O resto do Sanctum fica neste computador.",
   "sharing.listeningButOff": "Este servidor está à escuta na rede, mas os outros dispositivos são recusados até a partilha estar ativa.",
   "screen.linkExpired.title": "Este link já não funciona",
-  "screen.linkExpired.body": "Pede ao teu DM o link ou código QR atual da vista dos jogadores e abre-o de novo."
+  "screen.linkExpired.body": "Pede ao teu DM o link ou código QR atual da vista dos jogadores e abre-o de novo.",
+  "autosave.saving": "A guardar…",
+  "autosave.saved": "Guardado",
+  "autosave.unsaved": "Alterações por guardar",
+  "autosave.failed": "Não foi possível guardar. Verifique os campos obrigatórios e tente novamente.",
+  "autosave.on": "As alterações são guardadas automaticamente",
+  "autosave.done": "Concluído",
+  "autosave.closeBlocked": "Tem texto por guardar. Use Guardar ou Cancelar para fechar.",
+  "location.notesHint": "Notas sobre este local: o que há, quem está, os seus segredos. Prepare o encontro ou a masmorra de uma sessão em Sessões e acompanhe o enredo em curso em História.",
+  "sessions.encountersHint": "Um encontro ou masmorra planeado para esta sessão fica aqui; as notas sobre o próprio local ficam no seu registo de local.",
+  "sessions.prepNotesHint": "O plano desta sessão: segredos, lembretes, texto para ler em voz alta. O enredo em curso fica em História.",
+  "story.whereHint": "O enredo em curso fica aqui. As notas sobre um local ficam nesse local, e os encontros planeados de uma sessão em Sessões."
 }

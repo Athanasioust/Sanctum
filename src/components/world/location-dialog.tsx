@@ -23,6 +23,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Field } from "@/components/shared/form";
+import { SaveStatus, useAutosave } from "@/components/shared/autosave";
+import { useT } from "@/components/i18n/i18n-provider";
 import { api } from "@/lib/client";
 import { LOCATION_TYPES } from "@/lib/constants";
 import type { Location } from "@/db/schema";
@@ -43,6 +45,7 @@ export function LocationDialog({
   trigger?: React.ReactNode;
 }) {
   const router = useRouter();
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [form, setForm] = useState({
@@ -62,20 +65,48 @@ export function LocationDialog({
     setForm((f) => ({ ...f, [k]: v }));
   }
 
+  const payload = {
+    campaignId,
+    name: form.name,
+    type: form.type,
+    description: form.description,
+    notes: form.notes,
+    parentLocationId: form.parentLocationId === "none" ? null : Number(form.parentLocationId),
+  };
+
+  // Editing an existing location saves as you go (and on blur and close), so
+  // a stray click outside the dialog can never throw the notes away.
+  const autosave = useAutosave({
+    data: payload,
+    enabled: open && Boolean(location),
+    canSave: (d) => d.name.trim().length > 0,
+    save: (d) => api.patch(`/api/locations/${location!.id}`, d),
+  });
+
+  async function changeOpen(next: boolean) {
+    if (next || !location) {
+      setOpen(next);
+      return;
+    }
+    if (!form.name.trim()) {
+      toast.error("Name is required");
+      return;
+    }
+    const ok = await autosave.flush();
+    if (!ok) {
+      toast.error(t("autosave.failed"));
+      return;
+    }
+    setOpen(false);
+    router.refresh();
+  }
+
   async function save() {
     if (!form.name.trim()) {
       toast.error("Name is required");
       return;
     }
     setPending(true);
-    const payload = {
-      campaignId,
-      name: form.name,
-      type: form.type,
-      description: form.description,
-      notes: form.notes,
-      parentLocationId: form.parentLocationId === "none" ? null : Number(form.parentLocationId),
-    };
     try {
       if (location) await api.patch(`/api/locations/${location.id}`, payload);
       else await api.post("/api/locations", payload);
@@ -92,7 +123,7 @@ export function LocationDialog({
   const selectableParents = parentOptions.filter((o) => o.id !== location?.id);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(o) => void changeOpen(o)}>
       <DialogTrigger asChild>
         {trigger ?? (
           <Button>
@@ -100,7 +131,7 @@ export function LocationDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent guardUnsaved={!location} className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{location ? "Edit location" : "New location"}</DialogTitle>
         </DialogHeader>
@@ -128,16 +159,33 @@ export function LocationDialog({
             </Field>
           </div>
           <Field label="Description">
-            <Textarea value={form.description} onChange={(e) => set("description", e.target.value)} rows={3} />
+            <Textarea
+              value={form.description}
+              onChange={(e) => set("description", e.target.value)}
+              onBlur={() => void autosave.flush()}
+              rows={3}
+            />
           </Field>
-          <Field label="Notes">
-            <Textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={2} />
+          <Field label="Notes" hint={t("location.notesHint")}>
+            <Textarea
+              value={form.notes}
+              onChange={(e) => set("notes", e.target.value)}
+              onBlur={() => void autosave.flush()}
+              rows={4}
+            />
           </Field>
         </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => setOpen(false)} disabled={pending}>Cancel</Button>
-          <Button onClick={save} disabled={pending}>{pending ? "Saving…" : "Save"}</Button>
-        </DialogFooter>
+        {location ? (
+          <DialogFooter className="items-center sm:justify-between">
+            <SaveStatus state={autosave} />
+            <Button onClick={() => void changeOpen(false)} disabled={autosave.saving}>{t("autosave.done")}</Button>
+          </DialogFooter>
+        ) : (
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setOpen(false)} disabled={pending}>Cancel</Button>
+            <Button onClick={save} disabled={pending}>{pending ? "Saving…" : "Save"}</Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

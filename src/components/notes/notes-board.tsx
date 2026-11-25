@@ -15,6 +15,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Field } from "@/components/shared/form";
+import { SaveStatus, useAutosave } from "@/components/shared/autosave";
+import { useT } from "@/components/i18n/i18n-provider";
 import { DeleteIconButton } from "@/components/shared/delete-icon-button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { api } from "@/lib/client";
@@ -166,6 +168,7 @@ function NoteDialog({
   onSaved: (note: Note) => void;
   trigger?: React.ReactNode;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [preview, setPreview] = useState(false);
@@ -181,6 +184,26 @@ function NoteDialog({
       content: note?.content ?? "",
       color: note?.color ?? "default",
     });
+  }
+
+  // An existing note saves as you type and when the dialog closes.
+  const autosave = useAutosave({
+    data: form,
+    enabled: open && Boolean(note),
+    save: async (d) => onSaved(await api.patch<Note>(`/api/notes/${note!.id}`, d)),
+  });
+
+  async function changeOpen(next: boolean) {
+    if (next) {
+      setOpen(true);
+      reset();
+      return;
+    }
+    if (note && !(await autosave.flush())) {
+      toast.error(t("autosave.failed"));
+      return;
+    }
+    setOpen(false);
   }
 
   async function save() {
@@ -203,10 +226,7 @@ function NoteDialog({
   return (
     <Dialog
       open={open}
-      onOpenChange={(o) => {
-        setOpen(o);
-        if (o) reset();
-      }}
+      onOpenChange={(o) => void changeOpen(o)}
     >
       <DialogTrigger asChild>
         {trigger ?? (
@@ -215,7 +235,7 @@ function NoteDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent guardUnsaved={!note}>
         <DialogHeader>
           <DialogTitle>{note ? "Edit note" : "New note"}</DialogTitle>
         </DialogHeader>
@@ -239,7 +259,12 @@ function NoteDialog({
                 dangerouslySetInnerHTML={{ __html: renderMarkdown(form.content) }}
               />
             ) : (
-              <Textarea value={form.content} onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))} rows={6} />
+              <Textarea
+                value={form.content}
+                onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
+                onBlur={() => void autosave.flush()}
+                rows={6}
+              />
             )}
           </Field>
           <Field label="Color">
@@ -260,10 +285,17 @@ function NoteDialog({
             </div>
           </Field>
         </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => setOpen(false)} disabled={pending}>Cancel</Button>
-          <Button onClick={save} disabled={pending}>{pending ? "Saving…" : "Save"}</Button>
-        </DialogFooter>
+        {note ? (
+          <DialogFooter className="items-center sm:justify-between">
+            <SaveStatus state={autosave} />
+            <Button onClick={() => void changeOpen(false)} disabled={autosave.saving}>{t("autosave.done")}</Button>
+          </DialogFooter>
+        ) : (
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setOpen(false)} disabled={pending}>Cancel</Button>
+            <Button onClick={save} disabled={pending}>{pending ? "Saving…" : "Save"}</Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

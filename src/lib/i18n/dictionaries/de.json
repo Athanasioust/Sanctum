@@ -575,5 +575,16 @@
   "sharing.onlyPlayerView": "Andere Geräte in deinem Netzwerk können nur die Spieleransicht öffnen, und nur über diesen Link. Der Rest von Sanctum bleibt auf diesem Computer.",
   "sharing.listeningButOff": "Dieser Server lauscht in deinem Netzwerk, aber andere Geräte werden abgewiesen, bis das Teilen aktiviert ist.",
   "screen.linkExpired.title": "Dieser Link funktioniert nicht mehr",
-  "screen.linkExpired.body": "Bitte deine Spielleitung um den aktuellen Link oder QR-Code zur Spieleransicht und öffne ihn erneut."
+  "screen.linkExpired.body": "Bitte deine Spielleitung um den aktuellen Link oder QR-Code zur Spieleransicht und öffne ihn erneut.",
+  "autosave.saving": "Wird gespeichert…",
+  "autosave.saved": "Gespeichert",
+  "autosave.unsaved": "Ungespeicherte Änderungen",
+  "autosave.failed": "Speichern fehlgeschlagen. Prüfe die Pflichtfelder und versuche es erneut.",
+  "autosave.on": "Änderungen werden automatisch gespeichert",
+  "autosave.done": "Fertig",
+  "autosave.closeBlocked": "Du hast ungespeicherten Text. Schließe mit Speichern oder Abbrechen.",
+  "location.notesHint": "Notizen zu diesem Ort: was es hier gibt, wer hier ist, seine Geheimnisse. Plane die Begegnung oder den Dungeon einer Sitzung unter Sitzungen und verfolge die laufende Handlung unter Handlung.",
+  "sessions.encountersHint": "Eine geplante Begegnung oder ein Dungeon für diese Sitzung gehört hierher; Notizen zum Ort selbst gehören zu seinem Ort-Eintrag.",
+  "sessions.prepNotesHint": "Der Plan für diese Sitzung: Geheimnisse, Erinnerungen, Vorlesetext. Die laufende Handlung steht unter Handlung.",
+  "story.whereHint": "Die laufende Handlung gehört hierher. Notizen zu einem Ort gehören zu diesem Ort, geplante Begegnungen einer Sitzung unter Sitzungen."
 }
